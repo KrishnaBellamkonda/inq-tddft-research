@@ -1,0 +1,46 @@
+# INQ source and local heavy dependencies
+inq/
+angelo-jellium/
+venv/
+ParaView-6.1.0-MPI-Linux-Python3.12-x86_64.tar.gz
+
+# Build folders
+build/
+**/build/
+cmake-build-*/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Compiled outputs
+*.o
+*.obj
+*.so
+*.a
+*.out
+*.exe
+
+# Simulation outputs
+results/
+**/results/
+*.raw
+*.vti
+*.vtk
+*.vtu
+*.vtp
+*.npy
+*.npz
+*.h5
+*.hdf5
+
+# Large rendered/media/docs you said to exclude
+*.png
+*.pdf
+*.md
+
+# Editor/system noise
+.DS_Store
+*.swp
+*.swo
