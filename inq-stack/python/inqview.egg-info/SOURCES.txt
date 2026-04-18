@@ -1,0 +1,13 @@
+README.md
+pyproject.toml
+python/inqview/__init__.py
+python/inqview/config.py
+python/inqview/data.py
+python/inqview/defaults.py
+python/inqview/fourier.py
+python/inqview/paraview.py
+python/inqview/plots.py
+python/inqview.egg-info/PKG-INFO
+python/inqview.egg-info/SOURCES.txt
+python/inqview.egg-info/dependency_links.txt
+python/inqview.egg-info/top_level.txt

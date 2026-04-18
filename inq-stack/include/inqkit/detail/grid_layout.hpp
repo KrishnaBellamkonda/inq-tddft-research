@@ -1,0 +1,61 @@
+#pragma once
+
+#include <string>
+
+namespace inqkit::detail::grid_layout {
+
+/*
+ * This file defines the shared schema contract for complex 3D raw fields.
+ *
+ * The writer follows this contract.
+ * The Python reader should read the metadata and assume exactly this layout.
+ */
+struct ComplexField3DRawSchema {
+  std::string type = "complex_field_3d";
+  std::string dtype = "float64";
+
+  /*
+   * Flattening convention used by the writer:
+   *
+   *   flat = ((ix * ny) + iy) * nz + iz
+   *
+   * Therefore:
+   *   x = slowest varying index
+   *   z = fastest varying index
+   */
+  std::string layout = "x_slowest_z_fastest";
+
+  std::string real_suffix = "_real.raw";
+  std::string imag_suffix = "_imag.raw";
+  std::string meta_suffix = ".meta.txt";
+};
+
+struct RealField3DRawSchema {
+  std::string type = "real_field_3d";
+  std::string dtype = "float64";
+
+  // Flat ordering:
+  //   flat = ((ix * ny) + iy) * nz + iz
+  // so x is slowest, z is fastest
+  std::string layout = "x_slowest_z_fastest";
+
+  std::string value_suffix = ".raw";
+  std::string meta_suffix = ".meta.txt";
+};
+
+inline ComplexField3DRawSchema complex_field_3d_raw_schema() { return {}; }
+
+inline RealField3DRawSchema real_field_3d_raw_schema() { return {}; }
+
+/*
+ * Shared flattening convention for all 3D fields:
+ *   flat = ((ix * ny) + iy) * nz + iz
+ *
+ * x = slowest varying index
+ * z = fastest varying index
+ */
+inline std::size_t flatten_index(int ix, int iy, int iz, int ny, int nz) {
+  return ((static_cast<std::size_t>(ix) * ny) + iy) * nz + iz;
+}
+
+} // namespace inqkit::detail::grid_layout

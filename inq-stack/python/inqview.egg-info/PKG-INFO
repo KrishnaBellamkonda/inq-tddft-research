@@ -1,0 +1,5 @@
+Metadata-Version: 2.4
+Name: inqview
+Version: 0.1.0
+Summary: INQ post-processing tools
+Requires-Python: >=3.10

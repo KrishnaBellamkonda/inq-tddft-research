@@ -1,0 +1,91 @@
+# ============================================================
+# Run 001 — Coronene TDDFT LEED simulation
+# Configuration summary (human-readable)
+# ============================================================
+# Status: COMPLETE (2026-04-14)
+# Code:   INQ (GPU, CUDA 12.6, sm_80)
+# Paper:  Tsubonoya, Hu, Watanabe, PRB 90, 035416 (2014)
+# Notes:  First proof-of-concept run. Issues identified — see handover.
+# ============================================================
+
+
+[Unit Cell]
+Shape              = Orthorhombic, finite (isolated molecule)
+Lx                 = 18.4 Å  =  34.76 bohr
+Ly                 = 18.4 Å  =  34.76 bohr
+Lz                 = 31.7 Å  =  59.91 bohr
+Boundary           = Finite (no periodic images)
+Molecule position  = Centred at origin (0,0,0) in XYZ file
+                     NOTE: INQ maps origin to grid corner → molecule appears
+                     at grid corners, visually split into 4 quadrants in
+                     density plots. Fix required: shift XYZ by (+Lx/2, +Ly/2, 0).
+
+
+[Molecular Geometry]
+Species            = Coronene C24H12, D6h symmetry
+Source file        = ../01_geometry/coronene.xyz
+C-C bond length    = 1.421 Å (idealised, not DFT-relaxed)
+C-H bond length    = 1.086 Å (idealised)
+Ring radii (from centre):
+  Central ring     = 1.421 Å  (6 C atoms)
+  Middle ring      = 2.842 Å  (6 C atoms)
+  Outer ring       = 3.760 Å  (12 C atoms)
+  H atoms          = 4.578–4.758 Å
+Max force (LDA GS) = 0.063 Ha/bohr (outer C ring; geometry not relaxed)
+
+
+[Ground State (DFT)]
+XC functional      = LDA (Perdew-Zunger)
+Pseudopotentials   = pseudodojo_pbe (norm-conserving)
+Energy cutoff      = 40 Ha  (h = 0.186 Å = 0.351 bohr)
+                     Chosen as energy minimum from 03_ecut_convergence sweep.
+                     Paper uses 54 Ha with a different code.
+SCF tolerance      = 1e-6 Ha
+Total electrons    = 108  (24×C×4e + 12×H×1e)
+Occupied orbitals  = 54
+Extra states       = 3  (1 WP slot + 2 SCF buffer)
+GS energy          = -150.837 Ha  (57 SCF steps)
+
+
+[Wavepacket (Incident Electron)]
+Formula            = (1/(pi*d^2))^(3/4) * exp(-|r-b|^2/(2d^2)) * exp(i*k.r)
+                     Paper Eq. 1. Note: exponent denominator is 2d^2 (not 4d^2).
+Width d            = 0.53 Å  =  1.001 bohr
+                     NOTE: This is very narrow. At d=0.53 Å, density at the
+                     central ring (r=1.421 Å) is only 0.1% of peak.
+                     The WP passes through the ring centre without meaningfully
+                     interacting with the 6 central ring C atoms.
+                     A larger d (1.4–1.8 Å) is needed for a physically
+                     meaningful diffraction interaction with the ring.
+Initial centre     = (bx, by, bz) = (0, 0, +D) = (0, 0, 12.0 bohr) = (0, 0, 6.35 Å)
+Momentum           = k = (0, 0, -k0)  [directed toward flake, -z direction]
+Kinetic energy     = 200 eV  =  7.350 Ha
+k0                 = sqrt(2*E_kin) = 3.834 bohr^-1  =  7.246 Å^-1
+WP occupation      = 1.0  (singly occupied: one incident electron)
+WP arrival time t1 = D / k0  =  3.13 a.u.  =  0.076 fs
+
+
+[Real-Time TDDFT Propagation]
+XC functional      = ALDA (adiabatic LDA; XC evaluated at instantaneous density)
+Propagator         = 4th-order Taylor (INQ default)
+Time step Δt       = 0.02009 a.u.  =  4.84e-4 fs
+Total steps        = 516
+Total time t2      = 10.34 a.u.  =  0.25 fs
+LEED accumulation  = t1=3.13 a.u. to t2=10.34 a.u.
+Snapshot interval  = every 50 steps  (11 snapshots saved, at z=0 plane)
+Energy drift       = 96 μHa over 516 steps (well-behaved)
+
+
+[Observation / LEED]
+Observation plane  = z = +D = +12.0 bohr  (same as initial WP position)
+LEED pattern       = I(x,y) = ∫_{t1}^{t2} n(x,y,z=D,t) dt
+                     Paper Eq. 5.
+Output file        = results/leed_pattern.txt
+
+
+[Known Issues — See Handover]
+1. Molecule at grid corner (density shows 4 copies): XYZ must be shifted.
+2. WP width d=0.53 Å too narrow: central ring illumination < 0.1%.
+3. No absorbing boundary conditions: reflected WP creates interference.
+4. WP orbital not saved separately (only total density in snapshots).
+5. MPI slice extraction not MPI-safe (single rank only).

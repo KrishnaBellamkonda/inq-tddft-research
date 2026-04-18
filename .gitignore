@@ -44,3 +44,7 @@ results/
 .DS_Store
 *.swp
 *.swo
+
+# nvim and other
+nvim
+.*
