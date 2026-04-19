@@ -2,19 +2,23 @@
 plots.py — reusable scientific plotting functions for inqview.
 
 Covers time-series observables (energy, current, dipole) produced by
-inqkit::io::ObservablesWriter. Each function accepts the path to an
-observables.csv and returns a matplotlib Figure.
+inqkit::io::ObservablesWriter, and frequency-domain spectra from fourier.py.
+Each function accepts the path to an observables.csv (or a FourierResult) and
+returns a matplotlib Figure.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
 
 from .config import DEFAULT_THEME
+
+if TYPE_CHECKING:
+    from .fourier import FourierResult
 
 PathLike = Union[str, Path]
 
@@ -196,4 +200,88 @@ def plot_observables_summary(
 
     axes[-1].set_xlabel("Time (a.u.)")
     fig.tight_layout()
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Frequency-domain plots
+# ---------------------------------------------------------------------------
+
+def plot_spectrum(
+    result: "FourierResult",
+    output_path: PathLike,
+    x_max_au: float | None = None,
+    log_scale: bool = False,
+) -> plt.Figure:
+    """Plot the amplitude spectrum from a FourierResult.
+
+    Parameters
+    ----------
+    result      : FourierResult returned by FourierTransform.transform*().
+    output_path : path where the PNG is saved.
+    x_max_au    : if set, truncate the x-axis to this frequency (atomic units).
+    log_scale   : if True, use a log y-axis.
+    """
+    defaults = DEFAULT_THEME.plot
+    fig, ax = plt.subplots(figsize=defaults.figsize, dpi=defaults.dpi)
+
+    freq = result.frequency_au
+    amp = result.amplitude
+    if x_max_au is not None:
+        mask = freq <= x_max_au
+        freq = freq[mask]
+        amp = amp[mask]
+
+    ax.plot(freq, amp, color=defaults.line_colors[0], linewidth=1.2)
+    ax.set_xlabel("Frequency (Ha/\u0127)")
+    ax.set_ylabel("|FFT| (normalised)")
+    ax.set_title(f"Spectrum: {result.column}")
+    if log_scale:
+        ax.set_yscale("log")
+
+    fig.tight_layout()
+    fig.savefig(output_path)
+    plt.close(fig)
+    return fig
+
+
+def plot_spectrum_summary(
+    results: list["FourierResult"],
+    output_path: PathLike,
+    x_max_au: float | None = None,
+    log_scale: bool = False,
+) -> plt.Figure:
+    """Multi-panel spectrum figure, one subplot per FourierResult, shared x-axis."""
+    if not results:
+        raise ValueError("results list is empty.")
+
+    defaults = DEFAULT_THEME.plot
+    n = len(results)
+    fig, axes = plt.subplots(
+        n, 1,
+        figsize=(defaults.figsize[0], defaults.figsize[1] * n),
+        dpi=defaults.dpi,
+        sharex=True,
+    )
+    if n == 1:
+        axes = [axes]
+
+    for ax, result in zip(axes, results):
+        freq = result.frequency_au
+        amp = result.amplitude
+        if x_max_au is not None:
+            mask = freq <= x_max_au
+            freq = freq[mask]
+            amp = amp[mask]
+
+        ax.plot(freq, amp, color=defaults.line_colors[0], linewidth=1.2)
+        ax.set_ylabel("|FFT| (normalised)")
+        ax.set_title(f"Spectrum: {result.column}")
+        if log_scale:
+            ax.set_yscale("log")
+
+    axes[-1].set_xlabel("Frequency (Ha/\u0127)")
+    fig.tight_layout()
+    fig.savefig(output_path)
+    plt.close(fig)
     return fig

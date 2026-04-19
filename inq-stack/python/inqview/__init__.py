@@ -17,7 +17,10 @@ from .plots import (
     plot_current_vs_time,
     plot_dipole_vs_time,
     plot_observables_summary,
+    plot_spectrum,
+    plot_spectrum_summary,
 )
+from .fourier import FourierResult, FourierTransform, WindowSpec
 
 __all__ = [
     "DEFAULT_THEME",
@@ -46,4 +49,9 @@ __all__ = [
     "plot_current_vs_time",
     "plot_dipole_vs_time",
     "plot_observables_summary",
+    "plot_spectrum",
+    "plot_spectrum_summary",
+    "FourierResult",
+    "FourierTransform",
+    "WindowSpec",
 ]

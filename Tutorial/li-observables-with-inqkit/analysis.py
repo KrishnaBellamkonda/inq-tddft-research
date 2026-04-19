@@ -1,7 +1,8 @@
 """
 Li BCC 2x2x2 ionic-kick TDDFT — observable analysis.
 
-Run after the simulation to produce plots from results/observables.csv.
+Produces time-domain plots and frequency-domain spectra from
+results/observables.csv.
 
 Usage:
     python analysis.py
@@ -12,8 +13,14 @@ import argparse
 from pathlib import Path
 
 import inqview
+from inqview import FourierTransform, WindowSpec
+from inqview.plots import plot_spectrum, plot_spectrum_summary
 
 CSV_DEFAULT = Path("results/observables.csv")
+
+# Frequency cutoff for spectrum plots: 1.0 Ha/hbar ≈ 27 eV — covers all
+# Li phonon and plasmon frequencies while discarding high-frequency noise.
+FREQ_MAX_AU = 1.0
 
 
 def main(csv_path: Path) -> None:
@@ -28,6 +35,9 @@ def main(csv_path: Path) -> None:
     df = inqview.load_observables(csv_path)
     print(f"  {len(df)} rows, columns: {list(df.columns)}")
 
+    # ------------------------------------------------------------------
+    # Time-domain plots
+    # ------------------------------------------------------------------
     fig = inqview.plot_energy_vs_time(csv_path)
     fig.savefig(out / "energy_vs_time.png")
     print("  Saved energy_vs_time.png")
@@ -44,9 +54,40 @@ def main(csv_path: Path) -> None:
     fig.savefig(out / "observables_summary.png")
     print("  Saved observables_summary.png")
 
+    # ------------------------------------------------------------------
+    # Frequency-domain spectra (Hann window, linear detrend)
+    # ------------------------------------------------------------------
+    ft = FourierTransform(window=WindowSpec("hann"), detrend=True)
+
+    # Dipole spectra — reveals ionic resonance frequencies excited by the kick
+    dipole_spectra = []
+    for comp in ("x", "y", "z"):
+        col = f"dipole_{comp}"
+        if col in df.columns:
+            result = ft.transform_dipole(df, component=comp)
+            plot_spectrum(result, out / f"spectrum_{col}.png", x_max_au=FREQ_MAX_AU)
+            print(f"  Saved spectrum_{col}.png")
+            dipole_spectra.append(result)
+
+    if dipole_spectra:
+        plot_spectrum_summary(
+            dipole_spectra,
+            out / "spectrum_dipole_summary.png",
+            x_max_au=FREQ_MAX_AU,
+        )
+        print("  Saved spectrum_dipole_summary.png")
+
+    # Energy spectrum — tracks energy oscillation frequencies
+    try:
+        e_result = ft.transform_energy(df)
+        plot_spectrum(e_result, out / "spectrum_energy.png", x_max_au=FREQ_MAX_AU)
+        print("  Saved spectrum_energy.png")
+    except ValueError as exc:
+        print(f"  Skipping energy spectrum: {exc}")
+
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Plot Li ionic-kick TDDFT observables.")
+    parser = argparse.ArgumentParser(description="Plot Li ionic-kick TDDFT observables and spectra.")
     parser.add_argument("--csv", type=Path, default=CSV_DEFAULT)
     args = parser.parse_args()
     main(args.csv)
