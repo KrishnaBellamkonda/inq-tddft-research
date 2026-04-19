@@ -1,5 +1,7 @@
 Metadata-Version: 2.4
 Name: inqview
 Version: 0.1.0
-Summary: INQ post-processing tools
+Summary: Lightweight post-processing and visualisation tools for INQ / inqkit outputs.
 Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: numpy>=1.24
