@@ -19,6 +19,7 @@ from .config import DEFAULT_THEME
 
 if TYPE_CHECKING:
     from .fourier import FourierResult
+    from .fields import RealField3D
 
 PathLike = Union[str, Path]
 
@@ -281,6 +282,82 @@ def plot_spectrum_summary(
             ax.set_yscale("log")
 
     axes[-1].set_xlabel("Frequency (Ha/\u0127)")
+    fig.tight_layout()
+    fig.savefig(output_path)
+    plt.close(fig)
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Field slice plots
+# ---------------------------------------------------------------------------
+
+def plot_density_slice(
+    field: "RealField3D",
+    output_path: PathLike,
+    axis: int = 2,
+    slice_index: int | None = None,
+) -> plt.Figure:
+    """Plot a 2D colour map of a density slice through a RealField3D.
+
+    Parameters
+    ----------
+    field       : RealField3D loaded via inqview.load_real_field().
+    output_path : path where the PNG is saved.
+    axis        : axis normal to the slice plane: 0=x, 1=y, 2=z.
+    slice_index : index along that axis. None uses the midplane.
+    """
+    import numpy as np
+
+    defaults = DEFAULT_THEME.plot
+    data = field.array  # shape (nx, ny, nz), x_slowest_z_fastest
+
+    shape = data.shape
+    if slice_index is None:
+        slice_index = shape[axis] // 2
+
+    ox, oy, oz = field.meta.origin_bohr
+    dx, dy, dz = field.meta.spacing_bohr
+    nx, ny, nz = shape
+
+    axis_labels = ["x", "y", "z"]
+
+    if axis == 0:
+        slc = data[slice_index, :, :]   # shape (ny, nz)
+        xlabel = "z (bohr)"
+        ylabel = "y (bohr)"
+        extent = [oz, oz + nz * dz, oy, oy + ny * dy]
+        pos_bohr = ox + slice_index * dx
+    elif axis == 1:
+        slc = data[:, slice_index, :]   # shape (nx, nz)
+        xlabel = "z (bohr)"
+        ylabel = "x (bohr)"
+        extent = [oz, oz + nz * dz, ox, ox + nx * dx]
+        pos_bohr = oy + slice_index * dy
+    else:  # axis == 2
+        slc = data[:, :, slice_index]   # shape (nx, ny)
+        xlabel = "y (bohr)"
+        ylabel = "x (bohr)"
+        extent = [oy, oy + ny * dy, ox, ox + nx * dx]
+        pos_bohr = oz + slice_index * dz
+
+    fig, ax = plt.subplots(figsize=defaults.figsize, dpi=defaults.dpi)
+    im = ax.imshow(
+        slc,
+        origin="lower",
+        extent=extent,
+        cmap=defaults.scalar_cmap,
+        aspect="equal",
+        interpolation="nearest",
+    )
+    plt.colorbar(im, ax=ax, label="Density (bohr\u207b\u00b3)")
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    field_label = field.meta.field_name or "density"
+    ax.set_title(
+        f"{field_label}  |  {axis_labels[axis]} = {pos_bohr:.2f} bohr"
+        f"  (slice {slice_index})"
+    )
     fig.tight_layout()
     fig.savefig(output_path)
     plt.close(fig)

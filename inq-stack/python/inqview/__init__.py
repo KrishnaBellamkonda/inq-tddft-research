@@ -19,6 +19,7 @@ from .plots import (
     plot_observables_summary,
     plot_spectrum,
     plot_spectrum_summary,
+    plot_density_slice,
 )
 from .fourier import FourierResult, FourierTransform, WindowSpec
 
@@ -51,6 +52,7 @@ __all__ = [
     "plot_observables_summary",
     "plot_spectrum",
     "plot_spectrum_summary",
+    "plot_density_slice",
     "FourierResult",
     "FourierTransform",
     "WindowSpec",

@@ -14,7 +14,8 @@ from pathlib import Path
 
 import inqview
 from inqview import FourierTransform, WindowSpec
-from inqview.plots import plot_spectrum, plot_spectrum_summary
+from inqview.data import load_real_field, load_meta, infer_meta_path
+from inqview.plots import plot_spectrum, plot_spectrum_summary, plot_density_slice
 
 CSV_DEFAULT = Path("results/observables.csv")
 
@@ -31,6 +32,20 @@ def main(csv_path: Path) -> None:
         )
 
     out = csv_path.parent
+
+    # ------------------------------------------------------------------
+    # Ground-state density slices
+    # ------------------------------------------------------------------
+    gs_raw  = out / "gs_density" / "gs_density.raw"
+    gs_meta = out / "gs_density" / "gs_density.meta.txt"
+    if gs_raw.exists() and gs_meta.exists():
+        rho_gs = load_real_field(str(gs_raw), str(gs_meta))
+        for ax, label in enumerate(("x", "y", "z")):
+            plot_density_slice(rho_gs, out / f"gs_density_slice_{label}.png", axis=ax)
+            print(f"  Saved gs_density_slice_{label}.png")
+    else:
+        print(f"  GS density not found at {gs_raw} — skipping density plots.")
+
     print(f"Loading observables from {csv_path}")
     df = inqview.load_observables(csv_path)
     print(f"  {len(df)} rows, columns: {list(df.columns)}")

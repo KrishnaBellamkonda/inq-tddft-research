@@ -1,22 +1,23 @@
 #include <inq/inq.hpp>
 
-#include <inqkit/real_time/real_time_session.hpp>
+#include <inqkit/fields/density.hpp>
 #include <inqkit/io/observables_writer.hpp>
+#include <inqkit/io/real_field_3d_writer.hpp>
+#include <inqkit/real_time/real_time_session.hpp>
 
 using namespace inq;
 using namespace inq::magnitude;
 
-// Ionic kick velocity in a.u. (bohr / a.u. time).
-// Reference: QBall Li series, smallest kick — linear-response regime.
-// Santervás-Arranz, Stengel, Artacho, Phys. Rev. Research 7, 033292 (2025).
-static constexpr double KICK_VEL_AU = 0.0123;
+// Ionic kick velocity: 6.56 Ang/fs = 0.3000 a.u. (bohr/a.u.-time).
+// 1 a.u. velocity = a0/t0 = 0.529177 Ang / 0.024189 fs = 21.877 Ang/fs.
+static constexpr double KICK_VEL_AU = 0.3000;
 
 int main() {
     // ── System ────────────────────────────────────────────────────────────────
-    // BCC Li, a = 3.51 Å, 2×2×2 supercell (L = 7.02 Å), 16 atoms.
+    // BCC Li, a = 3.51 Å, 3×3×3 supercell (L = 10.53 Å), 54 atoms.
     // Gamma-point only; ionic velocity kick along +x after GS.
-    auto cell = systems::cell::cubic(7.02_angstrom).periodic();
-    auto ions = systems::ions::parse("li_bcc_2x2x2.xyz", cell);
+    auto cell = systems::cell::cubic(10.53_angstrom).periodic();
+    auto ions = systems::ions::parse("li_bcc_3x3x3.xyz", cell);
 
     // Metal: needs Fermi smearing + extra empty states
     systems::electrons electrons(
@@ -35,7 +36,17 @@ int main() {
 
     auto gs_energy = gs.energy.total();
     std::cout << "GS total energy = " << gs_energy << " Ha\n";
-    std::cout << "Kicking all ions: v_x = " << KICK_VEL_AU << " a.u.\n";
+
+    // ── Ground-state density ──────────────────────────────────────────────────
+    auto rho_gs = inqkit::fields::density::total(electrons);
+    inqkit::io::RealField3DWriter gs_density_writer(
+        "results/gs_density",
+        {.field_name = "gs_total_density", .include_meta = true},
+        {.overwrite = true});
+    gs_density_writer.write(rho_gs, "gs_density");
+    std::cout << "GS density written to results/gs_density/\n";
+
+    std::cout << "Kicking all ions: v_x = " << KICK_VEL_AU << " a.u. (6.56 Ang/fs)\n";
 
     // ── Ionic kick ────────────────────────────────────────────────────────────
     for (int i = 0; i < ions.size(); ++i)
