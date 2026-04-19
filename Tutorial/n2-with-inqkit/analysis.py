@@ -139,30 +139,34 @@ print("\n── Complex orbital ψ₀ — diagnostic plots ───────
 orb_meta = RESULTS / "orbitals" / "orbital_0000.meta.txt"
 orbital  = load_complex_field(meta_path=orb_meta)
 
-psi     = orbital.values                      # complex (nx, ny, nz)
-density = np.abs(psi) ** 2
-print(f"  Shape       : {orbital.shape}")
-print(f"  Spacing     : {orbital.spacing_bohr} bohr")
-print(f"  Orbital idx : {orbital.orbital_index}   spin: {orbital.spin_index}")
-print(f"  Norm (sum*dV): {density.sum() * np.prod(orbital.spacing_bohr):.6f}")
+ometa   = orbital.meta
+psi     = orbital.array                       # complex (nx, ny, nz)
+density = orbital.real**2 + orbital.imag**2   # |ψ|² without allocating complex array
 
-meta   = rho.meta
-oz, dz_sp, nz = meta.origin_bohr[2], meta.spacing_bohr[2], meta.nz
-dx_sp, dy_sp  = meta.spacing_bohr[0], meta.spacing_bohr[1]
+dx_sp, dy_sp, dz_sp = ometa.spacing_bohr
+ox, oy, oz          = ometa.origin_bohr
+nx, ny, nz          = ometa.shape
+dV_orb              = dx_sp * dy_sp * dz_sp
+
+print(f"  Shape       : {ometa.shape}")
+print(f"  Spacing     : {ometa.spacing_bohr} bohr")
+print(f"  Norm (sum*dV): {density.sum() * dV_orb:.6f}")
+
 z_grid = oz + np.arange(nz) * dz_sp
+x_grid = ox + np.arange(nx) * dx_sp
 
 # z-profile of real, imag, and |ψ|²
 fig, axes = plt.subplots(3, 1, figsize=(7, 7), sharex=True)
 for label, arr, ax in [
-    ("Re ψ₀",   psi.real,  axes[0]),
-    ("Im ψ₀",   psi.imag,  axes[1]),
-    ("|ψ₀|²",  density,   axes[2]),
+    ("Re ψ₀",  orbital.real, axes[0]),
+    ("Im ψ₀",  orbital.imag, axes[1]),
+    ("|ψ₀|²", density,      axes[2]),
 ]:
     profile = arr.sum(axis=(0, 1)) * dx_sp * dy_sp
     ax.plot(z_grid, profile, lw=1.2)
     ax.axhline(0, color="gray", lw=0.6, ls="--")
     ax.set_ylabel(label)
-    ax.axvline(_HALF_BOND_BOHR,          color="k", lw=0.8, ls=":", label="N atom")
+    ax.axvline(_HALF_BOND_BOHR,           color="k", lw=0.8, ls=":", label="N atom")
     ax.axvline(_L_BOHR - _HALF_BOND_BOHR, color="k", lw=0.8, ls=":")
 axes[-1].set_xlabel("z (bohr)")
 axes[0].set_title("N₂: KS orbital 0 — z-profiles")
@@ -173,25 +177,21 @@ fig.savefig(out, dpi=150)
 plt.close(fig)
 print(f"  Saved: {out}")
 
-# x-z density slice at y = ny//2
-ny = orbital.shape[1]
-nx = orbital.shape[0]
-ox = meta.origin_bohr[0]
-x_grid = ox + np.arange(nx) * dx_sp
-density_xz = density[:, ny // 2, :]
-
+# x-z slices at y = ny//2
 fig, axes = plt.subplots(1, 3, figsize=(13, 4))
 for ax, (label, arr) in zip(axes, [
-    ("Re ψ₀", psi.real[:, ny // 2, :]),
-    ("Im ψ₀", psi.imag[:, ny // 2, :]),
-    ("|ψ₀|²", density_xz),
+    ("Re ψ₀",  orbital.real[:, ny // 2, :]),
+    ("Im ψ₀",  orbital.imag[:, ny // 2, :]),
+    ("|ψ₀|²", density[:, ny // 2, :]),
 ]):
-    im = ax.pcolormesh(z_grid, x_grid, arr, cmap="coolwarm" if "Re" in label or "Im" in label else "inferno", rasterized=True)
+    cmap = "inferno" if "|" in label else "coolwarm"
+    im = ax.pcolormesh(z_grid, x_grid, arr, cmap=cmap, rasterized=True)
     ax.set_title(label)
     ax.set_xlabel("z (bohr)")
     ax.set_ylabel("x (bohr)")
-    ax.axvline(_HALF_BOND_BOHR,          color="w" if "|" in label else "k", lw=0.7, ls=":")
-    ax.axvline(_L_BOHR - _HALF_BOND_BOHR, color="w" if "|" in label else "k", lw=0.7, ls=":")
+    line_color = "w" if "|" in label else "k"
+    ax.axvline(_HALF_BOND_BOHR,           color=line_color, lw=0.7, ls=":")
+    ax.axvline(_L_BOHR - _HALF_BOND_BOHR, color=line_color, lw=0.7, ls=":")
     fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
 fig.suptitle("N₂: KS orbital 0 — x-z slice (y = centre)", fontsize=10)
 fig.tight_layout()
