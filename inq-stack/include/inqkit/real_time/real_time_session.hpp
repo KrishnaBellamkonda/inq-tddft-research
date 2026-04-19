@@ -35,10 +35,17 @@ public:
         if (data.iter() % write_every_ != 0) return;
 
         StepContext ctx;
-        ctx.step      = data.iter();
-        ctx.time_au   = data.time();
-        ctx.ions      = &ions_;
-        ctx.electrons = &electrons_;
+        ctx.step           = data.iter();
+        ctx.time_au        = data.time();
+        ctx.ions           = &ions_;
+        ctx.electrons      = &electrons_;
+        ctx.energy_total   = data.energy().total();
+        ctx.energy_kinetic = data.energy().kinetic();
+        ctx.energy_hartree = data.energy().hartree();
+        ctx.energy_xc      = data.energy().xc();
+        // current/dipole computed on demand; guard in case observables aren't active
+        try { ctx.current = data.current(); } catch (...) {}
+        try { ctx.dipole  = data.dipole();  } catch (...) {}
 
         for (auto& task : tasks_) {
             task(ctx);
