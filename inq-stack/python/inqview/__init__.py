@@ -11,6 +11,13 @@ from .data import (
 )
 from .vti import VTISeriesResult, convert_real_meta_to_vti, convert_real_series_to_vti, write_vti
 from .paraview import AnimationSpec, ParaViewPipeline, VolumeRenderSpec
+from .plots import (
+    load_observables,
+    plot_energy_vs_time,
+    plot_current_vs_time,
+    plot_dipole_vs_time,
+    plot_observables_summary,
+)
 
 __all__ = [
     "DEFAULT_THEME",
@@ -34,4 +41,9 @@ __all__ = [
     "VolumeRenderSpec",
     "AnimationSpec",
     "ParaViewPipeline",
+    "load_observables",
+    "plot_energy_vs_time",
+    "plot_current_vs_time",
+    "plot_dipole_vs_time",
+    "plot_observables_summary",
 ]
