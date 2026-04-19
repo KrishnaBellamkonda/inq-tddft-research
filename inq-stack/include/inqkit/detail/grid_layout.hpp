@@ -58,4 +58,11 @@ inline std::size_t flatten_index(int ix, int iy, int iz, int ny, int nz) {
   return ((static_cast<std::size_t>(ix) * ny) + iy) * nz + iz;
 }
 
+// Returns a step-index suffix like "_t000100" for use in time-series filenames.
+inline std::string step_suffix(int step) {
+    char buf[16];
+    std::snprintf(buf, sizeof(buf), "_t%06d", step);
+    return std::string(buf);
+}
+
 } // namespace inqkit::detail::grid_layout

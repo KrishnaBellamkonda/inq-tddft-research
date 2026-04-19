@@ -3,8 +3,10 @@
 #include <inqkit/detail/grid_layout.hpp>
 #include <inqkit/fields/real_field_3d.hpp>
 
+#include <cstdio>
 #include <filesystem>
 #include <fstream>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -26,8 +28,30 @@ public:
                     RealField3DWriteOptions options = {})
       : path_(std::move(path)), layout_(std::move(layout)), options_(options) {}
 
+  // Ground-state overload: caller supplies the full basename.
   void write(inqkit::fields::RealField3D const &field,
              std::string const &basename) const {
+    write_impl_(field, basename, std::nullopt);
+  }
+
+  // Real-time overload: generates basename = field_name + "_t{step:06d}".
+  // Writes time_au into the sidecar metadata so Python readers see time ordering.
+  void write(inqkit::fields::RealField3D const &field,
+             double time_au, int step) const {
+    auto const basename =
+        layout_.field_name + inqkit::detail::grid_layout::step_suffix(step);
+    write_impl_(field, basename, time_au);
+  }
+
+  void operator()(inqkit::fields::RealField3D const &field,
+                  std::string const &basename) const {
+    write(field, basename);
+  }
+
+private:
+  void write_impl_(inqkit::fields::RealField3D const &field,
+                   std::string const &basename,
+                   std::optional<double> time_au) const {
     if (basename.empty()) {
       throw std::runtime_error(
           "RealField3DWriter: basename must not be empty.");
@@ -54,16 +78,11 @@ public:
     write_binary_file_(stem + schema.value_suffix, field);
 
     if (layout_.include_meta) {
-      write_meta_file_(stem + schema.meta_suffix, field, basename, schema);
+      write_meta_file_(stem + schema.meta_suffix, field, basename, schema,
+                       time_au);
     }
   }
 
-  void operator()(inqkit::fields::RealField3D const &field,
-                  std::string const &basename) const {
-    write(field, basename);
-  }
-
-private:
   void write_binary_file_(std::string const &filename,
                           inqkit::fields::RealField3D const &field) const {
     auto const filepath = std::filesystem::path(filename);
@@ -94,7 +113,8 @@ private:
   void write_meta_file_(
       std::string const &filename, inqkit::fields::RealField3D const &field,
       std::string const &basename,
-      inqkit::detail::grid_layout::RealField3DRawSchema const &schema) const {
+      inqkit::detail::grid_layout::RealField3DRawSchema const &schema,
+      std::optional<double> time_au) const {
     auto const filepath = std::filesystem::path(filename);
 
     if (std::filesystem::exists(filepath) && !options_.overwrite) {
@@ -125,6 +145,11 @@ private:
         << field.dz_bohr << "\n";
 
     out << "layout = " << schema.layout << "\n";
+
+    if (time_au.has_value()) {
+      out << "time_au = " << std::fixed << *time_au << "\n";
+    }
+
     out << "value_file = " << basename << schema.value_suffix << "\n";
   }
 
