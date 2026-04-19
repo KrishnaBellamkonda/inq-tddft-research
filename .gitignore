@@ -35,10 +35,9 @@ results/
 *.h5
 *.hdf5
 
-# Large rendered/media/docs you said to exclude
+# Large rendered/media
 *.png
 *.pdf
-*.md
 
 # Editor/system noise
 .DS_Store
@@ -48,3 +47,18 @@ results/
 # nvim and other
 nvim
 .*
+
+# Remove executales
+run
+run_convergence
+gaussian_wave_packet
+n2
+unit-cells
+HF-laser-pertubation
+HF-toy-model
+HF
+h2
+ions
+li_bcc
+Si
+

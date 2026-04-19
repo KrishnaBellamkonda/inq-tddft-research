@@ -82,6 +82,11 @@ inline ComplexField3D wavefunction(inq::systems::electrons const &electrons,
   field.nx = nx;
   field.ny = ny;
   field.nz = nz;
+
+  field.origin_x_bohr = basis.symmetric_range_begin(0) * spacing[0];
+  field.origin_y_bohr = basis.symmetric_range_begin(1) * spacing[1];
+  field.origin_z_bohr = basis.symmetric_range_begin(2) * spacing[2];
+
   field.dx_bohr = spacing[0];
   field.dy_bohr = spacing[1];
   field.dz_bohr = spacing[2];

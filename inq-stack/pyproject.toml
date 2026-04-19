@@ -1,15 +1,20 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "inqview"
 version = "0.1.0"
-description = "INQ post-processing tools"
+description = "Lightweight post-processing and visualisation tools for INQ / inqkit outputs."
+readme = "README.md"
 requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+]
 
 [tool.setuptools]
 package-dir = {"" = "python"}
 
 [tool.setuptools.packages.find]
 where = ["python"]
+include = ["inqview", "inqview.*"]

@@ -17,6 +17,10 @@ struct ComplexField3D {
   int ny = 0;
   int nz = 0;
 
+  double origin_x_bohr = 0.0;
+  double origin_y_bohr = 0.0;
+  double origin_z_bohr = 0.0;
+
   double dx_bohr = 0.0;
   double dy_bohr = 0.0;
   double dz_bohr = 0.0;

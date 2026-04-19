@@ -118,6 +118,9 @@ private:
     out << "ny = " << field.ny << "\n";
     out << "nz = " << field.nz << "\n";
 
+    out << "origin_bohr = " << field.origin_x_bohr << " " << field.origin_y_bohr
+        << " " << field.origin_z_bohr << "\n";
+
     out << "spacing_bohr = " << field.dx_bohr << " " << field.dy_bohr << " "
         << field.dz_bohr << "\n";
 
