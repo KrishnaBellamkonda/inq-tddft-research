@@ -17,13 +17,13 @@ SIGMA0   = 0.265 * 1.8897259886   # bohr
 PV_EXE   = REPO_ROOT / "ParaView-6.1.0-MPI-Linux-Python3.12-x86_64" / "bin" / "pvbatch"
 
 print("Loading density series...")
-series = inqview.FieldSeries(RESULTS / "density_rt")
-print(f"  {len(series.frames)} frames loaded")
+series = inqview.SimulationData(RUN_DIR).field_series("results/density_rt")
+print(f"  {len(series.files)} frames loaded")
 
 # Validate N_elec
 nelec_vals = []
-for frame in series.frames:
-    f = inqview.load_real_field(frame.data_path)
+for meta_path in series.files:
+    f = inqview.load_real_field(meta_path=meta_path)
     dx, dy, dz = f.meta.spacing_bohr
     nelec_vals.append(float(f.array.sum() * dx * dy * dz))
 nelec_arr = np.array(nelec_vals)
@@ -33,8 +33,8 @@ print("  PASS: N_elec = 1.0")
 
 # sigma(t) from z-profile
 times, sigma_t = [], []
-for frame in series.frames:
-    f = inqview.load_real_field(frame.data_path)
+for meta_path in series.files:
+    f = inqview.load_real_field(meta_path=meta_path)
     dx, dy, dz = f.meta.spacing_bohr
     rho_z = f.array.sum(axis=(0, 1)) * dx * dy
     nz = rho_z.shape[0]
@@ -46,7 +46,7 @@ for frame in series.frames:
         sigma_t.append(np.sqrt(max(z2_mean - z_mean**2, 0.0)))
     else:
         sigma_t.append(np.nan)
-    times.append(frame.time_au)
+    times.append(inqview.load_real_field(meta_path=meta_path).meta.time_au)
 
 t = np.array(times)
 s = np.array(sigma_t)

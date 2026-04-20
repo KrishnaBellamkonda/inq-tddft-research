@@ -18,12 +18,12 @@ PV_EXE   = REPO_ROOT / "ParaView-6.1.0-MPI-Linux-Python3.12-x86_64" / "bin" / "p
 NELEC_EXPECTED = 41
 
 print("Loading density series...")
-series = inqview.FieldSeries(RESULTS / "density_rt")
-print(f"  {len(series.frames)} frames loaded")
+series = inqview.SimulationData(RUN_DIR).field_series("results/density_rt")
+print(f"  {len(series.files)} frames loaded")
 
 nelec_vals = []
-for frame in series.frames:
-    f = inqview.load_real_field(frame.data_path)
+for meta_path in series.files:
+    f = inqview.load_real_field(meta_path=meta_path)
     dx, dy, dz = f.meta.spacing_bohr
     nelec_vals.append(float(f.array.sum() * dx * dy * dz))
 nelec_arr = np.array(nelec_vals)
