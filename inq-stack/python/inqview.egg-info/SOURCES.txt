@@ -8,9 +8,11 @@ python/inqview/fields.py
 python/inqview/fourier.py
 python/inqview/paraview.py
 python/inqview/plots.py
+python/inqview/vti.py
 python/inqview.egg-info/PKG-INFO
 python/inqview.egg-info/SOURCES.txt
 python/inqview.egg-info/dependency_links.txt
 python/inqview.egg-info/requires.txt
 python/inqview.egg-info/top_level.txt
 python/inqview/scripts/check_field_loader.py
+python/inqview/scripts/render_density_series.py

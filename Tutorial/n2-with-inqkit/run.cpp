@@ -26,7 +26,8 @@ int main() {
 
 
         // 1. Initialise the system box and ions 
-        systems::ions ions(systems::cell::cubic(30.0_bohr).finite());
+	// INQ wrapsthis configuration such that 
+	systems::ions ions(systems::cell::cubic(30.0_bohr).finite());
         ions.insert("N", {0.0_angstrom, 0.0_angstrom, -half_bond});
         ions.insert("N", {0.0_angstrom, 0.0_angstrom, half_bond});
 
