@@ -29,13 +29,6 @@
 #include <filesystem>
 #include <iostream>
 
-#ifdef __CUDACC__
-#include <cuda_runtime.h>
-#define INQKIT_GPU_SYNC() cudaDeviceSynchronize()
-#else
-#define INQKIT_GPU_SYNC() ((void)0)
-#endif
-
 using namespace inq;
 using namespace inq::magnitude;
 
