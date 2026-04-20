@@ -20,6 +20,7 @@ from .config import DEFAULT_THEME
 if TYPE_CHECKING:
     from .fourier import FourierResult
     from .fields import RealField3D
+    from .screens import LeedPattern
 
 PathLike = Union[str, Path]
 
@@ -357,6 +358,63 @@ def plot_density_slice(
     ax.set_title(
         f"{field_label}  |  {axis_labels[axis]} = {pos_bohr:.2f} bohr"
         f"  (slice {slice_index})"
+    )
+    fig.tight_layout()
+    fig.savefig(output_path)
+    plt.close(fig)
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# LEED screen plots
+# ---------------------------------------------------------------------------
+
+def plot_leed_pattern(
+    pattern: "LeedPattern",
+    output_path: PathLike,
+    log_scale: bool = False,
+    vmax: float | None = None,
+    show_colorbar: bool = True,
+) -> plt.Figure:
+    """2D colourmap of a LeedPattern with physical axes in bohr.
+
+    Parameters
+    ----------
+    pattern     : LeedPattern loaded via inqview.load_leed_pattern().
+    output_path : path where the PNG is saved.
+    log_scale   : use logarithmic colour scale (adds 1 to avoid log(0)).
+    vmax        : upper colour limit; None uses data max.
+    show_colorbar : whether to show the colour bar.
+    """
+    import numpy as np
+
+    defaults = DEFAULT_THEME.plot
+    data = pattern.data.copy()
+
+    if log_scale:
+        data = np.log1p(data)
+        clabel = "log(1 + \u03c1\u00b7dt)  [bohr\u207b\u00b3\u00b7a.u.]"
+    else:
+        clabel = "\u03c1\u00b7dt  [bohr\u207b\u00b3\u00b7a.u.]"
+
+    fig, ax = plt.subplots(figsize=defaults.figsize, dpi=defaults.dpi)
+    im = ax.imshow(
+        data,
+        origin="lower",
+        extent=pattern.extent_bohr,
+        cmap=defaults.scalar_cmap,
+        aspect="equal",
+        interpolation="nearest",
+        vmin=0.0,
+        vmax=vmax,
+    )
+    if show_colorbar:
+        plt.colorbar(im, ax=ax, label=clabel)
+    ax.set_xlabel("x (bohr)")
+    ax.set_ylabel("y (bohr)")
+    ax.set_title(
+        f"{pattern.label}  |  z = {pattern.z_bohr:.2f} bohr"
+        f"  |  T = {pattern.total_time_au:.2f} a.u."
     )
     fig.tight_layout()
     fig.savefig(output_path)

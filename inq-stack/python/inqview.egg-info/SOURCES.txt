@@ -7,6 +7,7 @@ python/inqview/defaults.py
 python/inqview/fields.py
 python/inqview/fourier.py
 python/inqview/paraview.py
+python/inqview/screens.py
 python/inqview/plots.py
 python/inqview/vti.py
 python/inqview.egg-info/PKG-INFO

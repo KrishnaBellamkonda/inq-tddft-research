@@ -20,8 +20,11 @@ from .plots import (
     plot_spectrum,
     plot_spectrum_summary,
     plot_density_slice,
+    plot_leed_pattern,
 )
 from .fourier import FourierResult, FourierTransform, WindowSpec
+from .screens import LeedPattern, load_leed_pattern
+from .defaults import default_density_movie, default_wavepacket_movie
 
 __all__ = [
     "DEFAULT_THEME",
@@ -53,7 +56,12 @@ __all__ = [
     "plot_spectrum",
     "plot_spectrum_summary",
     "plot_density_slice",
+    "plot_leed_pattern",
     "FourierResult",
     "FourierTransform",
     "WindowSpec",
+    "LeedPattern",
+    "load_leed_pattern",
+    "default_density_movie",
+    "default_wavepacket_movie",
 ]
