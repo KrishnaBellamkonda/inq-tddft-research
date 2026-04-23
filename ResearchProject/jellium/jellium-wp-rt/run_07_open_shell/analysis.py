@@ -1,4 +1,4 @@
-"""analysis.py — jellium run_02_low_energy (N=38, 50 eV, σ=0.53 Å, +z)."""
+"""analysis.py — jellium run_07_open_shell (N=40, 200 eV, σ=0.53 Å, +z, open shell)."""
 from __future__ import annotations
 
 import csv
@@ -26,8 +26,8 @@ from inqview import (
 
 PV_EXE = REPO_ROOT / "ParaView-6.1.0-MPI-Linux-Python3.12-x86_64" / "bin" / "pvbatch"
 
-RUN_LABEL        = "02_low_energy"
-N_ELEC_EXPECTED  = 39      # 38 jellium + 1 WP
+RUN_LABEL        = "07_open_shell"
+N_ELEC_EXPECTED  = 41      # 40 jellium (open shell) + 1 WP
 N_SCREENS        = 20
 N_VTI_FRAMES     = 50
 GIF_FPS          = 6

@@ -1,6 +1,48 @@
 # Handover: WP Real-Time Propagation — free, jellium, coronene
 
-## Current status (2026-04-22) — run_02 / run_03 complete, root cause of LEED failure identified
+## Current status (2026-04-23) — jellium WP-RT full observable suite complete, ready to run
+
+### What was done this session
+
+**Branch: `features/jellium-inital-exploration`** (user-specified spelling)
+
+All 7 jellium WP-RT run.cpp files rewritten with the full observable suite:
+- Fixed `extra_electrons(40)→38` in runs 03–06 (closed shell must use N_gs=38)
+- Fixed N_STEPS in run_05 (550→480) and run_06 (509→480) to prevent WP loop-back
+- Added 3 RT density writers (total, jellium-only, WP-only)
+- Added GS density saves + per-orbital GS density saves
+- Added 20 LEED screens with deterministic z-jitter
+- Added instantaneous screen snapshots every 3 steps
+- Added `OrbitalOverlapMatrix` (every step)
+- Added comprehensive observables CSV (energy, current, dipole)
+
+New C++ header: `inq-stack/include/inqkit/observables/orbital_overlap.hpp`
+New analysis.py in each of the 7 run directories (steps 1–10 per plan)
+Sequential launcher: `ResearchProject/jellium/jellium-wp-rt/run_all_wp_rt.sh`
+Documentation: `docs/plans/jellium-wp-rt-initial-exploration.md`,
+               `docs/observables_reference.md`, `docs/notes/future-todos.md`
+
+### Exact next steps
+
+1. `bash ResearchProject/jellium/jellium-wp-rt/run_all_wp_rt.sh` overnight
+2. After runs complete, check each run.log for `norm_after ∈ [0.97, 1.03]`
+3. Run `python analysis.py` in each run directory
+4. Check overlap at t=0 (diagonal ≈ 1, off-diagonal ≈ 0)
+5. Check N-electron conservation (analysis.py step 1 output)
+6. Check run_05 density GIF — WP should not wrap back at t=9.6 a.u.
+
+### Key physics corrections confirmed
+
+| Run | Fix applied |
+|---|---|
+| 03_high_energy | `extra_electrons(40)→38` |
+| 04_tilted_45 | `extra_electrons(40)→38` |
+| 05_wide_sigma | `extra_electrons(40)→38`, N_STEPS 550→480 |
+| 06_narrow_sigma | `extra_electrons(40)→38`, N_STEPS 509→480 |
+
+---
+
+## Previous status (2026-04-22) — run_02 / run_03 complete, root cause of LEED failure identified
 
 ### What was done this session
 

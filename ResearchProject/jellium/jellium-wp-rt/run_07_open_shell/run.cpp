@@ -1,9 +1,12 @@
 // ============================================================================
-// jellium-wp-rt / run_06_narrow_sigma: N=38 closed-shell jellium, 200 eV, σ=0.265 Å, +z
+// jellium-wp-rt / run_07_open_shell: N=40 open-shell jellium, 200 eV, σ=0.53 Å, +z
 //
-// Physical: L=40.0 bohr=21.18 Å; N_gs=38, r_s=7.38 a₀, n=5.94e-4 e/bohr³
-// WP: σ=0.265 Å=0.50 bohr, k₀=3.834 bohr⁻¹, v=3.834 bohr/a.u.=83.5 Å/fs
-// Loop-back: T_sim=9.60 a.u. / T_loop=10.43 a.u. = 92% → OK (was 509 steps — reduced)
+// Physical: L=40.0 bohr=21.18 Å; N_gs=40, r_s=7.26 a₀, n=6.25e-4 e/bohr³
+// WP: σ=0.53 Å=1.00 bohr, k₀=3.834 bohr⁻¹, v=3.834 bohr/a.u.=83.5 Å/fs
+// Loop-back: T_sim=8.34 a.u. / T_loop=10.43 a.u. = 80% → OK
+//
+// Comparison to run_01_base (N=38, closed shell): tests the effect of
+// fractional orbital occupation at the Fermi level on WP scattering.
 // ============================================================================
 
 #include <inq/inq.hpp>
@@ -29,7 +32,7 @@ static constexpr double ANG_TO_BOHR = 1.8897259886;
 static constexpr double HA_TO_EV    = 27.21138625;
 static constexpr double L_BOHR      = 40.0;
 
-static constexpr double WP_SIGMA_ANG  = 0.265;
+static constexpr double WP_SIGMA_ANG  = 0.53;
 static constexpr double WP_SIGMA_BOHR = WP_SIGMA_ANG * ANG_TO_BOHR;
 static constexpr double WP_EKIN_EV    = 200.0;
 static constexpr double WP_EKIN_HA    = WP_EKIN_EV / HA_TO_EV;
@@ -37,9 +40,9 @@ static const     double WP_K0         = std::sqrt(2.0 * WP_EKIN_HA);
 
 static const double WP_CX = L_BOHR / 2.0;
 static const double WP_CY = L_BOHR / 2.0;
-static const double WP_CZ = 5.0 * WP_SIGMA_BOHR;  // 2.50 bohr
+static const double WP_CZ = 5.0 * WP_SIGMA_BOHR;
 
-static constexpr int    N_STEPS          = 480;  // was 509; reduced for 8% loop-back margin
+static constexpr int    N_STEPS          = 417;
 static constexpr double DT_AU            = 0.02;
 static constexpr int    WRITE_EVERY      = 10;
 static constexpr int    SCREEN_SNAP_EVERY = 3;
@@ -64,14 +67,14 @@ static void add_field_inplace(inqkit::fields::RealField3D& a,
 }
 
 int main() {
-    std::cout << "\n=== jellium run_06_narrow_sigma: N=38, 200 eV, σ=0.265 Å, +z ===\n";
+    std::cout << "\n=== jellium run_07_open_shell: N=40, 200 eV, σ=0.53 Å, +z ===\n";
 
     auto cell      = systems::cell::cubic(L_BOHR * 1.0_b).periodic();
     auto ions      = systems::ions(cell);
     auto electrons = systems::electrons(ions,
         options::electrons{}
             .spacing(0.50 * 1.0_b)
-            .extra_electrons(38)
+            .extra_electrons(40)
             .extra_states(3)
             .temperature(0.00862 * 1.0_eV),
         input::kpoints::gamma());
