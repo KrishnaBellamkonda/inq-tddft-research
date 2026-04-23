@@ -1,3 +1,20 @@
+/*
+ * Defines a structure containing a complex field in three
+ * dimensions, for example, the wavefunction of
+ * a single orbital. Stores important information
+ * such as -
+ * 1. origin of the coordinates
+ * 2. number of points in each dimension
+ * 3. spacing between points in each dimension
+ * 4. the field values stored as an array, stored as vector<complex>
+ *
+ * Data in 1-3 is required to recreate the coordinates of the grid
+ * on which the real field is evaluated.
+ *
+ * The writer class and the post process (Python) interfaces must depend
+ * on this abstraction.
+ * */
+
 #pragma once
 
 #include <complex>
@@ -7,10 +24,8 @@
 namespace inqkit::fields {
 
 /*
- * Generic owning container for any complex scalar field sampled on a 3D grid.
- *
- * This is intentionally independent of INQ's internal storage.
- * Writers and post-processing interfaces should depend on this abstraction.
+ * The writers (wave function writer) and the post processing scripts
+ * visualising these files must be based on this abstraction.
  */
 struct ComplexField3D {
   int nx = 0;

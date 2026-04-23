@@ -79,7 +79,7 @@ def default_density_movie(
     )
 
     pv.render_vti_series(
-        vti_files=vti_result.vti_paths,
+        vti_files=vti_result.files,
         render=render,
         animation=animation,
         atoms=atoms,

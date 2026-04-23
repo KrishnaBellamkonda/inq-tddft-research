@@ -40,9 +40,9 @@ static const double WP_CX = L_BOHR / 2.0;
 static const double WP_CY = L_BOHR / 2.0;
 static const double WP_CZ = 5.0 * WP_SIGMA_BOHR;
 
-static constexpr int    N_STEPS     = 10000;
+static constexpr int    N_STEPS     = 417;
 static constexpr double DT_AU       = 0.02;
-static constexpr int    WRITE_EVERY = 100;
+static constexpr int    WRITE_EVERY = 2;
 
 static void add_field_inplace(inqkit::fields::RealField3D & a,
                                inqkit::fields::RealField3D const& b) {
@@ -59,7 +59,7 @@ int main() {
         ions,
         options::electrons{}
             .spacing(0.50*1.0_b)
-            .extra_electrons(40)
+            .extra_electrons(38)
             .extra_states(3)
             .temperature(0.00862*1.0_eV),
         input::kpoints::gamma());
@@ -75,6 +75,10 @@ int main() {
             .mixing_ndim(8)
             .mixing(0.1));
 
+   // TODO: Save ground state 
+   // 1. Total density
+   // 2. Orbital density
+
     std::cout << "  GS energy = " << gs.energy.total() << " Ha\n";
 
     auto wp = inqkit::WavePacket{}
@@ -88,14 +92,29 @@ int main() {
               << "  norm_after = "  << report.norm_after
               << "  max_overlap = " << report.max_overlap << "\n";
 
+
     inqkit::io::RealField3DWriter density_writer("results/density_rt",
         {.field_name = "density", .include_meta = true}, {.overwrite = true});
     // t=0 density: jellium GS (40 e-) + WP orbital
     auto rho_t0 = inqkit::fields::density::total(electrons);
     auto rho_wp = inqkit::fields::density::orbital(electrons, report.state_index);
+    
+
+
+    // TODO: Calculate each oritals overlap with initial ground state orbitals
+    // and save them in the results folder, under a subfolder with an appropriate name
+    // This should be written as a class in inqview library (I will review the code myself)
+    // to ensure I've understood what is being done clearly. For every KS orbital at every timestep, 
+    // the overlap of the said orbital with all the KS ground state orbitals is calculated. This is
+    // repeated for the entire duration of the simulation run. Then, a GIF is made for each orbital using the overlap
+    //  matrices. The range on the x and y axis must clearly identify similar/degenerate (or near degenerate) orbitals
+    
     add_field_inplace(rho_t0, rho_wp);
     density_writer.write(rho_t0, 0.0, 0);
 
+    // TODO: Write the total electronic density, the target system electornic density (given by fields::density::total, 
+    // as currently, it only adds up the KS orbitals that were occupied before the wavefunction was added) and
+    // wave packet density. 
     inqkit::io::ObservableSelection sel;
     sel.step = sel.time_au = true;
     sel.energy_total = sel.energy_kinetic = sel.energy_hartree = sel.energy_xc = true;
@@ -104,6 +123,8 @@ int main() {
     inqkit::io::ObservablesWriter obs_writer("results/observables.csv", sel);
     obs_writer.write_header();
 
+    // Add 20 screens (almost evenly spaced, with a small random offset, so as to be secure from falling 
+    // into some resonance effects due to the size of the box.
     // Screens at z=10, 20, 30 bohr (L/4, L/2, 3L/4)
     inqkit::screens::LeedPatternAccumulator sc1(inqkit::screens::PlaneScreen{10.0, "screen_z10"});
     inqkit::screens::LeedPatternAccumulator sc2(inqkit::screens::PlaneScreen{20.0, "screen_z20"});

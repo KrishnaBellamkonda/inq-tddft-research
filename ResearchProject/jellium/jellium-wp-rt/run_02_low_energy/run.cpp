@@ -24,9 +24,9 @@ static const     double WP_K0         = std::sqrt(2.0 * WP_EKIN_HA);
 static const double WP_CX = L_BOHR / 2.0;
 static const double WP_CY = L_BOHR / 2.0;
 static const double WP_CZ = 5.0 * WP_SIGMA_BOHR;
-static constexpr int    N_STEPS     = 10000;
+static constexpr int    N_STEPS     = 834; // Half the momentum and hence twice the number of steps
 static constexpr double DT_AU       = 0.02;
-static constexpr int    WRITE_EVERY = 100;
+static constexpr int    WRITE_EVERY = 2;
 
 static void add_field_inplace(inqkit::fields::RealField3D & a,
                                inqkit::fields::RealField3D const& b) {
@@ -38,7 +38,7 @@ int main() {
     auto cell = systems::cell::cubic(L_BOHR*1.0_b).periodic();
     auto ions = systems::ions(cell);
     auto electrons = systems::electrons(ions,
-        options::electrons{}.spacing(0.50*1.0_b).extra_electrons(40).extra_states(3)
+        options::electrons{}.spacing(0.50*1.0_b).extra_electrons(38).extra_states(3)
             .temperature(0.00862*1.0_eV),
         input::kpoints::gamma());
     ground_state::initial_guess(ions, electrons);

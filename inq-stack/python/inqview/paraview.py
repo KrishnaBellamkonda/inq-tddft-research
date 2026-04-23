@@ -407,63 +407,66 @@ def main() -> None:
             d.SpecularPower = float(atom_data["specular_power"])
             d.Opacity = float(atom_data["opacity"])
 
-    did_adjust_camera = False
+    # Load all VTI files as a single time-series reader.
+    # This avoids creating a new reader+display per frame, which would accumulate
+    # OpenGL textures and trigger "Hardware does not support the number of textures".
+    reader = XMLImageDataReader(FileName=[str(p) for p in files])
+    reader.UpdatePipeline()
+    try:
+        reader.PointArrayStatus = [array_name]
+        reader.UpdatePipeline()
+    except Exception:
+        pass
+
+    display = Show(reader, render_view)
+
+    # ColorBy before Representation="Volume": ColorBy can reset the representation,
+    # so the explicit assignment below must come after.
+    ColorBy(display, ("POINTS", array_name))
+    display.Representation = "Volume"
+
+    lut = GetColorTransferFunction(array_name)
+    pwf = GetOpacityTransferFunction(array_name)
+
+    try:
+        if color_preset:
+            lut.ApplyPreset(color_preset, True)
+    except Exception:
+        pass
+
+    lut.RescaleTransferFunction(scalar_min, scalar_max)
+    pwf.RescaleTransferFunction(scalar_min, scalar_max)
+
+    flat_points = []
+    for x, y in opacity_points:
+        flat_points.extend([float(x), float(y), 0.5, 0.0])
+    pwf.Points = flat_points
+
+    try:
+        display.SetScalarBarVisibility(render_view, show_scalar_bar)
+    except Exception:
+        pass
+
+    # Camera: ResetCamera fits bounding box, then rotate to requested angle.
+    Render(render_view)
+    render_view.ResetCamera()
+    cam = GetActiveCamera()
+    cam.Azimuth(float(azimuth_deg))
+    cam.Elevation(float(elevation_deg))
+    render_view.ResetCameraClippingRange()
+
+    # Iterate through time steps by advancing AnimationScene.AnimationTime.
+    animation_scene = GetAnimationScene()
+    time_values = list(reader.TimestepValues)
+    if not time_values:
+        time_values = list(range(len(files)))
+
     frame_counter = 0
-
-    for _, vti_path in enumerate(files[::frame_stride]):
-        reader = XMLImageDataReader(FileName=[str(vti_path)])
-        try:
-            reader.PointArrayStatus = [array_name]
-        except Exception:
-            pass
-
-        display = Show(reader, render_view)
-        display.Representation = "Volume"
-
-        ColorBy(display, ("POINTS", array_name))
-
-        lut = GetColorTransferFunction(array_name)
-        pwf = GetOpacityTransferFunction(array_name)
-
-        try:
-            if color_preset:
-                lut.ApplyPreset(color_preset, True)
-        except Exception:
-            pass
-
-        lut.RescaleTransferFunction(scalar_min, scalar_max)
-        pwf.RescaleTransferFunction(scalar_min, scalar_max)
-
-        flat_points = []
-        for x, y in opacity_points:
-            flat_points.extend([float(x), float(y), 0.5, 0.0])
-        pwf.Points = flat_points
-
-        try:
-            display.SetScalarBarVisibility(render_view, show_scalar_bar)
-        except Exception:
-            pass
-
+    for t in time_values[::frame_stride]:
+        animation_scene.AnimationTime = t
         Render(render_view)
-
-        if not did_adjust_camera:
-            try:
-                render_view.ResetCamera()
-                cam = GetActiveCamera()
-                cam.Azimuth(float(azimuth_deg))
-                cam.Elevation(float(elevation_deg))
-                render_view.ResetCameraClippingRange()
-            except Exception:
-                pass
-            did_adjust_camera = True
-            Render(render_view)
-
         out_path = output_frames_dir / f"{filename_prefix}_{frame_counter:06d}.png"
         SaveScreenshot(str(out_path), render_view, ImageResolution=image_size)
-
-        Hide(reader, render_view)
-        Delete(reader)
-
         frame_counter += 1
 
 

@@ -138,6 +138,7 @@ def plot_dipole_vs_time(
 
 def plot_observables_summary(
     csv_path: PathLike,
+    output_path: PathLike | None = None,
     **kwargs,
 ) -> plt.Figure:
     """3-panel summary: energy | current | dipole vs time.
@@ -202,6 +203,9 @@ def plot_observables_summary(
 
     axes[-1].set_xlabel("Time (a.u.)")
     fig.tight_layout()
+    if output_path is not None:
+        fig.savefig(output_path, dpi=defaults.dpi)
+        plt.close(fig)
     return fig
 
 

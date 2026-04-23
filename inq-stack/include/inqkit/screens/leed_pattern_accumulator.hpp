@@ -1,3 +1,11 @@
+/*
+ * This class uses the PlaneScreen API to collect the LEED pattern for a given setup.
+ * .accumulate() function is key and will be written in the .cpp files that we
+ * write using this library. 
+ *
+ *
+ * */
+
 #pragma once
 
 // inqkit::screens::LeedPatternAccumulator
@@ -54,6 +62,9 @@ public:
     PlaneScreen const& screen() const { return screen_; }
 
     // Call at each RT time step.  dt_au is the propagation time step.
+    // Occupation weights are read from electrons.occupations() — after
+    // WavePacket::inject_into_last_extra_state() the WP has occ=1.0 and is
+    // included automatically. No wp_state_global argument needed.
     void accumulate(inq::systems::electrons const & electrons, double dt_au) {
         if (!initialised_) initialise(electrons);
 

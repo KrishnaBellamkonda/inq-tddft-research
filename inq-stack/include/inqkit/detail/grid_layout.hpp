@@ -1,3 +1,17 @@
+/*
+ * This file contains the schema for the files that are written
+ * in the complex and real field writers. It defines the following -
+ *
+ * 1. meta file details (type, dtype, layout)
+ * 2. suffixes of the files to be written
+ *    a. Real field (.meta.txt, .raw)
+ *    b. Complex field (.meta.txt, _real.raw, _imag.raw)
+ *
+ *
+ * Changes: Perhaps, the filename must be changed to something like
+ * schema, or something along the same lines.
+ * */
+
 #pragma once
 
 #include <string>
@@ -18,6 +32,13 @@ struct ComplexField3DRawSchema {
    * Flattening convention used by the writer:
    *
    *   flat = ((ix * ny) + iy) * nz + iz
+   *
+   * In a 3D grid, this specific flattening convention is such that
+   * for a constant value of (ix, iy), all of the iz coordinates are
+   * exhausted first. When done with iz values, iy -> iy+1. When all
+   * the iy values are exhausted (for a constant ix, upto ny -1), then
+   * ix -> ix+1. Can be thought of as dividing the system into
+   * columns along z direction for a given ix and iy.
    *
    * Therefore:
    *   x = slowest varying index
@@ -60,9 +81,12 @@ inline std::size_t flatten_index(int ix, int iy, int iz, int ny, int nz) {
 
 // Returns a step-index suffix like "_t000100" for use in time-series filenames.
 inline std::string step_suffix(int step) {
-    char buf[16];
-    std::snprintf(buf, sizeof(buf), "_t%06d", step);
-    return std::string(buf);
+  char buf[16];
+  // snprintf() is a function that helps format the
+  // string as if it were to be printed but stores it
+  // in a variable.
+  std::snprintf(buf, sizeof(buf), "_t%06d", step);
+  return std::string(buf);
 }
 
 } // namespace inqkit::detail::grid_layout

@@ -1,3 +1,15 @@
+/*
+ * This file handles the storage of the complex wavefunction or the entire
+ * electornic system or just an orbital (identified using k_point_index and
+ * orbital_index - a sub index that identifies the correct orbital within
+ * the set of wavefunctions at a given k point. The API of this module is
+ * almost identical to the density.hpp (fields::density) class.
+ *
+ * It is important to note that the complex numbers are handled using
+ * inq::complex instead of std::complex. This is to have consistency with
+ * the storage of complex numbers in the INQ module.
+ * */
+
 #pragma once
 
 #include <inq/inq.hpp>

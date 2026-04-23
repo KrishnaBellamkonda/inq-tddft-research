@@ -26,7 +26,7 @@ static const double WP_KZ = WP_K0 / std::sqrt(2.0);
 static const double WP_CX = L_BOHR / 2.0;
 static const double WP_CY = L_BOHR / 2.0;
 static const double WP_CZ = 5.0 * WP_SIGMA_BOHR;
-static constexpr int    N_STEPS     = 10000;
+static constexpr int    N_STEPS     = 350;
 static constexpr double DT_AU       = 0.02;
 static constexpr int    WRITE_EVERY = 100;
 

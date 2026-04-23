@@ -40,6 +40,71 @@ Possible explanations:
 2. The pattern is recorded time-integrated (spread WP still produces similar pattern).
 3. At 200 eV the WP is already very broad relative to lattice spacing.
 
+## Jellium run_01_base observations (2026-04-20)
+
+### What was seen
+
+- **Frame 0 (t=0):** Gaussian WP density clearly visible — compact, localised blob near z=0 face
+  of the periodic cell, on top of the (near-uniform) jellium background. This is the manually
+  written frame: `density::total()` (40 e⁻ jellium) + `rho_wp` (1 e⁻ WP orbital).
+- **Frames 1+ (t>0):** WP is no longer visually distinguishable. The density looks like pure
+  uniform jellium background with no localised feature.
+
+Frame 0 is NOT a ground-state image — it is the t=0 state immediately after WP injection, with
+the WP orbital superimposed manually. It is the only frame that shows the WP explicitly, because
+subsequent frames write `density::total()` which may or may not include the propagated extra state.
+
+### Hypothesis: density::total() excludes extra states during propagation
+
+If `density::total()` in INQ real-time output only sums the first N_occ bands and excludes
+extra (unoccupied) states, then frames 1+ show only the 40 jellium electrons. The WP orbital
+is propagated internally but never written to the density output. The WP "vanishes" because
+it is invisible in the written field, not because it is physically gone.
+
+Evidence for this:
+- Jellium N_elec mean = 40.785 across all 101 frames. The systematic +0.785 offset is a
+  finite-grid normalisation artifact (constant, not related to WP). If the WP were included
+  in frames 1+, we would expect ~41.785 on average. The observed ~40.785 is consistent with
+  the WP being excluded from `density::total()` after t=0.
+- The t=0 manual addition was introduced precisely because `density::total()` was known to
+  exclude extra states at t=0 (handover note). It is likely consistent throughout propagation.
+
+**Implication for all runs:** The density movies and screen patterns will not show the WP
+orbital explicitly. Screens accumulate `density::total()` at each step — again WP excluded.
+This would mean the screens only record the jellium/coronene response, not the WP passage.
+
+### Things to investigate / TODO
+
+1. **Confirm `density::total()` behaviour during RT propagation.**
+   - Option A: read INQ source (`inq/src/observables/density.hpp`) to check if extra states
+     are included in the RT density sum.
+   - Option B: run a minimal 1-electron extra-state-only system; if N_elec in frame 1 = 0,
+     it is confirmed that extra states are excluded.
+
+2. **Fix the screen accumulator if needed.**
+   - If `LeedPatternAccumulator::accumulate()` uses `density::total()`, it misses the WP.
+   - Should instead accumulate the WP orbital density: `density::orbital(electrons, state_idx)`.
+   - This requires passing `state_index` from the injection report into the RT callback.
+
+3. **Fix density writing during propagation.**
+   - For all runs, the RT density frame writes should add `rho_wp` just as at t=0, or
+     use a different observable that includes the extra state.
+
+4. **Alternative: finite jellium test** (user suggestion).
+   - Create a finite-cell jellium (N_elec small, e.g. 4-8 e⁻) with a localised positive
+     background confined to a small sphere/box region. Finite boundary conditions prevent
+     periodic wrapping. Inject WP far from the jellium blob and propagate.
+   - This would isolate WP propagation from the periodic-cell background subtlety, and give
+     a clear visual of WP–electron-gas scattering.
+
+5. **Verify coronene runs won't have the same problem.**
+   - Coronene has 108 electrons; the WP is 1 extra state. Same issue as jellium.
+   - Density movies will show only coronene density fluctuations, not WP passage.
+   - If screens accumulate only `density::total()`, the LEED pattern will be from coronene
+     response, not from the WP. This may or may not be the intended physical quantity.
+
+---
+
 ## To-do
 
 - Use free-propagation run_01_base z-profile to extract σ(t) numerically.
