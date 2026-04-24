@@ -1,3 +1,16 @@
+/* The idea of this module is simple. As the real_time::propagate() runs, 
+ * we are allowed to give this function a callback function which runs
+ * every step. We define such callbacks using the Pipeline and Tasks APIs. 
+ * However, we need a class to be able to hold the current state of the 
+ * real_time propagation. This StepContext class does this by holding 
+ * 1. step number
+ * 2. time (in atomic units)
+ * 3. current ions (handed over from data in the obs_callback)
+ * 4. current electrons (handed over from data)
+ * 5. Observables we are keeping a track of in the simulation
+ *
+ * */
+
 #pragma once
 
 #include <math/vector3.hpp>

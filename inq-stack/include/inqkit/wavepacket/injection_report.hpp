@@ -1,3 +1,9 @@
+/*
+ * A class that keeps track of the wave packet information together.
+ * This object can be used to make sanity checks and ensure the wave
+ * packet is behaving as expected. 
+ * */
+
 #pragma once
 
 namespace inqkit {

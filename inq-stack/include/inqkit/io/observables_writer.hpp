@@ -1,3 +1,9 @@
+/*
+ *
+ *
+ * */
+
+
 #pragma once
 
 #include <inqkit/real_time/step_context.hpp>
@@ -10,6 +16,11 @@
 
 namespace inqkit::io {
 
+
+// TODO: The current vector and dipole vector must be tracked as a unit
+// and not as x, y and z coordinates. This must be taken care of. 
+// This is a structure that holds all the observables the simulation wants
+// to track
 struct ObservableSelection {
     bool step           = true;
     bool time_au        = true;

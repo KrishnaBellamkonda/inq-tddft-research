@@ -1,3 +1,20 @@
+/* This class is simplified the initialisation of a wave packet and its injection
+ * into the last extra state. Limitations of the library as of now - 
+ * 1. Multiple k points are not supported
+ * 2. Only spherical gaussians are supported
+ * 3. Occupation of more than 1 is not tested. This would require inserting more than
+ * one orbital and then changing the occupation accordingly. 
+ *
+ * However, using the class is simple. We start by initialising it
+ * WavePacket wp{}.center(cx, cy, cz).sigma().k0(). 
+ *
+ * The injection happens by performing wp.inject_into_last_extra_state(electrons, occupation)
+ * 
+ * The core idea of this class is to make the run.cpp code much more readable and easily
+ * understandable. 
+ *
+ * */
+
 #pragma once
 // ============================================================================
 // inqkit::WavePacket
@@ -39,212 +56,244 @@
 
 namespace inqkit {
 
+
 class WavePacket {
-    double cx_ = 0, cy_ = 0, cz_ = 0;
-    double sigma_ = 1.0;
-    double kx_ = 0, ky_ = 0, kz_ = 0;
-    bool   do_ortho_ = false;
-    double ortho_tol_ = 1e-6;
+  // All of the input coordinates and values in bohrs
+  double cx_ = 0, cy_ = 0, cz_ = 0;
+  double sigma_ = 1.0;
+  /* TODO: Do not know what units the k values are defined in. Best guess
+  is 1/bohr to perform a sanity check using the simulations (free propagation o
+  of a wavepacket if it works, or jellium wave packet propagation) to determine
+  if the k coordinate is working as expected.
+  */
+  double kx_ = 0, ky_ = 0, kz_ = 0;
+  bool do_ortho_ = false;
+  double ortho_tol_ = 1e-6;
 
 public:
-    WavePacket& center(double x_bohr, double y_bohr, double z_bohr) {
-        cx_ = x_bohr; cy_ = y_bohr; cz_ = z_bohr;
-        return *this;
-    }
+  WavePacket &center(double x_bohr, double y_bohr, double z_bohr) {
+    cx_ = x_bohr;
+    cy_ = y_bohr;
+    cz_ = z_bohr;
+    return *this;
+  }
 
-    WavePacket& sigma(double sigma_bohr) {
-        sigma_ = sigma_bohr;
-        return *this;
-    }
+  WavePacket &sigma(double sigma_bohr) {
+    sigma_ = sigma_bohr;
+    return *this;
+  }
 
-    WavePacket& k0(double kx, double ky, double kz) {
-        kx_ = kx; ky_ = ky; kz_ = kz;
-        return *this;
-    }
+  WavePacket &k0(double kx, double ky, double kz) {
+    kx_ = kx;
+    ky_ = ky;
+    kz_ = kz;
+    return *this;
+  }
 
-    // Mark the WP for orthogonalisation against all occupied states during injection.
-    // Actual projection is performed inside inject_into_last_extra_state using
-    // GPU kernels (modified Gram-Schmidt). Passing electrons here is required by the
-    // API for consistency with future pre-computation of overlaps; currently unused.
-    WavePacket& orthogonalise_against_occupied(
-        inq::systems::electrons const& /*electrons*/,
-        double tolerance = 1e-6)
-    {
-        do_ortho_  = true;
-        ortho_tol_ = tolerance;
-        return *this;
-    }
+  // Mark the WP for orthogonalisation against all occupied states during
+  // injection. Actual projection is performed inside
+  // inject_into_last_extra_state using GPU kernels (modified Gram-Schmidt).
+  // Passing electrons here is required by the API for consistency with future
+  // pre-computation of overlaps; currently unused.
+  WavePacket &
+  orthogonalise_against_occupied(inq::systems::electrons const & /*electrons*/,
+                                 double tolerance = 1e-6) {
+    do_ortho_ = true;
+    ortho_tol_ = tolerance;
+    return *this;
+  }
 
-    InjectionReport inject_into_last_extra_state(
-        inq::systems::electrons& electrons,
-        double occupation = 1.0) const;
+  InjectionReport
+  inject_into_last_extra_state(inq::systems::electrons &electrons,
+                               double occupation = 1.0) const;
 };
 
 // ────────────────────────────────────────────────────────────────────────────
+// This line injects the gaussian wave packet into the last extra state that is defined
+// in the system
+inline InjectionReport
+WavePacket::inject_into_last_extra_state(inq::systems::electrons &electrons,
+                                         double occupation) const {
+  using complex = inq::complex;
 
-inline InjectionReport WavePacket::inject_into_last_extra_state(
-    inq::systems::electrons& electrons,
-    double occupation) const
-{
-    using complex = inq::complex;
+  // TODO: Update the code such that it would work with any number of kpoint
+  // configurations
+  if (electrons.kpin().size() != 1) {
+    throw std::runtime_error("inqkit::WavePacket: only single-kpoint "
+                             "(gamma-only) runs are supported.");
+  }
 
-    if (electrons.kpin().size() != 1) {
-        throw std::runtime_error(
-            "inqkit::WavePacket: only single-kpoint (gamma-only) runs are supported.");
-    }
+  auto &phi = electrons.kpin()[0];
+  auto &basis = phi.basis();
 
-    auto& phi   = electrons.kpin()[0];
-    auto& basis = phi.basis();
+  if (phi.basis().comm().size() != 1 || phi.set_comm().size() != 1) {
+    throw std::runtime_error("inqkit::WavePacket: multi-rank basis/set "
+                             "partitioning is not supported.");
+  }
 
-    if (phi.basis().comm().size() != 1 || phi.set_comm().size() != 1) {
-        throw std::runtime_error(
-            "inqkit::WavePacket: multi-rank basis/set partitioning is not supported.");
-    }
+  // Defining the last electron state (extra state) as the
+  // index of the wave packet.
+  int ist_wp = phi.set_part().local_size() - 1;
+  int n_pts = phi.basis().local_size();
+  double dV = basis.volume_element();
 
-    int  ist_wp = phi.set_part().local_size() - 1;
-    int  n_pts  = phi.basis().local_size();
-    double dV   = basis.volume_element();
+  InjectionReport report;
+  report.kpoint_index = 0;
+  report.state_index = ist_wp;
 
-    InjectionReport report;
-    report.kpoint_index = 0;
-    report.state_index  = ist_wp;
-
-    // ── 1. Norm of existing last slot (before injection) ───────────────────────
+  // ── 1. Norm of existing last slot (before injection) ───────────────────────
+ 
+  // ip runs over all of the grid points. ist_wp selects the wavefunction
+  // value at the given coorindate. Then, the density at that point
+  // dV* (phi)^2 is calculated and added up over the entire grid. 
+  // The summation should equal one for a self normalised function
+  INQKIT_GPU_SYNC();
+  {
+    auto mat_ = begin(phi.matrix());
+    auto res = gpu::run(1, gpu::reduce(n_pts), 0.0,
+                        [dV, mat_, ist_wp_ = ist_wp] GPU_LAMBDA(auto, auto ip) {
+                          auto v = mat_[ip][ist_wp_];
+                          return dV * (inq::real(v) * inq::real(v) +
+                                       inq::imag(v) * inq::imag(v));
+                        });
     INQKIT_GPU_SYNC();
-    {
-        auto mat_ = begin(phi.matrix());
-        auto res = gpu::run(1, gpu::reduce(n_pts), 0.0,
-            [dV, mat_, ist_wp_=ist_wp] GPU_LAMBDA (auto, auto ip) {
-                auto v = mat_[ip][ist_wp_];
-                return dV * (inq::real(v)*inq::real(v) + inq::imag(v)*inq::imag(v));
-            });
-        INQKIT_GPU_SYNC();
-        report.norm_before = std::sqrt(res[0]);
+    report.norm_before = std::sqrt(res[0]);
+  }
+
+  // ── 2. Inject raw Gaussian wavepacket ──────────────────────────────────────
+  // psi_wp(r) = (pi sigma^2)^{-3/4} exp(-|r-b|^2 / (2 sigma^2)) exp(i k.r)
+  double norm_fac = std::pow(M_PI * sigma_ * sigma_, -0.75);
+  double sig = sigma_;
+  double bx = cx_, by = cy_, bz = cz_; // initial position of the wp
+  double kxv = kx_, kyv = ky_, kzv = kz_;
+  double dx_sp = basis.rspacing()[0];
+  double dy_sp = basis.rspacing()[1];
+  double dz_sp = basis.rspacing()[2];
+  // In parallel processes, each process only stores a part of the entire
+  // vector or the marix. For instance, 
+  // Global: ix = [0, 1, 2, 3, 4, ......, 410, 411, 412, ....]
+  // Local : ix = [0, 1, 2, 3, 4, ...] can actually represent 410,411 and 412
+  // global points. Hence, the offset between the local and global is 400 in this case
+  // This offset is captured by x0, y0 and z0. 
+  int x0 = basis.cubic_part(0).start(); // 
+  int y0 = basis.cubic_part(1).start();
+  int z0 = basis.cubic_part(2).start();
+  int ist_w = ist_wp; // index of the wave-packet
+
+  // Gets access to the first element in the 4D vector
+  // Used to get the pointer that can be manipulated in GPU accelerated
+  // functions. 
+  auto phicub_ = begin(phi.hypercubic());
+
+  gpu::run(basis.local_sizes()[2], basis.local_sizes()[1],
+           basis.local_sizes()[0], [=] GPU_LAMBDA(auto iz, auto iy, auto ix) {
+             double rx = (ix + x0) * dx_sp;
+             double ry = (iy + y0) * dy_sp;
+             double rz = (iz + z0) * dz_sp;
+             double dx_ = rx - bx, dy_ = ry - by, dz_ = rz - bz;
+             double r2 = dx_ * dx_ + dy_ * dy_ + dz_ * dz_;
+             double amp = norm_fac * exp(-r2 / (2.0 * sig * sig));
+             double ph = kxv * rx + kyv * ry + kzv * rz;
+             phicub_[ix][iy][iz][ist_w] = complex(amp * cos(ph), amp * sin(ph));
+           });
+  INQKIT_GPU_SYNC();
+
+  // ── 3. Orthogonalise against occupied states (modified Gram-Schmidt on GPU)
+  // ─
+  if (do_ortho_) {
+    double max_ov = 0.0;
+    auto mat_ = begin(phi.matrix());
+
+    for (int i = 0; i < ist_wp; ++i) {
+      // Real part of <psi_i | psi_wp>
+      auto res_re =
+          gpu::run(1, gpu::reduce(n_pts), 0.0,
+                   [dV, mat_, i_ = i, ist_ = ist_wp] GPU_LAMBDA(auto, auto ip) {
+                     auto vi = mat_[ip][i_];
+                     auto vw = mat_[ip][ist_];
+                     return dV * (inq::real(vi) * inq::real(vw) +
+                                  inq::imag(vi) * inq::imag(vw));
+                   });
+      INQKIT_GPU_SYNC();
+      double ov_re = res_re[0];
+
+      // Imaginary part of <psi_i | psi_wp>
+      auto res_im =
+          gpu::run(1, gpu::reduce(n_pts), 0.0,
+                   [dV, mat_, i_ = i, ist_ = ist_wp] GPU_LAMBDA(auto, auto ip) {
+                     auto vi = mat_[ip][i_];
+                     auto vw = mat_[ip][ist_];
+                     return dV * (inq::real(vi) * inq::imag(vw) -
+                                  inq::imag(vi) * inq::real(vw));
+                   });
+      INQKIT_GPU_SYNC();
+      double ov_im = res_im[0];
+
+      max_ov = std::max(max_ov, std::sqrt(ov_re * ov_re + ov_im * ov_im));
+
+      // Subtract projection: psi_wp -= (ov_re + i*ov_im) * psi_i
+      double re_ = ov_re, im_ = ov_im;
+      int i_ = i;
+      gpu::run(basis.local_sizes()[2], basis.local_sizes()[1],
+               basis.local_sizes()[0],
+               [=] GPU_LAMBDA(auto iz, auto iy, auto ix) {
+                 auto vi = phicub_[ix][iy][iz][i_];
+                 auto vw = phicub_[ix][iy][iz][ist_w];
+                 // (ov_re + i*ov_im) * vi
+                 double sub_re = re_ * inq::real(vi) - im_ * inq::imag(vi);
+                 double sub_im = re_ * inq::imag(vi) + im_ * inq::real(vi);
+                 phicub_[ix][iy][iz][ist_w] =
+                     complex(inq::real(vw) - sub_re, inq::imag(vw) - sub_im);
+               });
+      INQKIT_GPU_SYNC();
     }
 
-    // ── 2. Inject raw Gaussian wavepacket ──────────────────────────────────────
-    // psi_wp(r) = (pi sigma^2)^{-3/4} exp(-|r-b|^2 / (2 sigma^2)) exp(i k.r)
-    double norm_fac = std::pow(M_PI * sigma_ * sigma_, -0.75);
-    double sig  = sigma_;
-    double bx   = cx_,  by  = cy_,  bz  = cz_;
-    double kxv  = kx_,  kyv = ky_,  kzv = kz_;
-    double dx_sp = basis.rspacing()[0];
-    double dy_sp = basis.rspacing()[1];
-    double dz_sp = basis.rspacing()[2];
-    int    x0    = basis.cubic_part(0).start();
-    int    y0    = basis.cubic_part(1).start();
-    int    z0    = basis.cubic_part(2).start();
-    int    ist_w = ist_wp;
+    report.max_overlap = max_ov;
+    report.orthogonalised = true;
 
-    auto phicub_ = begin(phi.hypercubic());
+    // Renormalise after projection
+    {
+      auto res = gpu::run(1, gpu::reduce(n_pts), 0.0,
+                          [dV, mat_, ist_ = ist_wp] GPU_LAMBDA(auto, auto ip) {
+                            auto v = mat_[ip][ist_];
+                            return dV * (inq::real(v) * inq::real(v) +
+                                         inq::imag(v) * inq::imag(v));
+                          });
+      INQKIT_GPU_SYNC();
+      double scale = 1.0 / std::sqrt(res[0]);
 
-    gpu::run(basis.local_sizes()[2],
-             basis.local_sizes()[1],
-             basis.local_sizes()[0],
-        [=] GPU_LAMBDA (auto iz, auto iy, auto ix) {
-            double rx  = (ix + x0) * dx_sp;
-            double ry  = (iy + y0) * dy_sp;
-            double rz  = (iz + z0) * dz_sp;
-            double dx_ = rx - bx,  dy_ = ry - by,  dz_ = rz - bz;
-            double r2  = dx_*dx_ + dy_*dy_ + dz_*dz_;
-            double amp = norm_fac * exp(-r2 / (2.0 * sig * sig));
-            double ph  = kxv*rx + kyv*ry + kzv*rz;
-            phicub_[ix][iy][iz][ist_w] = complex(amp * cos(ph), amp * sin(ph));
-        });
+      gpu::run(basis.local_sizes()[2], basis.local_sizes()[1],
+               basis.local_sizes()[0],
+               [=] GPU_LAMBDA(auto iz, auto iy, auto ix) {
+                 auto v = phicub_[ix][iy][iz][ist_w];
+                 phicub_[ix][iy][iz][ist_w] =
+                     complex(inq::real(v) * scale, inq::imag(v) * scale);
+               });
+      INQKIT_GPU_SYNC();
+    }
+
+    report.passed_tolerance = (max_ov < ortho_tol_ * 10.0);
+  } else {
+    report.passed_tolerance = true;
+  }
+
+  // ── 4. Norm after injection (and orthogonalisation if applied) ─────────────
+  {
+    auto mat_ = begin(phi.matrix());
+    auto res = gpu::run(1, gpu::reduce(n_pts), 0.0,
+                        [dV, mat_, ist_ = ist_wp] GPU_LAMBDA(auto, auto ip) {
+                          auto v = mat_[ip][ist_];
+                          return dV * (inq::real(v) * inq::real(v) +
+                                       inq::imag(v) * inq::imag(v));
+                        });
     INQKIT_GPU_SYNC();
+    report.norm_after = std::sqrt(res[0]);
+  }
 
-    // ── 3. Orthogonalise against occupied states (modified Gram-Schmidt on GPU) ─
-    if (do_ortho_) {
-        double max_ov = 0.0;
-        auto   mat_   = begin(phi.matrix());
+  // ── 5. Set occupation ──────────────────────────────────────────────────────
+  electrons.occupations()[0][ist_wp] = occupation;
 
-        for (int i = 0; i < ist_wp; ++i) {
-            // Real part of <psi_i | psi_wp>
-            auto res_re = gpu::run(1, gpu::reduce(n_pts), 0.0,
-                [dV, mat_, i_=i, ist_=ist_wp] GPU_LAMBDA (auto, auto ip) {
-                    auto vi = mat_[ip][i_];
-                    auto vw = mat_[ip][ist_];
-                    return dV * (inq::real(vi)*inq::real(vw) + inq::imag(vi)*inq::imag(vw));
-                });
-            INQKIT_GPU_SYNC();
-            double ov_re = res_re[0];
-
-            // Imaginary part of <psi_i | psi_wp>
-            auto res_im = gpu::run(1, gpu::reduce(n_pts), 0.0,
-                [dV, mat_, i_=i, ist_=ist_wp] GPU_LAMBDA (auto, auto ip) {
-                    auto vi = mat_[ip][i_];
-                    auto vw = mat_[ip][ist_];
-                    return dV * (inq::real(vi)*inq::imag(vw) - inq::imag(vi)*inq::real(vw));
-                });
-            INQKIT_GPU_SYNC();
-            double ov_im = res_im[0];
-
-            max_ov = std::max(max_ov, std::sqrt(ov_re*ov_re + ov_im*ov_im));
-
-            // Subtract projection: psi_wp -= (ov_re + i*ov_im) * psi_i
-            double re_ = ov_re, im_ = ov_im;
-            int    i_  = i;
-            gpu::run(basis.local_sizes()[2],
-                     basis.local_sizes()[1],
-                     basis.local_sizes()[0],
-                [=] GPU_LAMBDA (auto iz, auto iy, auto ix) {
-                    auto vi  = phicub_[ix][iy][iz][i_];
-                    auto vw  = phicub_[ix][iy][iz][ist_w];
-                    // (ov_re + i*ov_im) * vi
-                    double sub_re = re_ * inq::real(vi) - im_ * inq::imag(vi);
-                    double sub_im = re_ * inq::imag(vi) + im_ * inq::real(vi);
-                    phicub_[ix][iy][iz][ist_w] = complex(
-                        inq::real(vw) - sub_re,
-                        inq::imag(vw) - sub_im);
-                });
-            INQKIT_GPU_SYNC();
-        }
-
-        report.max_overlap    = max_ov;
-        report.orthogonalised = true;
-
-        // Renormalise after projection
-        {
-            auto res = gpu::run(1, gpu::reduce(n_pts), 0.0,
-                [dV, mat_, ist_=ist_wp] GPU_LAMBDA (auto, auto ip) {
-                    auto v = mat_[ip][ist_];
-                    return dV * (inq::real(v)*inq::real(v) + inq::imag(v)*inq::imag(v));
-                });
-            INQKIT_GPU_SYNC();
-            double scale = 1.0 / std::sqrt(res[0]);
-
-            gpu::run(basis.local_sizes()[2],
-                     basis.local_sizes()[1],
-                     basis.local_sizes()[0],
-                [=] GPU_LAMBDA (auto iz, auto iy, auto ix) {
-                    auto v = phicub_[ix][iy][iz][ist_w];
-                    phicub_[ix][iy][iz][ist_w] = complex(
-                        inq::real(v) * scale, inq::imag(v) * scale);
-                });
-            INQKIT_GPU_SYNC();
-        }
-
-        report.passed_tolerance = (max_ov < ortho_tol_ * 10.0);
-    } else {
-        report.passed_tolerance = true;
-    }
-
-    // ── 4. Norm after injection (and orthogonalisation if applied) ─────────────
-    {
-        auto mat_ = begin(phi.matrix());
-        auto res = gpu::run(1, gpu::reduce(n_pts), 0.0,
-            [dV, mat_, ist_=ist_wp] GPU_LAMBDA (auto, auto ip) {
-                auto v = mat_[ip][ist_];
-                return dV * (inq::real(v)*inq::real(v) + inq::imag(v)*inq::imag(v));
-            });
-        INQKIT_GPU_SYNC();
-        report.norm_after = std::sqrt(res[0]);
-    }
-
-    // ── 5. Set occupation ──────────────────────────────────────────────────────
-    electrons.occupations()[0][ist_wp] = occupation;
-
-    return report;
+  return report;
 }
 
 } // namespace inqkit
