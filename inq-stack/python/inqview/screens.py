@@ -97,32 +97,46 @@ def load_leed_pattern(path: PathLike) -> LeedPattern:
     with path.open() as fh:
         lines = fh.readlines()
 
-    if len(lines) < 3:
+    if len(lines) < 2:
         raise ValueError(f"Screen pattern file too short: {path}")
 
-    # Header line 1: label, z, total_time, n_accum
+    # Header line 1: label, z, total_time (accumulated) or t (snapshot), n_accum
     h1 = _parse_header_kv(lines[0])
-    label        = h1.get("label", "")
-    z_bohr       = float(h1.get("z",          "0"))
-    total_time   = float(h1.get("total_time", "0"))
-    n_accum      = int(h1.get("n_accum",   "0"))
+    label      = h1.get("label", "")
+    z_bohr     = float(h1.get("z", "0"))
+    total_time = float(h1.get("total_time", h1.get("t", "0")))
+    n_accum    = int(h1.get("n_accum", "1"))
 
-    # Header line 2: nx, ny, dx, dy, origin_x, origin_y
-    h2 = _parse_header_kv(lines[1])
-    nx       = int(h2.get("nx", "0"))
-    ny       = int(h2.get("ny", "0"))
-    dx_bohr  = float(h2.get("dx", "1"))
-    dy_bohr  = float(h2.get("dy", "1"))
-    origin_x = float(h2.get("origin_x", "0"))
-    origin_y = float(h2.get("origin_y", "0"))
+    # Header line 2 is optional: snapshot files write only 1 header line.
+    # Detect by checking whether line[1] starts with '#'.
+    if lines[1].startswith("#"):
+        h2 = _parse_header_kv(lines[1])
+        nx       = int(h2.get("nx", "0"))
+        ny       = int(h2.get("ny", "0"))
+        dx_bohr  = float(h2.get("dx", "1"))
+        dy_bohr  = float(h2.get("dy", "1"))
+        origin_x = float(h2.get("origin_x", "0"))
+        origin_y = float(h2.get("origin_y", "0"))
+        data_start = 2
+    else:
+        nx = ny = 0
+        dx_bohr = dy_bohr = 1.0
+        origin_x = origin_y = 0.0
+        data_start = 1
 
     # Data rows
-    data_lines = [l for l in lines[2:] if l.strip() and not l.startswith("#")]
+    data_lines = [l for l in lines[data_start:] if l.strip() and not l.startswith("#")]
     rows = []
     for dl in data_lines:
         rows.append([float(v) for v in dl.split()])
 
     data = np.array(rows, dtype=np.float64)
+
+    # Infer nx/ny from data if not in header (snapshot format)
+    if nx == 0 and data.ndim == 2:
+        ny, nx = data.shape
+        dx_bohr = dy_bohr = 1.0
+
     if data.ndim != 2 or data.shape[0] != ny or data.shape[1] != nx:
         raise ValueError(
             f"Unexpected data shape {data.shape} for nx={nx}, ny={ny} in {path}"

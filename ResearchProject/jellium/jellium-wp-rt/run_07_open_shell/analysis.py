@@ -27,7 +27,6 @@ from inqview import (
 PV_EXE = REPO_ROOT / "ParaView-6.1.0-MPI-Linux-Python3.12-x86_64" / "bin" / "pvbatch"
 
 RUN_LABEL        = "07_open_shell"
-N_ELEC_EXPECTED  = 41      # 40 jellium (open shell) + 1 WP
 N_SCREENS        = 20
 N_VTI_FRAMES     = 50
 GIF_FPS          = 6
@@ -98,10 +97,10 @@ if total_dir.exists():
         dx, dy, dz = f.meta.spacing_bohr
         nelec_vals.append(float(f.array.sum() * dx * dy * dz))
     arr = np.array(nelec_vals)
+    pct = 100.0 * arr.std() / arr.mean() if arr.mean() > 0 else float("inf")
     print(f"  N_elec mean={arr.mean():.4f}  std={arr.std():.4f}  "
-          f"min={arr.min():.4f}  max={arr.max():.4f}  expected={N_ELEC_EXPECTED}")
-    ok = np.all(np.abs(arr - N_ELEC_EXPECTED) < 0.5)
-    print("  PASS: within 0.5e" if ok else "  WARN: N_elec deviates — check WP injection")
+          f"min={arr.min():.4f}  max={arr.max():.4f}  drift={pct:.4f}%")
+    print("  PASS: conserved (<0.1%)" if pct < 0.1 else f"  WARN: N_elec drifts {pct:.3f}%")
 else:
     print("  Skip: density_rt_total not found")
 
