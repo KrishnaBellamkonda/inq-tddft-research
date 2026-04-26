@@ -2,6 +2,7 @@
 
 #include <inqkit/detail/grid_layout.hpp>
 #include <inqkit/fields/complex_field_3d.hpp>
+#include <inqkit/io/vti_image_data_writer.hpp>
 
 #include <complex>
 #include <filesystem>
@@ -13,9 +14,16 @@
 
 namespace inqkit::io {
 
+// Same opt-in model as RealField3DLayout. emit_raw governs both
+// <basename>_real.raw and <basename>_imag.raw outputs; emit_vti emits one
+// <basename>.vti containing two arrays named <field_name>_real and
+// <field_name>_imag.
 struct ComplexField3DLayout {
   std::string field_name = "field";
   bool include_meta = true;
+  bool emit_raw = true;
+  bool emit_vti = false;
+  VTIWriteOptions::Format vti_format = VTIWriteOptions::Format::ascii;
 };
 
 struct ComplexField3DWriteOptions {
@@ -54,11 +62,21 @@ public:
         inqkit::detail::grid_layout::complex_field_3d_raw_schema();
     auto const stem = (std::filesystem::path(path_) / basename).string();
 
-    write_binary_parts_(stem + schema.real_suffix, stem + schema.imag_suffix,
-                        field);
+    if (layout_.emit_raw) {
+      write_binary_parts_(stem + schema.real_suffix, stem + schema.imag_suffix,
+                          field);
+    }
 
-    if (layout_.include_meta) {
+    if (layout_.emit_raw && layout_.include_meta) {
       write_meta_file_(stem + schema.meta_suffix, field, basename, schema);
+    }
+
+    if (layout_.emit_vti) {
+      VTIWriteOptions vti_opts;
+      vti_opts.format = layout_.vti_format;
+      vti_opts.overwrite = options_.overwrite;
+      VTIImageDataWriter vti_wr(vti_opts);
+      vti_wr.write_complex(field, stem + ".vti", layout_.field_name);
     }
   }
 

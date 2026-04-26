@@ -11,6 +11,7 @@
 
 #include <inqkit/detail/grid_layout.hpp>
 #include <inqkit/fields/real_field_3d.hpp>
+#include <inqkit/io/vti_image_data_writer.hpp>
 
 #include <cstdio>
 #include <filesystem>
@@ -22,10 +23,19 @@
 
 namespace inqkit::io {
 
-// This class handles the o
+// Layout selects what artefacts the writer emits per call:
+//   emit_raw  - <basename>.raw (flat float64 binary, x-slowest layout)
+//   include_meta - <basename>.meta.txt sidecar (only meaningful with emit_raw)
+//   emit_vti  - <basename>.vti (VTK XML ImageData, ParaView-ready)
+// Defaults preserve the historical behaviour: raw + meta, no vti. New runs
+// opt in to vti by setting emit_vti = true (and may set emit_raw = false to
+// skip the .raw entirely).
 struct RealField3DLayout {
   std::string field_name = "field";
   bool include_meta = true;
+  bool emit_raw = true;
+  bool emit_vti = false;
+  VTIWriteOptions::Format vti_format = VTIWriteOptions::Format::ascii;
 };
 
 struct RealField3DWriteOptions {
@@ -92,11 +102,21 @@ private:
     auto const schema = inqkit::detail::grid_layout::real_field_3d_raw_schema();
     auto const stem = (std::filesystem::path(path_) / basename).string();
 
-    write_binary_file_(stem + schema.value_suffix, field);
+    if (layout_.emit_raw) {
+      write_binary_file_(stem + schema.value_suffix, field);
+    }
 
-    if (layout_.include_meta) {
+    if (layout_.emit_raw && layout_.include_meta) {
       write_meta_file_(stem + schema.meta_suffix, field, basename, schema,
                        time_au);
+    }
+
+    if (layout_.emit_vti) {
+      VTIWriteOptions vti_opts;
+      vti_opts.format = layout_.vti_format;
+      vti_opts.overwrite = options_.overwrite;
+      VTIImageDataWriter vti_wr(vti_opts);
+      vti_wr.write_real(field, stem + ".vti", layout_.field_name);
     }
   }
 
