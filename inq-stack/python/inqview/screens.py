@@ -68,6 +68,18 @@ class LeedPattern:
             float(self.y_axis[-1] + self.dy_bohr),
         )
 
+    def inverse_fft(self, method: str = "patterson",
+                    hann: bool = True) -> np.ndarray:
+        """Inverse-FFT this LEED screen back to a real-space density estimate.
+
+        Thin wrapper around inqview.postprocess._ifft.reconstruct_real_space.
+        See that module's docstring for the available methods
+        ('patterson' — Patterson autocorrelation, default; 'amp_only' —
+        phase-less amplitude reconstruction).
+        """
+        from .postprocess._ifft import reconstruct_real_space
+        return reconstruct_real_space(self, method=method, hann=hann)
+
 
 def _parse_header_kv(line: str) -> dict[str, str]:
     """Parse 'key=value key=value ...' from a header comment line."""

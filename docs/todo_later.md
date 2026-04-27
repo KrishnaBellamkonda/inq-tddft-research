@@ -81,3 +81,53 @@ comparisons.
 
 - No visualisation of the coronene atomic structure has been made.
 - **Action:** Convert the `.xyz` file to a VESTA-readable format and verify the molecular geometry matches Fig. 1 of Tsubonoya et al.
+
+---
+
+## Screen-z FFT-natural mapping bug (Phase 3)
+
+**Bug:** `PlaneScreen::iz_nearest`
+(`inq-stack/include/inqkit/screens/plane_screen.hpp:50-57`) clamped negative
+physical z to grid index 0 instead of wrapping into INQ's FFT-natural
+ordering (where index 0 = physical centre, upper-half indices = negative z).
+Every transmission screen at `z < 0` was therefore sampling the molecule
+plane (the static coronene electron cloud), not the requested z-plane.
+
+**Symptom:** in every `all_screens_grid.png` prior to Phase 3, the
+transmission half of the grid showed the static coronene electron density
+rather than a diffraction pattern.
+
+**Affected runs:** every run produced before Phase 3 — all 10 in the
+framework. Backscattering screens (z ≥ 0) were unaffected because their
+physical z mapped directly to a non-negative array index.
+
+**Resolution:** FFT-natural wrap added in Phase 3:
+`int iz_nat = ((iz % Nz) + Nz) % Nz;`. The branch
+`coronene-fft-fixed-base` re-runs `run_base` for verification;
+`coronene-fft-fixed-rerun` then re-runs the other 9. After both branches
+merge, every total/, paper-window, and physics-window screen on the
+transmission side is physically meaningful.
+
+---
+
+## Complex orbital wavefunction export was not fftshifted (Phase 3)
+
+**Bug:** `inqkit::fields::orbital::wavefunction`
+(`inq-stack/include/inqkit/fields/orbital.hpp:107-118`) iterated `(ix, iy, iz)`
+and read `hc[ix][iy][iz][...]` directly **without** the `fft_shift_index`
+mapping that the sibling `density::total` / `density::orbital` exporters
+apply. The `ComplexField3D` it returned was therefore in FFT-natural order
+while metadata claimed left-to-right physical layout (origin = −L/2).
+
+**Symptom:** any VTI viewer or Python slice consumer of the complex
+orbital wavefunction saw the WP at scrambled spatial positions relative
+to the metadata origin. `density::orbital` (real density) was correctly
+shifted, so total / system / wp **density** outputs were correct; only the
+**complex wavefunction** export was scrambled.
+
+**Affected runs:** every run that wrote
+`results/raw/wavepacket/wavefunction_wp_initial.vti` (all 10).
+
+**Resolution:** `fft_shift_index` mapping added in Phase 3, mirroring
+`density.hpp:88-99`. The Phase-3 re-run regenerates the file correctly
+on every run.
