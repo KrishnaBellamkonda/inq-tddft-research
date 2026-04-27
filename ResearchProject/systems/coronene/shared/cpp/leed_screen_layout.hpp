@@ -28,26 +28,30 @@ constexpr int N_SCREENS = 20;
 //
 // The aim of windowing is to suppress the unscattered Gaussian-WP contribution
 // at the screen plane and accumulate only the diffracted / scattered density.
+// The "extent" of the WP envelope considered is set by `n_sigmas` (the
+// configuration parameter Cfg::WP_ENVELOPE_SIGMAS). n_sigmas = 1 reproduces
+// the Phase-3 logic; n_sigmas = 2 (current default) demands a wider clear
+// margin around the screen plane.
 //
 // Forward screens (z_screen < 0, transmission side):
-//   * t_start = max(0, (b + sigma - z_screen) / |k|)
-//                — when the WP trailing edge has cleared the screen plane on
-//                  its way down toward the molecule. Any density at z_screen
-//                  after this time is the transmitted+diffracted contribution
-//                  (the molecule has spread the WP into a non-Gaussian).
+//   * t_start = max(0, (b + n_sigmas*sigma - z_screen) / |k|)
+//                — when the WP trailing edge (centroid + n_sigmas*sigma in z)
+//                  has cleared the screen plane on its way down toward the
+//                  molecule. Density at z_screen after this time is the
+//                  transmitted+diffracted contribution.
 //   * t_end   = total_time_au (= N_steps * dt by construction of
 //                compute_n_steps), i.e. integrate to end of run.
 //
 // Backscattering screens (z_screen >= 0, reflection side):
-//   * t_start = max(0, (b + sigma - z_screen) / |k|)
+//   * t_start = max(0, (b + n_sigmas*sigma - z_screen) / |k|)
 //                — same expression. For screens above the initial WP
-//                  envelope (z_screen > b + sigma) this is <= 0 and clamps
-//                  to 0 (the screen was never under the incoming WP).
-//   * t_end   = (b + Lz/2 - sigma) / |k|
+//                  envelope (z_screen > b + n_sigmas*sigma) this is <= 0 and
+//                  clamps to 0 (the screen was never under the incoming WP).
+//   * t_end   = (b + Lz/2 - n_sigmas*sigma) / |k|
 //                — when the back-scattered forward leading edge
-//                  (rebound centroid + sigma in +z direction) reaches the
-//                  +Lz/2 box face, just before periodic-boundary wrap-around
-//                  contaminates the signal.
+//                  (rebound centroid + n_sigmas*sigma in +z direction)
+//                  reaches the +Lz/2 box face, just before periodic-boundary
+//                  wrap-around contaminates the signal.
 //
 // Demarcation: z_screen < 0 vs z_screen >= 0 (the molecule plane).
 //
@@ -64,9 +68,11 @@ struct ScreenWindow {
 inline constexpr ScreenWindow compute_screen_window(double z_screen, double b,
                                                     double sigma, double k0,
                                                     double lz_bohr,
-                                                    double total_time_au) {
+                                                    double total_time_au,
+                                                    double n_sigmas = 1.0) {
+    const double envelope = n_sigmas * sigma;
     // Constexpr-friendly max(0, x).
-    const double t_start_raw = (b + sigma - z_screen) / k0;
+    const double t_start_raw = (b + envelope - z_screen) / k0;
     const double t_start = (t_start_raw > 0.0) ? t_start_raw : 0.0;
     if (z_screen < 0.0) {
         // Forward / transmission side: integrate to end of simulation.
@@ -74,7 +80,7 @@ inline constexpr ScreenWindow compute_screen_window(double z_screen, double b,
     }
     // Backscattering side: integrate until the rebound leading edge reaches
     // the +Lz/2 boundary.
-    const double t_end_back = (b + 0.5 * lz_bohr - sigma) / k0;
+    const double t_end_back = (b + 0.5 * lz_bohr - envelope) / k0;
     return ScreenWindow{ t_start, t_end_back, true };
 }
 

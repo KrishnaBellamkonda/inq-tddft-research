@@ -86,6 +86,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    help="inq-run executable (default: 'inq-run' on PATH)")
     p.add_argument("--cpp-file", type=str, default="run.cpp",
                    help="run.cpp basename (default: run.cpp)")
+    p.add_argument("--clear-results", action="store_true",
+                   help="wipe each run's results/{raw,analysis,run_summary.txt}"
+                        " before launching, so a re-run starts clean.")
     return p.parse_args(argv)
 
 
@@ -166,13 +169,38 @@ class DispatchLog:
         self.fh.close()
 
 
+def _clear_results(run_dir: Path, log: DispatchLog) -> None:
+    """Wipe the run's output trees so a re-run starts clean.
+
+    Removes ``results/raw`` and ``results/analysis`` (the populated
+    subtrees) but leaves ``results/`` itself intact. Build artefacts
+    (build/, run binary, build_run.log, run.log) are left so
+    ``inq-run`` can incrementally rebuild — only old simulation output
+    is purged.
+    """
+    for sub in ("raw", "analysis"):
+        target = run_dir / "results" / sub
+        if target.exists():
+            shutil.rmtree(target)
+    rs = run_dir / "results" / "run_summary.txt"
+    if rs.exists():
+        rs.unlink()
+    log(f"[gpu --] cleared {run_dir.name}/results/{{raw,analysis,run_summary.txt}}")
+
+
 def launch(slot: GPUSlot, run_dir: Path, *, inq_run: str, cpp_file: str,
-           dry_run: bool, log: DispatchLog) -> None:
+           dry_run: bool, log: DispatchLog,
+           clear_results: bool = False) -> None:
     cmd = ["env", f"CUDA_VISIBLE_DEVICES={slot.gpu_id}", inq_run, cpp_file]
     log_str = f"cd {run_dir} && CUDA_VISIBLE_DEVICES={slot.gpu_id} {inq_run} {cpp_file}"
     if dry_run:
+        if clear_results:
+            log(f"[dry-run] [gpu {slot.gpu_id}] would clear "
+                f"{run_dir.name}/results/{{raw,analysis,run_summary.txt}}")
         log(f"[dry-run] [gpu {slot.gpu_id}] {log_str}")
         return
+    if clear_results:
+        _clear_results(run_dir, log)
     run_log = run_dir / "run.log"
     fh = run_log.open("ab")
     log(f"[gpu {slot.gpu_id}] launching {run_dir.name} (log: {run_log})")
@@ -248,7 +276,8 @@ def main(argv: list[str] | None = None) -> int:
                     if args.dry_run:
                         run_dir = pending.pop(0)
                         launch(s, run_dir, inq_run=args.inq_run,
-                               cpp_file=args.cpp_file, dry_run=True, log=log)
+                               cpp_file=args.cpp_file, dry_run=True, log=log,
+                               clear_results=args.clear_results)
                         continue
                     free = gpu_free_with_confirmation(
                         s.gpu_id,
@@ -261,7 +290,8 @@ def main(argv: list[str] | None = None) -> int:
                         continue
                     run_dir = pending.pop(0)
                     launch(s, run_dir, inq_run=args.inq_run,
-                           cpp_file=args.cpp_file, dry_run=False, log=log)
+                           cpp_file=args.cpp_file, dry_run=False, log=log,
+                           clear_results=args.clear_results)
 
             if args.dry_run:
                 # nothing actually running; exit when queue is empty
