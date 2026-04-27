@@ -75,6 +75,61 @@ public:
         if (index_file_.is_open()) index_file_.close();
     }
 
+    // WP-only variant: compute O_i,wp(t) = |<psi_i^GS | psi_wp(t)>|^2 for
+    // every reference orbital i in 0..n_ref-1. Cost is n_ref complex dot
+    // products per call instead of n_ref*(n_ref+1) for the full matrix —
+    // ~62x cheaper for the coronene paper-replica setup.
+    //
+    // Output format:
+    //   overlap_XXXXXX.csv contains a header line plus a single row of
+    //   n_ref comma-separated |overlap|^2 values, in column order i=0..n_ref-1.
+    //   index.csv entries match snapshot()'s schema (step,time_au,file).
+    //
+    // Use this when you only need to track decoherence / decay of the WP
+    // into the occupied subspace, not the full KS-orbital cross-talk matrix.
+    void snapshot_wp_only(inq::systems::electrons const& electrons,
+                          double time_au, int step)
+    {
+        // Pull only the WP wavefunction (column j = n_ref) from the device.
+        auto wp = fields::orbital::wavefunction(electrons, n_ref_);
+
+        std::size_t n_pts = wp.values.size();
+        std::vector<double> O(n_ref_, 0.0);
+        for (int i = 0; i < n_ref_; ++i) {
+            std::complex<double> inner(0.0, 0.0);
+            auto const& ri = ref_wfns_[i].values;
+            auto const& ej = wp.values;
+            for (std::size_t r = 0; r < n_pts; ++r)
+                inner += std::conj(ri[r]) * ej[r];
+            inner *= dv_;
+            O[i] = std::norm(inner);
+        }
+
+        std::ostringstream ss;
+        ss << output_dir_ << "/overlap_"
+           << std::setfill('0') << std::setw(6) << step << ".csv";
+        std::string fname = ss.str();
+
+        std::ofstream f(fname);
+        if (!f)
+            throw std::runtime_error("OrbitalOverlapMatrix: cannot open " + fname);
+
+        f << "# step=" << step
+          << " time_au=" << std::fixed << std::setprecision(6) << time_au
+          << " n_ref=" << n_ref_ << " mode=wp_only\n";
+        for (int i = 0; i < n_ref_; ++i) {
+            f << std::fixed << std::setprecision(8) << O[i];
+            if (i + 1 < n_ref_) f << ",";
+        }
+        f << "\n";
+
+        std::string basename = std::filesystem::path(fname).filename().string();
+        index_file_ << step << ","
+                    << std::fixed << std::setprecision(6) << time_au << ","
+                    << basename << "\n";
+        index_file_.flush();
+    }
+
     // Compute O_ij(t) and write to output_dir/overlap_XXXXXX.csv.
     // Rows = GS reference orbital index i (0..n_ref-1).
     // Columns = evolved orbital index j (0..n_ref); last column is the WP.

@@ -162,34 +162,32 @@ WavePacket::inject_into_last_extra_state(inq::systems::electrons &electrons,
 
   // ── 2. Inject raw Gaussian wavepacket ──────────────────────────────────────
   // psi_wp(r) = (pi sigma^2)^{-3/4} exp(-|r-b|^2 / (2 sigma^2)) exp(i k.r)
+  //
+  // Coordinate convention: INQ stores centred orthorhombic cells with the
+  // origin at array index 0 and uses to_symmetric_range so that the physical
+  // coordinate at global index ig is (ig <= N/2 ? ig : ig - N) * dr — i.e.
+  // r ∈ [-L/2, +L/2]. We therefore obtain the Cartesian position from
+  // basis.point_op().rvector_cartesian(...) instead of recomputing it as
+  // ig*dr (which would be wrong for ig > N/2 and silently corrupt the
+  // e^{i k·r} phase across half the cell).
   double norm_fac = std::pow(M_PI * sigma_ * sigma_, -0.75);
   double sig = sigma_;
   double bx = cx_, by = cy_, bz = cz_; // initial position of the wp
   double kxv = kx_, kyv = ky_, kzv = kz_;
-  double dx_sp = basis.rspacing()[0];
-  double dy_sp = basis.rspacing()[1];
-  double dz_sp = basis.rspacing()[2];
-  // In parallel processes, each process only stores a part of the entire
-  // vector or the marix. For instance, 
-  // Global: ix = [0, 1, 2, 3, 4, ......, 410, 411, 412, ....]
-  // Local : ix = [0, 1, 2, 3, 4, ...] can actually represent 410,411 and 412
-  // global points. Hence, the offset between the local and global is 400 in this case
-  // This offset is captured by x0, y0 and z0. 
-  int x0 = basis.cubic_part(0).start(); // 
-  int y0 = basis.cubic_part(1).start();
-  int z0 = basis.cubic_part(2).start();
   int ist_w = ist_wp; // index of the wave-packet
 
   // Gets access to the first element in the 4D vector
   // Used to get the pointer that can be manipulated in GPU accelerated
-  // functions. 
+  // functions.
   auto phicub_ = begin(phi.hypercubic());
+  auto point_op_ = basis.point_op();
 
   gpu::run(basis.local_sizes()[2], basis.local_sizes()[1],
            basis.local_sizes()[0], [=] GPU_LAMBDA(auto iz, auto iy, auto ix) {
-             double rx = (ix + x0) * dx_sp;
-             double ry = (iy + y0) * dy_sp;
-             double rz = (iz + z0) * dz_sp;
+             auto rvec = point_op_.rvector_cartesian(ix, iy, iz);
+             double rx = rvec[0];
+             double ry = rvec[1];
+             double rz = rvec[2];
              double dx_ = rx - bx, dy_ = ry - by, dz_ = rz - bz;
              double r2 = dx_ * dx_ + dy_ * dy_ + dz_ * dz_;
              double amp = norm_fac * exp(-r2 / (2.0 * sig * sig));

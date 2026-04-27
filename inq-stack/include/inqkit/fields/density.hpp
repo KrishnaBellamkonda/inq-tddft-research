@@ -20,19 +20,35 @@
 
 namespace inqkit::fields::density {
 
+// FFT-shift along one axis: convert a contiguous output index
+// (0 -> -L/2, ..., size-1 -> +L/2 - dx) into the FFT-natural array
+// index that INQ uses internally (0 -> cell centre, size/2 -> -L/2).
+// See inq/src/basis/grid.hpp:78-95 (to/from_symmetric_range) and the
+// run_06_centred_writer_check diagnostic. The formula
+// (idx + (size+1)/2) % size handles both even and odd sizes.
+inline int fft_shift_index(int output_idx, int size) {
+  return (output_idx + (size + 1) / 2) % size;
+}
+
 /*
  * Build the total electronic density field:
  *   rho(r) = electrons.density()
+ *
+ * INQ stores the real-space grid in FFT-natural order (array index 0
+ * corresponds to physical position 0, the cell centre). The metadata
+ * we publish has Origin = -L/2, so when iterating output index ix from
+ * 0 to nx-1 we must read INQ array element at fft_shift_index(ix, nx)
+ * to get a contiguous left-to-right physical layout.
  */
 inline RealField3D total(inq::systems::electrons const &electrons) {
   INQKIT_GPU_SYNC();
 
   auto density = electrons.density();
   // Basis has the x, y and z direction basis vectors
-  // and their corresponding sizes. 
+  // and their corresponding sizes.
   auto const &basis = density.basis();
 
-  
+
   if (basis.comm().size() != 1) {
     throw std::runtime_error("inqkit::fields::density::total: multi-rank basis "
                              "export is not implemented yet.");
@@ -48,7 +64,7 @@ inline RealField3D total(inq::systems::electrons const &electrons) {
   // Turns the density object in to 3D vector
   // phi.cubic()[ix][iy][iz]
   // where ix, iy and iz are indices of the 3D
-  // grid. 
+  // grid.
   auto hc = density.cubic();
 
   // Using the RealField class to house in all of the
@@ -58,9 +74,6 @@ inline RealField3D total(inq::systems::electrons const &electrons) {
   field.ny = ny;
   field.nz = nz;
 
-  // The origin is found out using the undertanding that INQ
-  // always has its origin at the (0,0,0) point (as the bottom-most
-  // and the left-most point)
   field.origin_x_bohr = basis.symmetric_range_begin(0) * spacing[0];
   field.origin_y_bohr = basis.symmetric_range_begin(1) * spacing[1];
   field.origin_z_bohr = basis.symmetric_range_begin(2) * spacing[2];
@@ -70,14 +83,17 @@ inline RealField3D total(inq::systems::electrons const &electrons) {
   field.dz_bohr = spacing[2];
   field.values.resize(static_cast<std::size_t>(nx) * ny * nz);
 
-  // Writing the density in the field values using 
-  // the flattened index. 
+  // Output index ix runs left-to-right (ix=0 at -L/2, ix=nx-1 near +L/2).
+  // INQ's hc is FFT-natural, so we read hc[fft_shift_index(ix)].
   for (int ix = 0; ix < nx; ++ix) {
+    int sx = fft_shift_index(ix, nx);
     for (int iy = 0; iy < ny; ++iy) {
+      int sy = fft_shift_index(iy, ny);
       for (int iz = 0; iz < nz; ++iz) {
+        int sz = fft_shift_index(iz, nz);
         auto flat =
             inqkit::detail::grid_layout::flatten_index(ix, iy, iz, ny, nz);
-        field.values[flat] = hc[ix][iy][iz];
+        field.values[flat] = hc[sx][sy][sz];
       }
     }
   }
@@ -182,12 +198,16 @@ inline RealField3D orbital(inq::systems::electrons const &electrons,
   field.dz_bohr = spacing[2];
   field.values.resize(static_cast<std::size_t>(nx) * ny * nz);
 
+  // FFT-shift output -> INQ array index, same as in density::total.
   for (int ix = 0; ix < nx; ++ix) {
+    int sx = fft_shift_index(ix, nx);
     for (int iy = 0; iy < ny; ++iy) {
+      int sy = fft_shift_index(iy, ny);
       for (int iz = 0; iz < nz; ++iz) {
+        int sz = fft_shift_index(iz, nz);
         auto flat =
             inqkit::detail::grid_layout::flatten_index(ix, iy, iz, ny, nz);
-        auto psi = hc[ix][iy][iz][local_orbital];
+        auto psi = hc[sx][sy][sz][local_orbital];
         auto re = inq::real(psi);
         auto im = inq::imag(psi);
         field.values[flat] = re * re + im * im;
