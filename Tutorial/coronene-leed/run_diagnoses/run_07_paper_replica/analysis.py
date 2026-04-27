@@ -100,11 +100,16 @@ def _convert_all_vti():
         )
         if not metas:
             continue
+        existing_vti = list(out_dir.glob("*.vti"))
+        if len(existing_vti) >= len(metas):
+            print(f"  VTI: {src_name} already converted ({len(existing_vti)} files), skipping")
+            continue
         convert_real_series_to_vti(metas, out_dir, array_name="density")
         print(f"  VTI: {src_name} -> {len(metas)} file(s)")
 
     gs_orb = RESULTS / "density_gs_orbitals"
     if gs_orb.exists():
+        any_converted = False
         for orb_dir in sorted(gs_orb.iterdir()):
             if not orb_dir.is_dir():
                 continue
@@ -116,9 +121,13 @@ def _convert_all_vti():
             if not metas:
                 continue
             out_dir = VTI_ROOT / "density_gs_orbitals" / orb_dir.name
+            existing_vti = list(out_dir.glob("*.vti")) if out_dir.exists() else []
+            if len(existing_vti) >= len(metas):
+                continue
             out_dir.mkdir(parents=True, exist_ok=True)
             convert_real_series_to_vti(metas, out_dir, array_name="density")
-        print(f"  VTI: density_gs_orbitals converted")
+            any_converted = True
+        print(f"  VTI: density_gs_orbitals {'converted' if any_converted else 'already up to date'}")
 
 
 def _plot_observables():
@@ -131,6 +140,10 @@ def _plot_observables():
         r = csv.DictReader(fh)
         cols = r.fieldnames or []
         for row in r:
+            # Skip incomplete rows (e.g. last row when run still writing,
+            # or any row with a missing/empty cell).
+            if any(row.get(c) in (None, "") for c in cols):
+                continue
             rows.append(row)
     if not rows:
         return
@@ -213,6 +226,49 @@ def _plot_leed_panels():
             plt.close(fig)
         print(f"  Wrote {label} panels: {out_dir.relative_to(RUN_DIR)}")
 
+    # Per-step snapshot evolution GIFs: one GIF per screen, frames = step dirs.
+    snap_root = RESULTS / "screens_snapshots"
+    if snap_root.exists():
+        step_dirs = sorted(
+            (d for d in snap_root.iterdir() if d.is_dir()),
+            key=_natural_key,
+        )
+        if step_dirs:
+            screen_names = sorted(
+                {p.name for d in step_dirs for p in d.glob("screen_*.dat")},
+                key=lambda n: _natural_key(Path(n)),
+            )
+            out_dir = VIS / "leed_snapshots"
+            out_dir.mkdir(parents=True, exist_ok=True)
+            for sname in screen_names:
+                arrs, labels = [], []
+                for d in step_dirs:
+                    p = d / sname
+                    if not p.exists():
+                        continue
+                    try:
+                        arrs.append(np.loadtxt(p))
+                        labels.append(d.name)
+                    except Exception:
+                        continue
+                if not arrs:
+                    continue
+                vmax = max(a.max() for a in arrs if a.size)
+                vmin = 0.0
+                frames = []
+                for arr, lab in zip(arrs, labels):
+                    fig, ax = plt.subplots(figsize=(4, 4), dpi=80)
+                    ax.imshow(arr, cmap="inferno", origin="lower",
+                              vmin=vmin, vmax=vmax)
+                    ax.set_title(f"{Path(sname).stem} {lab}")
+                    fig.tight_layout()
+                    fig.canvas.draw()
+                    frames.append(np.asarray(fig.canvas.buffer_rgba())[:, :, :3].copy())
+                    plt.close(fig)
+                iio.imwrite(out_dir / f"{Path(sname).stem}_evolution.gif",
+                            frames, fps=GIF_FPS, loop=0)
+            print(f"  Wrote LEED snapshot GIFs: {out_dir.relative_to(RUN_DIR)}")
+
 
 def _plot_density_gifs():
     VIS.mkdir(parents=True, exist_ok=True)
@@ -253,13 +309,6 @@ def _plot_density_gifs():
 
 
 def _plot_overlap_gifs():
-    summary = _read_summary(RESULTS / "run_summary.txt")
-    n_occupied = int(summary.get("n_occupied", 0))
-    wp_idx = int(summary.get("wp_state_index", -1))
-    if n_occupied <= 0 or wp_idx < 0:
-        print("  Skip overlap: cannot read n_occupied/wp_state_index from run_summary.txt")
-        return
-
     overlap_dir = RESULTS / "overlap"
     if not (overlap_dir / "index.csv").exists():
         print("  Skip overlap: results/overlap/index.csv not found")
@@ -271,6 +320,20 @@ def _plot_overlap_gifs():
         return
 
     n_ref_raw, n_evolved_raw = series[0].matrix.shape
+
+    # Prefer values from run_summary.txt; fall back to known coronene values
+    # so this runs mid-simulation before run.cpp writes the summary.
+    summary = _read_summary(RESULTS / "run_summary.txt")
+    n_occupied = int(summary.get("n_occupied", 0))
+    wp_idx = int(summary.get("wp_state_index", -1))
+    if n_occupied <= 0 or wp_idx < 0:
+        # C++ records (wp_idx) x (wp_idx+1); coronene C24H12 closed-shell:
+        # 54 occupied = (24*4 + 12*1)/2.
+        n_occupied = 54
+        wp_idx = n_evolved_raw - 1
+        print(f"  run_summary.txt missing; using fallback n_occupied={n_occupied}, "
+              f"wp_idx={wp_idx} (inferred from matrix shape)")
+
     print(f"  Overlap raw shape = {n_ref_raw} x {n_evolved_raw}, "
           f"n_occupied = {n_occupied}, wp_idx = {wp_idx}")
 

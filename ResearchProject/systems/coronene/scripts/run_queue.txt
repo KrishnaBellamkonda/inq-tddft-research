@@ -1,0 +1,18 @@
+# Coronene replication queue — run_base + gs_35x35x60_cut40 already done /
+# in flight on GPU 0; remaining jobs below are dispatched across the two GPUs
+# by dispatch_runs.py. Order: remaining GS saves first, then propagations.
+
+# 1. Remaining GS save runs.
+/local/data/public/skcb2/tddft/ResearchProject/systems/coronene/save_gs/gs_35x35x80_cut40
+/local/data/public/skcb2/tddft/ResearchProject/systems/coronene/save_gs/gs_35x35x40_cut40
+
+# 2. Propagation runs (run_base already running on GPU 0; not listed here).
+/local/data/public/skcb2/tddft/ResearchProject/systems/coronene/run_E30
+/local/data/public/skcb2/tddft/ResearchProject/systems/coronene/run_E800
+/local/data/public/skcb2/tddft/ResearchProject/systems/coronene/run_s0p33
+/local/data/public/skcb2/tddft/ResearchProject/systems/coronene/run_s3
+/local/data/public/skcb2/tddft/ResearchProject/systems/coronene/run_E800_s0p33
+/local/data/public/skcb2/tddft/ResearchProject/systems/coronene/run_E30_s3
+/local/data/public/skcb2/tddft/ResearchProject/systems/coronene/run_b18_35x35x80
+/local/data/public/skcb2/tddft/ResearchProject/systems/coronene/run_b6_35x35x80
+/local/data/public/skcb2/tddft/ResearchProject/systems/coronene/run_35x35x40

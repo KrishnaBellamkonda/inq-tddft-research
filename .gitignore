@@ -3,6 +3,7 @@ inq/
 angelo-jellium/
 venv/
 ParaView-6.1.0-MPI-Linux-Python3.12-x86_64.tar.gz
+ParaView-6.1.0-MPI-Linux-Python3.12-x86_64/
 
 # Build folders
 build/
@@ -35,9 +36,27 @@ results/
 *.h5
 *.hdf5
 
+# electrons.save() / electrons.load() checkpoint directories
+checkpoints/
+**/checkpoints/
+
 # Large rendered/media
 *.png
 *.pdf
+*.gif
+*.mp4
+
+# Per-run runtime logs (dispatcher / postprocess / inq-run)
+*.log
+**/run.log
+**/build_run.log
+**/dispatch.log
+**/dispatch.stdout
+**/auto_postprocess.log
+**/auto_postprocess.stdout
+**/auto_postprocess_done.txt
+profile.dat
+**/profile.dat
 
 # Editor/system noise
 .DS_Store

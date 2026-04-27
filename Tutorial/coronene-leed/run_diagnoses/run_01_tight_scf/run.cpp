@@ -10,7 +10,7 @@
 // LEED patterns with a spurious cross-like artifact.
 //
 // This run repeats the run_07 ground-state calculation with:
-//   - energy_tolerance: 1e-4 Ha -> 1e-8 Ha
+//   - energy_tolerance: 1e-4 Ha -> 1e-6 Ha (relaxed from 1e-8 after limit-cycle observed)
 //   - max_steps:        300     -> 1000
 //   - mixing_ndim:      8       -> 16  (deeper Broyden history)
 //
@@ -50,7 +50,7 @@ static std::string orbital_tag(int ist) {
 }
 
 int main() {
-    std::cout << "\n=== diagnostic run 01: coronene tight SCF (1e-8 Ha) ===\n";
+    std::cout << "\n=== diagnostic run 01: coronene SCF (1e-6 Ha) ===\n";
 
     auto cell = systems::cell::orthorhombic(
         LX_BOHR * 1.0_b, LY_BOHR * 1.0_b, LZ_BOHR * 1.0_b
@@ -70,7 +70,7 @@ int main() {
         electrons,
         options::theory{}.pbe(),
         options::ground_state{}
-            .energy_tolerance(1e-8_Ha)
+            .energy_tolerance(1e-6_Ha)
             .max_steps(1000)
             .broyden_mixing()
             .mixing_ndim(8)
@@ -130,7 +130,7 @@ int main() {
         summary << "xc = pbe\n";
         summary << "cutoff_ha = 54.0\n";
         summary << "extra_states = 8\n";
-        summary << "energy_tolerance_ha = 1e-8\n";
+        summary << "energy_tolerance_ha = 1e-6\n";
         summary << "max_steps = 1000\n";
         summary << "mixing = broyden\n";
         summary << "mixing_ndim = 16\n";

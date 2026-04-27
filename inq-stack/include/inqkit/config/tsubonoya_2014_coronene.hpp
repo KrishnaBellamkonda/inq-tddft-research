@@ -66,8 +66,11 @@ inline const     double WP_KZ = -WP_K0;
 // Paper: Δt = 4.84e-4 fs = 0.020 a.u. for the LEED window.
 //        10000 steps total (LEED phase).
 inline constexpr double DT_AU                = 0.020;            // ~4.84e-4 fs
-inline constexpr int    N_STEPS              = 10000;            // LEED window total
-inline constexpr int    WRITE_EVERY          = 30;               // density frame cadence
+// 600 steps = 12.0 a.u. = 0.290 fs. WP traverses from z=+12 Bohr to
+// z=-29.95 Bohr (cell -Lz/2) at v=|k|=3.834 a.u., which takes ~10.94 a.u.;
+// 600 steps is the WP transit time + small margin.
+inline constexpr int    N_STEPS              = 600;
+inline constexpr int    WRITE_EVERY          = 10;               // density frame cadence
 inline constexpr int    SCREEN_SNAP_EVERY    = 30;               // per-step screen snapshot cadence
 inline constexpr int    N_SCREENS            = 20;
 

@@ -4,6 +4,23 @@ Deferred tasks for the coronene WP scattering project. Items here are not blocke
 
 ---
 
+## Legacy run-directory cleanup
+
+After the new replication framework (see `docs/plans/coronene-replication.md`)
+has reproduced the important runs, lump every legacy buggy coronene run under a
+single `legacy/` subtree:
+
+- `ResearchProject/systems/coronene/04_leed_simulation/` (run_001–005, all `z=L/2` shifted geometry)
+- `ResearchProject/systems/coronene/coronene-wp-rt/` (run_01–06, all `z=L/2` shifted geometry)
+- `Tutorial/coronene-leed/run_diagnoses/run_01_tight_scf` … `run_05_quarter_coronene` (buggy z=L/2 xyz files)
+- `ResearchProject/systems/coronene/run_propagate_paper_replica/` and `run_save_gs_paper_replica/` once the new `save_gs/`/`run_*/` framework supersedes them
+
+Move under `ResearchProject/systems/coronene/legacy/` (or per-tree `legacy/`)
+rather than deleting; the on-disk artefacts are useful for diff-vs-corrected
+comparisons.
+
+---
+
 ## Integration tests
 
 - **End-to-end smoke test:** Run `04_leed_simulation` on CPU with a reduced parameter set (E_cut=20 Ha, 10 steps, 1 snapshot) and verify that all output files are produced with sensible values.
