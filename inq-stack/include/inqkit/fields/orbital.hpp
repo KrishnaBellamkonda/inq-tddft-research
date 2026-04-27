@@ -16,6 +16,7 @@
 
 #include <inqkit/detail/grid_layout.hpp>
 #include <inqkit/fields/complex_field_3d.hpp>
+#include <inqkit/fields/density.hpp>   // fft_shift_index
 
 #include <complex>
 #include <stdexcept>
@@ -104,12 +105,20 @@ inline ComplexField3D wavefunction(inq::systems::electrons const &electrons,
   field.dz_bohr = spacing[2];
   field.values.resize(static_cast<std::size_t>(nx) * ny * nz);
 
+  // Output index ix runs left-to-right (ix = 0 at -L/2, ix = nx-1 near +L/2).
+  // INQ's hypercubic is FFT-natural, so we read hc[fft_shift_index(ix), ...].
+  // Without this shift the exported wavefunction is spatially scrambled
+  // relative to the metadata origin (-L/2). Same convention as
+  // density.hpp::total / density.hpp::orbital.
   for (int ix = 0; ix < nx; ++ix) {
+    int sx = inqkit::fields::density::fft_shift_index(ix, nx);
     for (int iy = 0; iy < ny; ++iy) {
+      int sy = inqkit::fields::density::fft_shift_index(iy, ny);
       for (int iz = 0; iz < nz; ++iz) {
+        int sz = inqkit::fields::density::fft_shift_index(iz, nz);
         auto flat =
             inqkit::detail::grid_layout::flatten_index(ix, iy, iz, ny, nz);
-        auto psi = hc[ix][iy][iz][local_orbital];
+        auto psi = hc[sx][sy][sz][local_orbital];
 
         field.values[flat] =
             std::complex<double>(inq::real(psi), inq::imag(psi));

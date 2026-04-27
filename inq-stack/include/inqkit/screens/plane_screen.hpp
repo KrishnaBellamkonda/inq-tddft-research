@@ -47,13 +47,21 @@ class PlaneScreen {
   std::string label_;
 
   // ── Nearest-z-index helper ──────────────────────────────────────────────
+  // INQ stores fields in FFT-natural order: array index 0 corresponds to
+  // physical z = 0 (cell centre); indices in (Nz/2, Nz-1] map to negative
+  // physical z. The previous implementation clamped to [0, Nz-1], which
+  // pinned every negative-z screen to grid index 0 (the molecule plane) —
+  // every "transmission" screen was therefore sampling z = 0 instead of
+  // the requested plane. This wrap is the inverse of grid::to_symmetric_range
+  // used by point_op_.rvector_cartesian().
   static int iz_nearest(inq::systems::electrons const &electrons,
                         double z_target) {
     auto const &basis = electrons.states_basis();
     int Nz = basis.sizes()[2];
     double dz = basis.rspacing()[2];
     int iz = static_cast<int>(std::round(z_target / dz));
-    return std::max(0, std::min(iz, Nz - 1));
+    int iz_nat = ((iz % Nz) + Nz) % Nz;     // FFT-natural wrap into [0, Nz)
+    return iz_nat;
   }
 
 public:
