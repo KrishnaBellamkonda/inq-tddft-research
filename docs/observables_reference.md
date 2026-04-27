@@ -340,3 +340,45 @@ physically meaningful.
 
 **Code**: `inq-stack/python/inqview/postprocess/observables.py`
 (`_extended_spectra`, `_hann_fft`, `_build_variants`, `_plot_compare`).
+
+---
+
+## 12. Ground-state orbital eigenvalues + occupations
+
+The KS orbital eigenvalues (`ε_i`) and their fractional occupations (`f_i`)
+of the ground state are essential context for every WP-RT run: they fix
+the HOMO/LUMO gap, mark the WP injection slot's energy, and seed the
+overlap analysis. Every coronene run therefore writes them once, right
+after `electrons.load(<checkpoint>)` and before WP injection.
+
+**Writer**: `run_template.hpp::run_propagation` calls a small helper
+`coronene::run_template::dump_eigenvalues(electrons, dir)` that flushes
+two CSVs.
+
+**Output paths**:
+
+```
+results/raw/observables/eigenvalues/
+  eigenvalues.csv      # cols: state_index, eigenvalue_ha, eigenvalue_ev
+  occupations.csv      # cols: state_index, occupation
+```
+
+The state index runs `0..n_states-1` (with `n_states = n_occupied +
+extra_states`); the WP slot is `state_index = n_occupied + extra_states - 1`
+(populated to occupation 1.0 only after the WP injection block runs).
+
+**Retrofit for existing runs**: `scripts/extract_eigenvalues_from_log.py`
+parses each `save_gs/<sig>/run.log` (the GS save's INQ log already prints
+all eigenvalues per state at SCF convergence) and copies the resulting
+CSVs into every run that loaded the matching checkpoint.
+
+**Postprocess viz** in `analysis/observables/eigenvalues/`:
+
+| File | Content |
+|---|---|
+| `eigenvalues_levels.png` | horizontal level diagram, eV scale, occupied vs unoccupied colour-coded; HOMO/LUMO marked; WP slot dashed-line annotated. |
+| `eigenvalues_dos.png` | density-of-states histogram (Gaussian-broadened, `σ_DOS = 0.1 eV` default), eV axis. |
+| `eigenvalue_table.txt` | plain-text dump of state, ε_ha, ε_ev, occ for quick reference. |
+
+These are produced by the `observables` postprocess phase whenever the
+input CSVs exist; phase is skipped silently otherwise.

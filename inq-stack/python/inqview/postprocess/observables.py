@@ -106,7 +106,143 @@ def run(results_dir: Path, *, run_name: str, rebuild: bool, **_) -> dict:
     # save numerical CSVs alongside per-variant PNGs and a 3-curve overlay.
     notes["extended_spectra"] = _extended_spectra(
         df, out_dir, raw_dir, run_name, rebuild)
+    notes["eigenvalues"] = _eigenvalue_plots(
+        results_dir, out_dir, raw_dir, run_name, rebuild)
     return notes
+
+
+def _eigenvalue_plots(results_dir: Path, out_dir: Path, raw_dir: Path,
+                     run_name: str, rebuild: bool) -> dict:
+    """Read raw/observables/eigenvalues/{eigenvalues,occupations}.csv and
+    produce the level diagram + DOS + plain-text table in
+    analysis/observables/eigenvalues/.
+
+    Silent skip if the CSVs don't exist (legacy runs predate the
+    eigenvalue writer; retrofit via scripts/retrofit_eigenvalues.py).
+    """
+    import numpy as np
+
+    eig_dir_in = raw_dir / "eigenvalues"
+    eig_csv = eig_dir_in / "eigenvalues.csv"
+    occ_csv = eig_dir_in / "occupations.csv"
+    if not eig_csv.exists():
+        return {"skipped": "eigenvalues.csv missing — run save_gs and "
+                            "scripts/retrofit_eigenvalues.py to populate"}
+
+    out_eig = _common.ensure_dir(out_dir / "eigenvalues")
+
+    # Parse eigenvalues.csv: state_index, eigenvalue_ha, eigenvalue_ev
+    eig_data = np.loadtxt(eig_csv, delimiter=",", skiprows=1)
+    if eig_data.ndim == 1:
+        eig_data = eig_data[None, :]
+    state_idx = eig_data[:, 0].astype(int)
+    eig_ev = eig_data[:, 2]
+
+    # Parse occupations.csv (may be shorter than n_states if extra slots).
+    occ = np.zeros(eig_data.shape[0])
+    if occ_csv.exists():
+        occ_data = np.loadtxt(occ_csv, delimiter=",", skiprows=1)
+        if occ_data.ndim == 1:
+            occ_data = occ_data[None, :]
+        for i in range(occ_data.shape[0]):
+            si = int(occ_data[i, 0])
+            if 0 <= si < occ.size:
+                occ[si] = occ_data[i, 1]
+
+    # Identify HOMO / LUMO indices (HOMO = highest with occ > 1e-3).
+    occupied_mask = occ > 1e-3
+    homo_idx = int(state_idx[occupied_mask][-1]) if occupied_mask.any() else -1
+    lumo_idx = (int(state_idx[~occupied_mask][0])
+                if (~occupied_mask).any() else -1)
+
+    import matplotlib.pyplot as plt
+
+    # 1. Plain-text table.
+    table_path = out_eig / "eigenvalue_table.txt"
+    if _common.need_rebuild(table_path, rebuild):
+        with table_path.open("w") as fh:
+            fh.write("# state_index, eigenvalue_ha, eigenvalue_ev, occupation\n")
+            for si, ev, o in zip(state_idx,
+                                 eig_data[:, 1], occ):
+                fh.write(f"{si:4d}  {eig_data[si, 1]:18.10f}  {ev:14.6f}  {o:6.4f}\n")
+
+    # 2. Level diagram (horizontal lines per state, eV scale).
+    levels_png = out_eig / "eigenvalues_levels.png"
+    if _common.need_rebuild(levels_png, rebuild):
+        fig, ax = plt.subplots(figsize=(6, max(4, 0.12 * eig_ev.size)),
+                               dpi=120)
+        for si, ev, o in zip(state_idx, eig_ev, occ):
+            colour = "#2070b8" if o > 1e-3 else "#bbbbbb"
+            lw = 2.0 if o > 1e-3 else 1.0
+            ax.hlines(ev, 0.0, 1.0, colors=colour, linewidth=lw)
+            ax.text(1.05, ev, f"{si} (occ={o:.2g})", va="center",
+                    fontsize="x-small", color=colour)
+        if homo_idx >= 0:
+            ax.hlines(eig_ev[homo_idx], -0.05, 1.0, colors="#cc0000",
+                      linewidth=1.0, linestyles="--")
+            ax.text(-0.10, eig_ev[homo_idx], "HOMO", color="#cc0000",
+                    ha="right", va="center", fontsize="small")
+        if lumo_idx >= 0:
+            ax.hlines(eig_ev[lumo_idx], -0.05, 1.0, colors="#cc0000",
+                      linewidth=1.0, linestyles="--")
+            ax.text(-0.10, eig_ev[lumo_idx], "LUMO", color="#cc0000",
+                    ha="right", va="center", fontsize="small")
+            gap = eig_ev[lumo_idx] - eig_ev[homo_idx]
+            ax.set_title(f"{run_name}: KS eigenvalue level diagram"
+                         f"   (HOMO–LUMO gap = {gap:.3f} eV)")
+        else:
+            ax.set_title(f"{run_name}: KS eigenvalue level diagram")
+        ax.set_xlim(-0.30, 1.45)
+        ax.set_xticks([])
+        ax.set_ylabel("ε (eV)")
+        fig.tight_layout()
+        fig.savefig(levels_png)
+        plt.close(fig)
+
+    # 3. Density of states (Gaussian-broadened histogram).
+    dos_png = out_eig / "eigenvalues_dos.png"
+    if _common.need_rebuild(dos_png, rebuild):
+        sigma_dos_ev = 0.1
+        e_min = eig_ev.min() - 5 * sigma_dos_ev
+        e_max = eig_ev.max() + 5 * sigma_dos_ev
+        e_grid = np.linspace(e_min, e_max, 2000)
+        gauss = np.exp(-((e_grid[None, :] - eig_ev[:, None]) ** 2)
+                        / (2 * sigma_dos_ev ** 2))
+        gauss /= np.sqrt(2 * np.pi) * sigma_dos_ev
+        # Total + occupied DOS.
+        dos_total = gauss.sum(axis=0)
+        dos_occ = (gauss * occ[:, None]).sum(axis=0)
+
+        fig, ax = plt.subplots(figsize=(7, 4), dpi=120)
+        ax.plot(e_grid, dos_total, color="#444444", linewidth=1.0,
+                label="all states")
+        ax.fill_between(e_grid, 0, dos_occ, color="#2070b8",
+                        alpha=0.55, label="occupied (weighted)")
+        if homo_idx >= 0:
+            ax.axvline(eig_ev[homo_idx], color="#cc0000", linewidth=0.8,
+                       linestyle="--", label="HOMO")
+        if lumo_idx >= 0:
+            ax.axvline(eig_ev[lumo_idx], color="#cc0000", linewidth=0.8,
+                       linestyle=":", label="LUMO")
+        ax.set_xlabel("ε (eV)")
+        ax.set_ylabel(r"DOS (1/eV)")
+        ax.set_title(f"{run_name}: KS density of states "
+                     f"(σ_DOS = {sigma_dos_ev} eV)")
+        ax.legend(fontsize="x-small")
+        fig.tight_layout()
+        fig.savefig(dos_png)
+        plt.close(fig)
+
+    return {
+        "out_dir": str(out_eig),
+        "n_states": int(eig_data.shape[0]),
+        "homo_idx": homo_idx,
+        "lumo_idx": lumo_idx,
+        "homo_lumo_gap_ev": (
+            float(eig_ev[lumo_idx] - eig_ev[homo_idx])
+            if homo_idx >= 0 and lumo_idx >= 0 else None
+        ),
+    }
 
 
 # ──────────────────────────────────────────────────────────────────────────

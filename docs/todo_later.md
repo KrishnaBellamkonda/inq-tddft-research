@@ -221,3 +221,70 @@ not a physical response — `mean_subtracted` is fine there.
 `inq-stack/python/inqview/postprocess/observables.py::_extended_spectra`
 should mark the chosen variant as the canonical one (e.g. by emitting
 it under a `spectrum_<col>.png` alias alongside the variant grid).
+
+---
+
+## Ground-state KS eigenvalues + occupations
+
+The HOMO/LUMO gap, the WP slot's energy, and the seed for the overlap
+analysis are all encoded in the GS KS eigenvalues `ε_i` and their
+fractional occupations `f_i`. These are *not* currently emitted by any
+run; the SCF log carries them but no post-run consumer can read them
+back without parsing log text.
+
+**Action — future runs**:
+
+* Add `coronene::run_template::dump_eigenvalues(electrons, out_dir)`
+  to `shared/cpp/run_template.hpp`, called once right after
+  `electrons.load(<gs_checkpoint>)` and before the WP injection.
+* Output CSVs at:
+  ```
+  results/raw/observables/eigenvalues/
+    eigenvalues.csv      # state_index, eigenvalue_ha, eigenvalue_ev
+    occupations.csv      # state_index, occupation
+  ```
+* Postprocess phase `observables` reads these and produces, in
+  `results/analysis/observables/eigenvalues/`:
+  - `eigenvalues_levels.png` (horizontal level diagram, HOMO/LUMO + WP slot marked)
+  - `eigenvalues_dos.png` (Gaussian-broadened DOS, σ default 0.1 eV)
+  - `eigenvalue_table.txt`
+
+**Action — already-completed runs**: retrofit via
+`scripts/extract_eigenvalues_from_log.py` which parses the SCF log
+under each `save_gs/<sig>/run.log` (eigenvalues are printed per state
+at SCF convergence) and copies the CSVs into every run that loaded the
+matching checkpoint.
+
+Documented in `docs/observables_reference.md` §12.
+
+---
+
+## Other useful additions to consider
+
+Three things that would improve interpretability or reproducibility but
+are not yet in the framework:
+
+1. **HOMO/LUMO orbital character on screens** — for each transmission /
+   backscattering screen, project the diffracted density onto the
+   GS orbitals (HOMO, HOMO−1, LUMO) and plot which orbital character
+   dominates the scattered signal. Tells us whether the WP excited a
+   π-resonance, σ*, etc., rather than a generic continuum response.
+   Cheap to add given the eigenvalues + the existing per-step
+   `wp_overlap_with_gs_orbitals.csv`.
+
+2. **Norm-conservation diagnostic** — write `norm_per_state.csv` at
+   every WRITE_EVERY step (`Σ_r |ψ_i(r,t)|² · dV`) for every
+   evolved orbital including the WP. Lets us track WP norm over the
+   propagation directly (currently only `injection_report.txt` carries
+   the t=0 norm). Also catches numerical leakage if any orbital's norm
+   drifts beyond ~1e-3.
+
+3. **Energy-component decomposition spectrum** — same Hann + zero-pad
+   pipeline as §11 but applied to `energy_kinetic`, `energy_hartree`,
+   `energy_xc` separately, not just `energy_total`. The KE spectrum in
+   particular shows whether the post-collision excitation is dominated
+   by single-particle motion or by collective modes. Trivial to add
+   to the existing extended-spectra columns tuple.
+
+All three are deferred until the GS-eigenvalue retrofit + post-Branch-3
+verification cycle completes.

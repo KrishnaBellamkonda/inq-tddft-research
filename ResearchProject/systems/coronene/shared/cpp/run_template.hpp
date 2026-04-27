@@ -51,6 +51,7 @@
 #include <inqkit/wavepacket/injection_report.hpp>
 #include <inqkit/wavepacket/wavepacket.hpp>
 
+#include "eigenvalues_writer.hpp"
 #include "leed_screen_layout.hpp"
 #include "results_paths.hpp"
 
@@ -150,6 +151,12 @@ int run_propagation(std::string const &run_name,
             .extra_states(Cfg::EXTRA_STATES));
     electrons.load(gs_checkpoint_dir);
     std::cout << "  Loaded GS from " << gs_checkpoint_dir << "\n";
+
+    // Copy GS eigenvalues + occupations from the checkpoint into this
+    // run's results tree (silent no-op if the checkpoint predates Phase
+    // 4 and lacks them — the retrofit script then fills the gap).
+    coronene::eigenvalues::copy_from_checkpoint(
+        gs_checkpoint_dir, "results/raw/observables/eigenvalues");
 
     const int n_states    = electrons.states().num_states();
     const int n_electrons = electrons.states().num_electrons();

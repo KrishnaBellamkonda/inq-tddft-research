@@ -9,6 +9,7 @@
 #include <inqkit/io/real_field_3d_writer.hpp>
 
 #include "../../shared/configs/cell_35x35x40.hpp"
+#include "../../shared/cpp/eigenvalues_writer.hpp"
 
 #include <cmath>
 #include <filesystem>
@@ -88,6 +89,11 @@ int main() {
     std::filesystem::create_directories(CHECKPOINT_DIR);
     electrons.save(CHECKPOINT_DIR);
     std::cout << "  Wrote checkpoint to " << CHECKPOINT_DIR << "\n";
+
+    coronene::eigenvalues::dump(electrons, CHECKPOINT_DIR);
+    coronene::eigenvalues::dump(electrons,
+                                "results/raw/observables/eigenvalues");
+    std::cout << "  Wrote eigenvalues + occupations CSVs\n";
 
     std::filesystem::create_directories("results/density_gs_system");
     {
