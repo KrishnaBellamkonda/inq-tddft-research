@@ -32,14 +32,44 @@ def load_observables(csv_path: PathLike) -> pd.DataFrame:
     return df
 
 
-def plot_energy_vs_time(
+def plot_total_energy_vs_time(
     csv_path: PathLike,
     ax: "plt.Axes | None" = None,
     **kwargs,
 ) -> plt.Figure:
-    """Plot total and kinetic energy vs time.
+    """Plot ONLY the total energy vs time (TODO 1e).
 
-    Returns the Figure. Pass ax to embed in an existing axes.
+    Use ``plot_all_energy_components_vs_time`` for the multi-component
+    version (kinetic, Hartree, XC, total all on the same axes).
+    """
+    df = load_observables(csv_path)
+    defaults = DEFAULT_THEME.plot
+    own_fig = ax is None
+    if own_fig:
+        fig, ax = plt.subplots(figsize=defaults.figsize, dpi=defaults.dpi)
+    else:
+        fig = ax.figure
+    if "energy_total" not in df.columns:
+        raise ValueError(f"{csv_path}: energy_total column missing")
+    ax.plot(df["time_au"], df["energy_total"],
+            color=defaults.line_colors[0], label="E_total", **kwargs)
+    ax.set_xlabel("Time (a.u.)")
+    ax.set_ylabel("Total energy (Ha)")
+    ax.legend()
+    ax.set_title("Total energy vs Time")
+    fig.tight_layout()
+    return fig
+
+
+def plot_all_energy_components_vs_time(
+    csv_path: PathLike,
+    ax: "plt.Axes | None" = None,
+    **kwargs,
+) -> plt.Figure:
+    """Plot every available energy component on a single axes.
+
+    Components rendered when present in the CSV:
+    energy_total, energy_kinetic, energy_hartree, energy_xc.
     """
     df = load_observables(csv_path)
     defaults = DEFAULT_THEME.plot
@@ -65,9 +95,14 @@ def plot_energy_vs_time(
     ax.set_xlabel("Time (a.u.)")
     ax.set_ylabel("Energy (Ha)")
     ax.legend()
-    ax.set_title("Energy vs Time")
+    ax.set_title("All energy components vs Time")
     fig.tight_layout()
     return fig
+
+
+# Backwards-compatible alias: existing callers passing plot_energy_vs_time
+# get the multi-component figure (the historical behaviour).
+plot_energy_vs_time = plot_all_energy_components_vs_time
 
 
 def plot_current_vs_time(

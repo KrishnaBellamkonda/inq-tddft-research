@@ -34,11 +34,12 @@ def run(results_dir: Path, *, run_name: str, rebuild: bool, **_) -> dict:
     from .. import (
         FourierTransform,
         load_observables,
+        plot_all_energy_components_vs_time,
         plot_current_vs_time,
         plot_dipole_vs_time,
-        plot_energy_vs_time,
         plot_observables_summary,
         plot_spectrum,
+        plot_total_energy_vs_time,
     )
 
     df = load_observables(csv)
@@ -50,11 +51,13 @@ def run(results_dir: Path, *, run_name: str, rebuild: bool, **_) -> dict:
         plot_observables_summary(csv, out)
     notes["summary"] = str(out)
 
-    # Per-quantity plots
+    # Per-quantity plots. total_energy_vs_time.png contains ONLY E_total
+    # (TODO 1e); all_energies_vs_time.png contains every component.
     for fn, name in [
-        (plot_energy_vs_time, "total_energy_vs_time.png"),
-        (plot_current_vs_time, "current_components_vs_time.png"),
-        (plot_dipole_vs_time, "dipole_components_vs_time.png"),
+        (plot_total_energy_vs_time,         "total_energy_vs_time.png"),
+        (plot_all_energy_components_vs_time, "all_energies_vs_time.png"),
+        (plot_current_vs_time,              "current_components_vs_time.png"),
+        (plot_dipole_vs_time,               "dipole_components_vs_time.png"),
     ]:
         out = out_dir / name
         if _common.need_rebuild(out, rebuild):

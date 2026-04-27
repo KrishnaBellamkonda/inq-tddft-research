@@ -25,14 +25,64 @@ def fs_from_au(t_au: float) -> float:
 
 
 def title(run_name: str, what: str, *, step: int | None = None,
-          total_steps: int | None = None, time_au: float | None = None) -> str:
-    """Standard plot title: ``run_name: what [, step k/N, t = X.XX fs]``."""
-    parts = [f"{run_name}: {what}"]
+          total_steps: int | None = None, time_au: float | None = None,
+          multiline: bool = True) -> str:
+    """Plot title.
+
+    Two modes:
+
+    * ``multiline=True`` (default for animations): line 1 = ``run_name: what``;
+      line 2 = ``step k/N, t = X.XX fs`` (only those tokens that are non-None
+      appear). Matches the visualisation rule (TODO 1a).
+    * ``multiline=False``: legacy single-line ``run_name: what, step ..., t = ...``.
+    """
+    head = f"{run_name}: {what}"
+    sub_parts: list[str] = []
     if step is not None and total_steps is not None:
-        parts.append(f"step {step:d}/{total_steps:d}")
+        sub_parts.append(f"step {step:d}/{total_steps:d}")
     if time_au is not None:
-        parts.append(f"t = {sigfigs(fs_from_au(time_au))} fs")
-    return ", ".join(parts)
+        sub_parts.append(f"t = {sigfigs(fs_from_au(time_au))} fs")
+    sub = ", ".join(sub_parts)
+    if not sub:
+        return head
+    return f"{head}\n{sub}" if multiline else f"{head}, {sub}"
+
+
+def write_animation(out_stem: Path, png_paths: list[Path], *,
+                    fps: int = 8, also_mp4: bool = True) -> dict[str, Path]:
+    """Render an animation from ``png_paths`` to both GIF and MP4.
+
+    Returns the dict ``{"gif": Path, "mp4": Path | None}``. MP4 is silently
+    skipped if ``ffmpeg`` is not on PATH or imageio's libx264 plugin is
+    missing.
+
+    Each PNG file becomes one frame at the given fps. ``out_stem`` is the
+    path *without* extension (the helper appends ``.gif`` and ``.mp4``).
+    """
+    import imageio.v2 as imageio
+    import shutil
+    out_stem = Path(out_stem)
+    out_stem.parent.mkdir(parents=True, exist_ok=True)
+
+    gif_path = out_stem.with_suffix(".gif")
+    with imageio.get_writer(gif_path, mode="I", fps=fps, loop=0) as wr:
+        for p in png_paths:
+            wr.append_data(imageio.imread(p))
+
+    mp4_path: Path | None = None
+    if also_mp4 and shutil.which("ffmpeg"):
+        try:
+            mp4_path = out_stem.with_suffix(".mp4")
+            with imageio.get_writer(
+                mp4_path, fps=fps, codec="libx264", quality=8,
+                pixelformat="yuv420p", macro_block_size=1
+            ) as wr:
+                for p in png_paths:
+                    wr.append_data(imageio.imread(p))
+        except Exception:
+            mp4_path = None
+
+    return {"gif": gif_path, "mp4": mp4_path}
 
 
 def ensure_dir(p: Path) -> Path:

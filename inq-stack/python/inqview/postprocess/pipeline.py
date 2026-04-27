@@ -17,6 +17,7 @@ from typing import Callable, Iterable
 from . import (
     density,
     ground_state,
+    layout,
     observables,
     orbitals,
     overlap,
@@ -29,18 +30,21 @@ PathLike = str | Path
 PHASES: tuple[str, ...] = (
     "summary",
     "gs",
+    "layout",
     "observables",
     "density",
     "screens",
     "overlap",
     "orbitals",
     "paraview",
+    "paraview_3d",
 )
 
 # Phase -> module entry point
 _PHASE_FUNCS: dict[str, Callable] = {
     "summary":     run_summary.run,
     "gs":          ground_state.run,
+    "layout":      layout.run,
     "observables": observables.run,
     "density":     density.run,
     "screens":     screens.run,
@@ -122,6 +126,16 @@ def run(
                     log.info("[skip] %s — %s", phase, res.skipped[phase])
                     continue
                 out = paraview_runner(results_dir, run_name, rebuild)
+            elif phase == "paraview_3d":
+                if skip_paraview:
+                    res.skipped[phase] = (
+                        "paraview_3d skipped (skip_paraview=True; use --with-paraview)"
+                    )
+                    log.info("[skip] %s — %s", phase, res.skipped[phase])
+                    continue
+                from . import paraview_3d
+                out = paraview_3d.run(
+                    results_dir, run_name=run_name, rebuild=rebuild, **opts)
             else:
                 fn = _PHASE_FUNCS[phase]
                 out = fn(

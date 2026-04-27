@@ -14,6 +14,8 @@ from .paraview import AnimationSpec, ParaViewPipeline, VolumeRenderSpec
 from .plots import (
     load_observables,
     plot_energy_vs_time,
+    plot_total_energy_vs_time,
+    plot_all_energy_components_vs_time,
     plot_current_vs_time,
     plot_dipole_vs_time,
     plot_observables_summary,
@@ -50,6 +52,8 @@ __all__ = [
     "ParaViewPipeline",
     "load_observables",
     "plot_energy_vs_time",
+    "plot_total_energy_vs_time",
+    "plot_all_energy_components_vs_time",
     "plot_current_vs_time",
     "plot_dipole_vs_time",
     "plot_observables_summary",

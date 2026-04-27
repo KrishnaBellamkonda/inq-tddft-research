@@ -104,36 +104,45 @@ def run(results_dir: Path, *, run_name: str, rebuild: bool, **_) -> dict:
             if not patterns:
                 continue
             data = np.stack([p.data for p in patterns], axis=0)
-            vmin, vmax = float(data.min()), float(np.percentile(data, 99))
-            if vmax <= vmin:
-                vmax = vmin + 1.0
-            out_gif = out_inst / f"screen_{sid}_time_evolution.gif"
-            if not _common.need_rebuild(out_gif, rebuild):
-                continue
-            tmp = _common.ensure_dir(out_inst / f".__tmp_{sid}")
-            pngs: list[Path] = []
-            for (step, _path), pat in zip(items, patterns):
-                fig, ax = plt.subplots(figsize=(5, 5), dpi=120)
-                ax.imshow(pat.data, origin="lower", cmap="viridis",
-                          extent=pat.extent_bohr, aspect="equal",
-                          vmin=vmin, vmax=vmax)
-                ax.set_xlabel("x (bohr)"); ax.set_ylabel("y (bohr)")
-                ax.set_title(_common.title(
-                    run_name, f"instantaneous screen_{sid}",
-                    step=step, total_steps=items[-1][0],
-                    time_au=pat.total_time_au,
-                ))
-                fig.tight_layout()
-                p = tmp / f"f_{step:06d}.png"
-                fig.savefig(p)
-                plt.close(fig)
-                pngs.append(p)
-            with imageio.get_writer(out_gif, mode="I", fps=6, loop=0) as wr:
+            vmin_lin = float(data.min())
+            vmax_lin = float(np.percentile(data, 99))
+            if vmax_lin <= vmin_lin:
+                vmax_lin = vmin_lin + 1.0
+            vmin_log = 0.0
+            vmax_log = float(np.log1p(vmax_lin))
+
+            for scale_label, transform, vmin, vmax, cbar in [
+                ("",     lambda a: a,  vmin_lin, vmax_lin, "intensity (a.u.)"),
+                ("_log", np.log1p,     vmin_log, vmax_log, r"log$_{10}$(1 + intensity)"),
+            ]:
+                stem = out_inst / f"screen_{sid}_time_evolution{scale_label}"
+                gif_path = stem.with_suffix(".gif")
+                if not _common.need_rebuild(gif_path, rebuild):
+                    continue
+                tmp = _common.ensure_dir(out_inst / f".__tmp_{sid}{scale_label}")
+                pngs: list[Path] = []
+                for (step, _path), pat in zip(items, patterns):
+                    fig, ax = plt.subplots(figsize=(5, 5), dpi=120)
+                    im = ax.imshow(transform(pat.data), origin="lower",
+                                   cmap="viridis",
+                                   extent=pat.extent_bohr, aspect="equal",
+                                   vmin=vmin, vmax=vmax)
+                    plt.colorbar(im, ax=ax, label=cbar)
+                    ax.set_xlabel("x (bohr)"); ax.set_ylabel("y (bohr)")
+                    ax.set_title(_common.title(
+                        run_name, f"instantaneous screen_{sid}{scale_label}",
+                        step=step, total_steps=items[-1][0],
+                        time_au=pat.total_time_au,
+                    ))
+                    fig.tight_layout()
+                    p = tmp / f"f_{step:06d}.png"
+                    fig.savefig(p)
+                    plt.close(fig)
+                    pngs.append(p)
+                _common.write_animation(stem, pngs, fps=6)
                 for p in pngs:
-                    wr.append_data(imageio.imread(p))
-            for p in pngs:
-                p.unlink(missing_ok=True)
-            tmp.rmdir()
+                    p.unlink(missing_ok=True)
+                tmp.rmdir()
         notes["instantaneous"] = str(out_inst)
 
     # ---- time_windowed/ — flat PNGs per window-screen --------------------
@@ -157,20 +166,23 @@ def run(results_dir: Path, *, run_name: str, rebuild: bool, **_) -> dict:
         out_cc = _common.ensure_dir(out_dir / "coordinate_checks")
         first = next(iter(sorted(total_dir.glob("screen_*.dat"))), None)
         if first is not None:
-            pat = _load_pattern(first)
-            # Raw-index plot
+            pat = _load_pattern(first)  # already fftshifted by load_leed_pattern
+            # Raw-index plot: undo the fftshift so this image shows the
+            # FFT-natural layout the C++ writer produces (peak at corner with
+            # four-fold split — the failure mode the spec §17.6 warns about).
+            raw = np.fft.ifftshift(pat.data)
             fig, ax = plt.subplots(figsize=(5, 5), dpi=120)
-            ax.imshow(pat.data, origin="lower", cmap="viridis", aspect="equal")
-            ax.set_xlabel("array index ix")
+            ax.imshow(raw, origin="lower", cmap="viridis", aspect="equal")
+            ax.set_xlabel("array index ix (FFT-natural; index 0 = cell centre)")
             ax.set_ylabel("array index iy")
             ax.set_title(_common.title(
-                run_name, f"{pat.label} raw-index plot"))
+                run_name, f"{pat.label} raw-index plot (no fftshift)"))
             fig.tight_layout()
             out = out_cc / f"{pat.label}_raw_index_plot.png"
             if _common.need_rebuild(out, rebuild):
                 fig.savefig(out)
             plt.close(fig)
-            # Coordinate-mapped plot (uses extent in bohr)
+            # Coordinate-mapped plot (uses fftshifted data + extent in bohr)
             _save_total_panel(pat, out_cc / f"{pat.label}_coordinate_mapped_plot.png",
                               run_name, log_scale=False)
         notes["coordinate_checks"] = str(out_cc)

@@ -111,15 +111,17 @@ def run_hypothesis(
         notes["peak_intensity"] = str(out_png)
 
     # ---- 3. Energy/current overlays --------------------------------------
-    from .. import load_observables
+    from .. import load_observables, FourierTransform
     fig_e, ax_e = plt.subplots(figsize=(7, 4), dpi=120)
     fig_j, ax_j = plt.subplots(figsize=(7, 4), dpi=120)
     plotted = 0
+    dfs: dict[str, "object"] = {}
     for label, run_dir in runs:
         csv = Path(run_dir) / "results" / "raw" / "observables" / "observables.csv"
         if not csv.exists():
             continue
         df = load_observables(csv)
+        dfs[label] = df
         if "energy_total" in df.columns:
             ax_e.plot(df["time_au"], df["energy_total"] - df["energy_total"].iloc[0],
                       label=label, linewidth=1.0)
@@ -146,7 +148,130 @@ def run_hypothesis(
         if _common.need_rebuild(out_png, rebuild):
             fig_j.savefig(out_png)
 
+    # ---- 4. physics/ subfolder — extra cross-run overlays -----------------
+    physics_dir = _common.ensure_dir(out / "physics")
+
+    def _overlay_column(col: str, ylabel: str, title: str, fname: str) -> None:
+        fig, ax = plt.subplots(figsize=(7, 4), dpi=120)
+        any_plotted = False
+        for label, df in dfs.items():
+            if col in df.columns:
+                ax.plot(df["time_au"], df[col], label=label, linewidth=1.0)
+                any_plotted = True
+        if not any_plotted:
+            plt.close(fig); return
+        ax.set_xlabel("Time (a.u.)")
+        ax.set_ylabel(ylabel)
+        ax.set_title(title)
+        ax.legend(fontsize="x-small")
+        fig.tight_layout()
+        out_png = physics_dir / fname
+        if _common.need_rebuild(out_png, rebuild):
+            fig.savefig(out_png)
+        plt.close(fig)
+
+    def _overlay_spectrum(col: str, title: str, fname: str,
+                          x_max_au: float | None = 5.0) -> None:
+        fig, ax = plt.subplots(figsize=(7, 4), dpi=120)
+        any_plotted = False
+        ft = FourierTransform()
+        for label, df in dfs.items():
+            if col not in df.columns:
+                continue
+            try:
+                result = ft.transform_column(df, col)
+            except Exception:
+                continue
+            f = result.frequency_au
+            a = result.amplitude
+            if x_max_au is not None:
+                mask = f <= x_max_au
+                f = f[mask]; a = a[mask]
+            ax.plot(f, a, label=label, linewidth=1.0)
+            any_plotted = True
+        if not any_plotted:
+            plt.close(fig); return
+        ax.set_xlabel("Frequency (a.u.)")
+        ax.set_ylabel(f"|FFT({col})|")
+        ax.set_title(title)
+        ax.legend(fontsize="x-small")
+        fig.tight_layout()
+        out_png = physics_dir / fname
+        if _common.need_rebuild(out_png, rebuild):
+            fig.savefig(out_png)
+        plt.close(fig)
+
+    _overlay_column("current_x", "J_x (a.u.)", "x-current overlay",
+                    "current_x_overlay.png")
+    _overlay_column("current_y", "J_y (a.u.)", "y-current overlay",
+                    "current_y_overlay.png")
+    _overlay_column("current_z", "J_z (a.u.)", "z-current overlay",
+                    "current_z_overlay.png")
+    _overlay_column("dipole_x", "d_x (a.u.)", "x-dipole overlay",
+                    "dipole_x_overlay.png")
+    _overlay_column("dipole_y", "d_y (a.u.)", "y-dipole overlay",
+                    "dipole_y_overlay.png")
+    _overlay_column("dipole_z", "d_z (a.u.)", "z-dipole overlay",
+                    "dipole_z_overlay.png")
+
+    _overlay_spectrum("energy_total", "Energy spectrum overlay (FFT)",
+                      "energy_total_spectrum_overlay.png")
+    _overlay_spectrum("current_x", "J_x spectrum overlay", "current_x_spectrum_overlay.png")
+    _overlay_spectrum("current_y", "J_y spectrum overlay", "current_y_spectrum_overlay.png")
+    _overlay_spectrum("current_z", "J_z spectrum overlay", "current_z_spectrum_overlay.png")
+    _overlay_spectrum("dipole_x",  "d_x spectrum overlay",  "dipole_x_spectrum_overlay.png")
+    _overlay_spectrum("dipole_y",  "d_y spectrum overlay",  "dipole_y_spectrum_overlay.png")
+    _overlay_spectrum("dipole_z",  "d_z spectrum overlay",  "dipole_z_spectrum_overlay.png")
+
+    # ---- 5. WP-overlap residual at t_final per run ------------------------
+    import csv as _csv_mod
+    residuals: list[tuple[str, "object"]] = []
+    for label, run_dir in runs:
+        idx_csv = Path(run_dir) / "results" / "raw" / "overlap" / "index.csv"
+        if not idx_csv.exists():
+            continue
+        last_file = None
+        with idx_csv.open() as fh:
+            rdr = _csv_mod.DictReader(fh)
+            last_step = -1
+            for r in rdr:
+                step = int(r["step"])
+                if step > last_step:
+                    last_step = step
+                    last_file = r["file"]
+        if last_file is None:
+            continue
+        path = Path(run_dir) / "results" / "raw" / "overlap" / last_file
+        if not path.exists():
+            continue
+        with path.open() as fh:
+            for line in fh:
+                if line.startswith("#") or not line.strip():
+                    continue
+                vals = np.array([float(v) for v in line.strip().split(",")])
+                residuals.append((label, vals))
+                break
+
+    if residuals:
+        n_ref = max(v.size for _, v in residuals)
+        fig, ax = plt.subplots(figsize=(8, 4), dpi=120)
+        n_runs = len(residuals)
+        x = np.arange(n_ref)
+        bar_w = 0.8 / n_runs
+        for i, (label, vals) in enumerate(residuals):
+            ax.bar(x + (i - (n_runs - 1) / 2) * bar_w, vals, width=bar_w,
+                   label=label)
+        ax.set_xlabel("Ground-state KS orbital index i")
+        ax.set_ylabel(r"|⟨ψ$_i^{GS}$ | ψ$_{wp}(t_{final})$⟩|²")
+        ax.set_title("WP overlap with GS KS orbitals at t_final")
+        ax.legend(fontsize="x-small")
+        fig.tight_layout()
+        out_png = physics_dir / "wp_overlap_residual_at_t_final.png"
+        if _common.need_rebuild(out_png, rebuild):
+            fig.savefig(out_png)
+        plt.close(fig)
+
     import matplotlib.pyplot as _plt
     _plt.close("all")
-
+    notes["physics_dir"] = str(physics_dir)
     return notes

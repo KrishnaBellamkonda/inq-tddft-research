@@ -43,15 +43,16 @@ def run(results_dir: Path, *, run_name: str, rebuild: bool, **_) -> dict:
         _pipeline.skip(f"overlap index missing at {index_csv}")
 
     out_dir = _common.ensure_dir(results_dir / "analysis" / "overlap")
-    out_gif = out_dir / "wp_overlap_with_gs_orbitals.gif"
-    if not _common.need_rebuild(out_gif, rebuild):
-        return {"gif": str(out_gif), "cached": True}
+    out_stem_lin = out_dir / "wp_overlap_with_gs_orbitals"
+    out_stem_log = out_dir / "wp_overlap_with_gs_orbitals_log"
+    if (not _common.need_rebuild(out_stem_lin.with_suffix(".gif"), rebuild)
+            and not _common.need_rebuild(out_stem_log.with_suffix(".gif"), rebuild)):
+        return {"gif": str(out_stem_lin.with_suffix(".gif")), "cached": True}
 
     try:
-        import imageio.v2 as imageio
         import matplotlib.pyplot as plt
     except ImportError as exc:
-        _pipeline.skip(f"missing imageio / matplotlib: {exc}")
+        _pipeline.skip(f"missing matplotlib: {exc}")
 
     # Read the index file
     rows: list[tuple[int, float, Path]] = []
@@ -67,34 +68,60 @@ def run(results_dir: Path, *, run_name: str, rebuild: bool, **_) -> dict:
 
     overlaps = [_read_overlap_csv(p) for _, _, p in rows]
     n_ref = overlaps[0].size
-    arr = np.stack([o for o in overlaps], axis=0)  # (n_steps, n_ref)
-    y_max = max(1.0, float(arr.max()) * 1.05)
+    arr = np.stack([o for o in overlaps], axis=0)   # (n_steps, n_ref)
+    # Data-driven y range. Drop the legacy max(1.0, ...) floor — overlap
+    # values are typically ≪ 1 for a forward-scattered WP, and clamping
+    # to [0,1] hides the structure (TODO 1f).
+    y_max_lin = float(arr.max()) * 1.10
+    y_min_lin = -0.05 * y_max_lin if y_max_lin > 0 else -0.01
+    # Log axis floor: small positive value so symlog shows tiny overlaps.
+    if y_max_lin > 0:
+        nonzero = arr[arr > 0]
+        y_log_floor = (float(nonzero.min()) if nonzero.size else 1e-12) * 0.5
+    else:
+        y_log_floor = 1e-12
+    y_log_top = max(y_max_lin, 10 * y_log_floor)
 
-    tmp = _common.ensure_dir(out_dir / ".__tmp_wp_overlap")
-    pngs: list[Path] = []
     last_step = rows[-1][0]
     indices = np.arange(n_ref)
-    for (step, t_au, _p), row in zip(rows, overlaps):
-        fig, ax = plt.subplots(figsize=(7, 4), dpi=120)
-        ax.bar(indices, row, color="steelblue")
-        ax.set_xlim(-0.5, n_ref - 0.5)
-        ax.set_ylim(0, y_max)
-        ax.set_xlabel("Ground-state KS orbital index i")
-        ax.set_ylabel(r"|⟨ψ$_i^{GS}$ | ψ$_{wp}(t)$⟩|²")
-        ax.set_title(_common.title(
-            run_name, "WP overlap with GS KS orbitals",
-            step=step, total_steps=last_step, time_au=t_au))
-        fig.tight_layout()
-        p = tmp / f"f_{step:06d}.png"
-        fig.savefig(p)
-        plt.close(fig)
-        pngs.append(p)
 
-    with imageio.get_writer(out_gif, mode="I", fps=8, loop=0) as wr:
+    def _render(stem: Path, log_scale: bool) -> dict:
+        if not _common.need_rebuild(stem.with_suffix(".gif"), rebuild):
+            return {"gif": str(stem.with_suffix(".gif")), "cached": True}
+        tmp = _common.ensure_dir(out_dir / f".__tmp_{stem.name}")
+        pngs: list[Path] = []
+        for (step, t_au, _p), row in zip(rows, overlaps):
+            fig, ax = plt.subplots(figsize=(7, 4), dpi=120)
+            ax.bar(indices, row, color="steelblue")
+            ax.set_xlim(-0.5, n_ref - 0.5)
+            if log_scale:
+                ax.set_yscale("log")
+                ax.set_ylim(y_log_floor, y_log_top)
+            else:
+                ax.set_ylim(y_min_lin, y_max_lin)
+            ax.set_xlabel("Ground-state KS orbital index i")
+            ax.set_ylabel(r"|⟨ψ$_i^{GS}$ | ψ$_{wp}(t)$⟩|²"
+                          + (" (log)" if log_scale else ""))
+            ax.set_title(_common.title(
+                run_name,
+                "WP overlap with GS KS orbitals" + (" (log)" if log_scale else ""),
+                step=step, total_steps=last_step, time_au=t_au))
+            fig.tight_layout()
+            p = tmp / f"f_{step:06d}.png"
+            fig.savefig(p)
+            plt.close(fig)
+            pngs.append(p)
+        outs = _common.write_animation(stem, pngs, fps=8)
         for p in pngs:
-            wr.append_data(imageio.imread(p))
-    for p in pngs:
-        p.unlink(missing_ok=True)
-    tmp.rmdir()
+            p.unlink(missing_ok=True)
+        tmp.rmdir()
+        return {"gif": str(outs["gif"]),
+                "mp4": str(outs["mp4"]) if outs["mp4"] else None}
 
-    return {"gif": str(out_gif), "n_frames": len(rows), "n_ref": int(n_ref)}
+    return {
+        "linear":    _render(out_stem_lin, log_scale=False),
+        "log":       _render(out_stem_log, log_scale=True),
+        "n_frames":  len(rows),
+        "n_ref":     int(n_ref),
+        "y_max_lin": float(y_max_lin),
+    }

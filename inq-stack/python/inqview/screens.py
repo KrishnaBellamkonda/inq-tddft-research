@@ -142,6 +142,26 @@ def load_leed_pattern(path: PathLike) -> LeedPattern:
             f"Unexpected data shape {data.shape} for nx={nx}, ny={ny} in {path}"
         )
 
+    # ── FFT-shift to centre the diffraction peak ──────────────────────────
+    # LeedPatternAccumulator (inq-stack/include/inqkit/screens/...) writes the
+    # screen in INQ's FFT-natural order: array index (0, 0) = physical origin
+    # x = 0, y = 0; then positive coordinates first, then wrapped negative.
+    # Without np.fft.fftshift the diffraction peak lands at a corner with its
+    # 4-way symmetric tails distributed to the other three corners (the
+    # "four-corner-split" failure mode the spec §17.6 warns about).
+    #
+    # Reference correct loader (the proven path):
+    # ResearchProject/systems/coronene/run_propagate_paper_replica/analysis.py
+    # `_load_screen_centred`.
+    data = np.fft.fftshift(data)
+
+    # The C++ writer emits origin_x = origin_y = 0 (assuming raw-index
+    # convention). After fftshift, array index (0, 0) corresponds to physical
+    # (-Lx/2, -Ly/2). Override the origin so LeedPattern.extent_bohr spans
+    # [-Lx/2, +Lx/2, -Ly/2, +Ly/2] automatically.
+    origin_x = -0.5 * nx * dx_bohr
+    origin_y = -0.5 * ny * dy_bohr
+
     return LeedPattern(
         data=data,
         z_bohr=z_bohr,

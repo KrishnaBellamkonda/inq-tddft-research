@@ -94,10 +94,9 @@ def run(results_dir: Path, *, run_name: str, rebuild: bool,
     notes: dict = {"out_dir": str(out_dir)}
 
     try:
-        import imageio.v2 as imageio
         import matplotlib.pyplot as plt
     except ImportError as exc:
-        _pipeline.skip(f"missing imageio / matplotlib: {exc}")
+        _pipeline.skip(f"missing matplotlib: {exc}")
 
     for cat in _CATEGORIES:
         cat_dir = raw_vti / cat
@@ -114,56 +113,68 @@ def run(results_dir: Path, *, run_name: str, rebuild: bool,
             cube, meta = _load_vti_array(f)
             frames.append((step, time_au, cube, meta))
 
-        nframes = len(frames)
-        # Compute global vmin/vmax per slice plane (same across frames).
+        # Per-plane: emit linear + log animation pairs (each pair as gif+mp4).
         for plane, (axis, xlab, ylab) in _PLANES.items():
             slices = [f[2].take(f[2].shape[axis] // 2, axis=axis)
                       for f in frames]
-            vmin, vmax = _global_vmin_vmax(slices, percentile)
+            vmin_lin, vmax_lin = _global_vmin_vmax(slices, percentile)
+            # log1p domain: floor at 0; same vmax derived from log1p(percentile).
+            vmin_log = 0.0
+            vmax_log = float(np.log1p(vmax_lin))
 
-            out_gif = out_dir / f"{cat[len('density_rt_'):]}_{plane}.gif"
-            if not _common.need_rebuild(out_gif, rebuild):
-                notes[f"{cat}_{plane}"] = str(out_gif) + " (cached)"
-                continue
+            for scale_label, scale_kwargs, vmin, vmax, transform, cbar_label in [
+                ("",     dict(), vmin_lin, vmax_lin, lambda a: a,
+                 r"density (bohr$^{-3}$)"),
+                ("_log", dict(), vmin_log, vmax_log, np.log1p,
+                 r"log$_{10}$(1 + density)"),
+            ]:
+                out_stem = out_dir / f"{cat[len('density_rt_'):]}_{plane}{scale_label}"
+                gif_path = out_stem.with_suffix(".gif")
+                if not _common.need_rebuild(gif_path, rebuild):
+                    notes[f"{cat}_{plane}{scale_label}"] = str(gif_path) + " (cached)"
+                    continue
 
-            tmp_dir = _common.ensure_dir(out_dir / f".__tmp_{cat}_{plane}")
-            png_paths: list[Path] = []
-            for i, (step, t_au, cube, meta) in enumerate(frames):
-                slc = cube.take(cube.shape[axis] // 2, axis=axis)
-                fig, ax = plt.subplots(figsize=(5, 5), dpi=120)
-                ox, oy, oz = meta["origin"]
-                dx, dy, dz = meta["spacing"]
-                if plane == "xy":
-                    extent = [ox, ox + meta["nx"] * dx,
-                              oy, oy + meta["ny"] * dy]
-                elif plane == "xz":
-                    extent = [ox, ox + meta["nx"] * dx,
-                              oz, oz + meta["nz"] * dz]
-                else:  # yz
-                    extent = [oy, oy + meta["ny"] * dy,
-                              oz, oz + meta["nz"] * dz]
-                im = ax.imshow(slc.T, origin="lower", extent=extent,
-                               cmap="viridis", aspect="equal",
-                               vmin=vmin, vmax=vmax)
-                plt.colorbar(im, ax=ax, label="density (bohr^-3)")
-                ax.set_xlabel(xlab); ax.set_ylabel(ylab)
-                ax.set_title(_common.title(
-                    run_name, f"{cat} {plane}",
-                    step=step, total_steps=frames[-1][0],
-                    time_au=t_au,
-                ))
-                fig.tight_layout()
-                p = tmp_dir / f"frame_{i:04d}.png"
-                fig.savefig(p)
-                plt.close(fig)
-                png_paths.append(p)
+                tmp_dir = _common.ensure_dir(
+                    out_dir / f".__tmp_{cat}_{plane}{scale_label}")
+                png_paths: list[Path] = []
+                for i, (step, t_au, cube, meta) in enumerate(frames):
+                    slc = cube.take(cube.shape[axis] // 2, axis=axis)
+                    slc_t = transform(slc)
+                    fig, ax = plt.subplots(figsize=(5, 5), dpi=120)
+                    ox, oy, oz = meta["origin"]
+                    dx, dy, dz = meta["spacing"]
+                    if plane == "xy":
+                        extent = [ox, ox + meta["nx"] * dx,
+                                  oy, oy + meta["ny"] * dy]
+                    elif plane == "xz":
+                        extent = [ox, ox + meta["nx"] * dx,
+                                  oz, oz + meta["nz"] * dz]
+                    else:  # yz
+                        extent = [oy, oy + meta["ny"] * dy,
+                                  oz, oz + meta["nz"] * dz]
+                    im = ax.imshow(slc_t.T, origin="lower", extent=extent,
+                                   cmap="viridis", aspect="equal",
+                                   vmin=vmin, vmax=vmax)
+                    plt.colorbar(im, ax=ax, label=cbar_label)
+                    ax.set_xlabel(xlab); ax.set_ylabel(ylab)
+                    ax.set_title(_common.title(
+                        run_name, f"{cat} {plane}{scale_label or ''}",
+                        step=step, total_steps=frames[-1][0],
+                        time_au=t_au,
+                    ))
+                    fig.tight_layout()
+                    p = tmp_dir / f"frame_{i:04d}.png"
+                    fig.savefig(p)
+                    plt.close(fig)
+                    png_paths.append(p)
 
-            with imageio.get_writer(out_gif, mode="I", fps=8, loop=0) as wr:
+                outs = _common.write_animation(out_stem, png_paths, fps=8)
                 for p in png_paths:
-                    wr.append_data(imageio.imread(p))
-            for p in png_paths:
-                p.unlink(missing_ok=True)
-            tmp_dir.rmdir()
-            notes[f"{cat}_{plane}"] = str(out_gif)
+                    p.unlink(missing_ok=True)
+                tmp_dir.rmdir()
+                notes[f"{cat}_{plane}{scale_label}"] = {
+                    "gif": str(outs["gif"]),
+                    "mp4": str(outs["mp4"]) if outs["mp4"] else None,
+                }
 
     return notes

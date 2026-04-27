@@ -9,12 +9,14 @@ choose to run all of them or a subset.
 Phases (in dependency order):
     summary      — verify and (re)build ``results/run_summary.txt``
     gs           — ground-state plots (orbital gallery, density)
+    layout       — xz layout diagram (cell, target, WP marker, screen lines)
     observables  — time-domain + FFT plots from ``raw/observables/``
-    density      — 2D slice GIFs for total / system / wp densities
+    density      — 2D slice GIFs for total / system / wp densities (linear + log)
     screens      — total / instantaneous / time-windowed LEED + coord checks
-    overlap      — WP-overlap-with-GS-orbitals bar-chart GIF
+    overlap      — WP-overlap-with-GS-orbitals bar-chart GIF (linear + log)
     orbitals     — RT orbital gallery (only if RT orbital VTIs were emitted)
     paraview     — 3D volume renders via pvbatch (slowest; opt-out)
+    paraview_3d  — overlay (system + WP) volume rendering, two cameras (opt-in)
 
 Public entry point: :func:`run`.
 """
