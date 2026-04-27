@@ -330,7 +330,8 @@ int run_propagation(std::string const &run_name,
         acc_paper[k]         = LeedPatternAccumulator(PlaneScreen{screen_z[k], label});
         screen_windows[k] = coronene::layout::compute_screen_window(
             screen_z[k], Cfg::WP_CZ_BOHR, Cfg::WP_SIGMA_BOHR, Cfg::WP_K0,
-            Cfg::LZ_BOHR, Cfg::DT_AU * Cfg::N_STEPS);
+            Cfg::LZ_BOHR, Cfg::DT_AU * Cfg::N_STEPS,
+            Cfg::WP_ENVELOPE_SIGMAS);
     }
 
     // Persist the configuration so the postprocess can reproduce filenames.

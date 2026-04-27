@@ -107,6 +107,15 @@ struct Base {
     static constexpr double T2_FS = 0.25;
     static constexpr double T1_AU = T1_FS * FS_TO_AU;
     static constexpr double T2_AU = T2_FS * FS_TO_AU;
+
+    // How many sigmas of the WP envelope are considered as the "extent"
+    // for screen-window timing. n=1 reproduces the Phase-3 logic
+    // (centroid +/- 1*sigma); for these runs we use n=2 so the full WP
+    // envelope has cleared the screen before integration begins (forward)
+    // and the rebound trailing edge has more headroom (back).
+    // compute_screen_window scales sigma by this factor when computing
+    // t_start (forward + back) and t_end (back).
+    static constexpr double WP_ENVELOPE_SIGMAS = 2.0;
 };
 
 }  // namespace coronene::config
