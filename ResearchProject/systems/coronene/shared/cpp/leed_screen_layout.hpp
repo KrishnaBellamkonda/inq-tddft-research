@@ -24,41 +24,58 @@ namespace coronene::layout {
 
 constexpr int N_SCREENS = 20;
 
-// Per-screen physics window:
-//   * start_au = time when the WP centroid arrives at the screen.
-//   * end_au   = time when the trailing edge has cleared the screen
-//                (centroid + sigma for forward screens; centroid - sigma
-//                 [back-scattered] for backscattering screens).
+// Per-screen physics window (Phase-3 logic — corrected for LEED purity):
 //
-// Forward screen  (z_screen <  b): centroid arrives at (b - z)/|k|;
-//                                  centroid + sigma at (b + sigma - z)/|k|.
-// Backscatter     (z_screen >= b): centroid arrives at (b + z)/|k|;
-//                                  centroid + sigma at (b + sigma + z)/|k|.
+// The aim of windowing is to suppress the unscattered Gaussian-WP contribution
+// at the screen plane and accumulate only the diffracted / scattered density.
 //
-// Convention: WP starts at z = +b moving in -z at speed |k|. The molecule
-// is at z = 0. A scattered packet rebounding from the molecule at t = b/|k|
-// moves in +z at the same speed; the model treats backscattering screens
-// as receiving that rebounded centroid plus its sigma envelope.
+// Forward screens (z_screen < 0, transmission side):
+//   * t_start = max(0, (b + sigma - z_screen) / |k|)
+//                — when the WP trailing edge has cleared the screen plane on
+//                  its way down toward the molecule. Any density at z_screen
+//                  after this time is the transmitted+diffracted contribution
+//                  (the molecule has spread the WP into a non-Gaussian).
+//   * t_end   = total_time_au (= N_steps * dt by construction of
+//                compute_n_steps), i.e. integrate to end of run.
+//
+// Backscattering screens (z_screen >= 0, reflection side):
+//   * t_start = max(0, (b + sigma - z_screen) / |k|)
+//                — same expression. For screens above the initial WP
+//                  envelope (z_screen > b + sigma) this is <= 0 and clamps
+//                  to 0 (the screen was never under the incoming WP).
+//   * t_end   = (b + Lz/2 - sigma) / |k|
+//                — when the back-scattered forward leading edge
+//                  (rebound centroid + sigma in +z direction) reaches the
+//                  +Lz/2 box face, just before periodic-boundary wrap-around
+//                  contaminates the signal.
+//
+// Demarcation: z_screen < 0 vs z_screen >= 0 (the molecule plane).
+//
+// Convention: WP starts at z = +b moving in -z at speed |k|; molecule at z=0.
+// A scattered packet rebounding from the molecule at t = b/|k| moves in +z
+// at the same speed; the model treats backscattering screens as receiving
+// that rebounded centroid plus its sigma envelope.
 struct ScreenWindow {
     double t_start_au;
     double t_end_au;
-    bool   is_back;     // true = backscattering side (z_screen >= b)
+    bool   is_back;     // true = backscattering side (z_screen >= 0)
 };
 
 inline constexpr ScreenWindow compute_screen_window(double z_screen, double b,
-                                                    double sigma, double k0) {
-    if (z_screen < b) {
-        return ScreenWindow{
-            (b - z_screen) / k0,
-            (b + sigma - z_screen) / k0,
-            false,
-        };
+                                                    double sigma, double k0,
+                                                    double lz_bohr,
+                                                    double total_time_au) {
+    // Constexpr-friendly max(0, x).
+    const double t_start_raw = (b + sigma - z_screen) / k0;
+    const double t_start = (t_start_raw > 0.0) ? t_start_raw : 0.0;
+    if (z_screen < 0.0) {
+        // Forward / transmission side: integrate to end of simulation.
+        return ScreenWindow{ t_start, total_time_au, false };
     }
-    return ScreenWindow{
-        (b + z_screen) / k0,
-        (b + sigma + z_screen) / k0,
-        true,
-    };
+    // Backscattering side: integrate until the rebound leading edge reaches
+    // the +Lz/2 boundary.
+    const double t_end_back = (b + 0.5 * lz_bohr - sigma) / k0;
+    return ScreenWindow{ t_start, t_end_back, true };
 }
 
 inline std::array<double, N_SCREENS> screen_z_positions(double lz_bohr) {

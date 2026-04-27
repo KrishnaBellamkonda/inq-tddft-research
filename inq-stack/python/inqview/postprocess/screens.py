@@ -62,6 +62,29 @@ def run(results_dir: Path, *, run_name: str, rebuild: bool, **_) -> dict:
                 _save_total_panel(pat, png, run_name, log_scale=False)
             if _common.need_rebuild(png_log, rebuild):
                 _save_total_panel(pat, png_log, run_name, log_scale=True)
+            # IFFT reconstructions (Patterson + amp-only) per screen.
+            for ifft_method, ifft_suffix, cbar in [
+                ("patterson", "_ifft_patterson", "Patterson autocorrelation (a.u.)"),
+                ("amp_only",  "_ifft_amp",       r"|IFFT(√|F|)|² (a.u.)"),
+            ]:
+                ifft_png = Path(str(base) + ifft_suffix + ".png")
+                if not _common.need_rebuild(ifft_png, rebuild):
+                    continue
+                rec = pat.inverse_fft(method=ifft_method, hann=True)
+                fig_i, ax_i = plt.subplots(figsize=(5, 5), dpi=120)
+                im_i = ax_i.imshow(rec, origin="lower",
+                                   extent=pat.extent_bohr, aspect="equal",
+                                   cmap="viridis")
+                plt.colorbar(im_i, ax=ax_i, label=cbar)
+                ax_i.set_xlabel("x (bohr)"); ax_i.set_ylabel("y (bohr)")
+                ax_i.set_title(_common.title(
+                    run_name,
+                    f"{pat.label} {ifft_method}, z = "
+                    f"{_common.sigfigs(pat.z_bohr)} bohr",
+                    multiline=False))
+                fig_i.tight_layout()
+                fig_i.savefig(ifft_png)
+                plt.close(fig_i)
         # Grid panel
         if patterns:
             cols, rows = 5, 4
