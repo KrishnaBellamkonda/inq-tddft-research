@@ -55,82 +55,123 @@ def _step_from_filename(p: Path) -> int:
 
 
 def _pvbatch_script() -> str:
-    """The pvbatch driver. Reads its config from sys.argv[1] (a JSON file)."""
+    """The pvbatch driver. Reads its config from sys.argv[1] (a JSON file).
+
+    Each series gets a *unique* registered array name (``density_system``,
+    ``density_wp``) so ParaView builds a separate LUT/PWF per series even
+    though both VTI files contain a scalar field called ``density``. This
+    avoids the all-blue failure mode where both volumes shared the system's
+    LUT and the WP became invisible.
+    """
     return r"""
-import json, sys
+import json, sys, os
 from paraview.simple import *
 
 cfg = json.loads(open(sys.argv[1]).read())
 
-# Helper: build a Volume rep for one VTI series.
-def make_volume(files, array_name, color_preset, opacity_points, scalar_range):
-    src = XMLImageDataReader(FileName=files)
-    src.PointArrayStatus = [array_name]
-    rep = Show(src, GetActiveViewOrCreate('RenderView'))
-    rep.Representation = 'Volume'
-    # Note: ParaView 6.1's UniformGridRepresentation no longer exposes
-    # SelectMapper as a Python attribute; the default Smart mapper is used.
-    ColorBy(rep, ('POINTS', array_name))
+
+def _make_lut_pwf(array_name, scalar_range, rgb_points, opacity_points):
+    '''Build a colour LUT and opacity PWF with explicit RGB control points.
+
+    rgb_points : list of [normalised_position_in_0_1, R, G, B] (RGB in [0,1])
+    opacity_points : list of [density_value, opacity, midpoint, sharpness]
+    '''
+    lo, hi = float(scalar_range[0]), float(scalar_range[1])
+    if hi <= lo:
+        hi = lo + 1.0
+    span = hi - lo
+    # Linear LUT (no log) with explicit RGB points placed at
+    # absolute density values lo + frac * span.
+    flat = []
+    for frac, r, g, b in rgb_points:
+        flat.extend([lo + float(frac) * span,
+                     float(r), float(g), float(b)])
     lut = GetColorTransferFunction(array_name)
-    lut.RescaleTransferFunction(*scalar_range)
+    lut.RGBPoints = flat
+    lut.ColorSpace = 'RGB'
     try:
-        lut.UseLogScale = 1
-    except Exception:
-        pass
-    try:
-        lut.ApplyPreset(color_preset, True)
+        lut.UseLogScale = 0
     except Exception:
         pass
     pwf = GetOpacityTransferFunction(array_name)
-    # opacity_points is a list of [value, opacity] pairs
-    flat = []
+    pflat = []
     for v, a in opacity_points:
-        flat.extend([float(v), float(a), 0.5, 0.0])
-    pwf.Points = flat
-    return src, rep
+        pflat.extend([float(v), float(a), 0.5, 0.0])
+    pwf.Points = pflat
+    return lut, pwf
+
+
+def make_volume(files, registered_name, source_array,
+                rgb_points, opacity_points, scalar_range):
+    src = XMLImageDataReader(FileName=files)
+    src.PointArrayStatus = [source_array]
+    # Rename the active scalar so each volume has its own LUT.
+    calc = Calculator(Input=src)
+    calc.ResultArrayName = registered_name
+    calc.Function = source_array
+    rep = Show(calc, GetActiveViewOrCreate('RenderView'))
+    rep.Representation = 'Volume'
+    ColorBy(rep, ('POINTS', registered_name))
+    _make_lut_pwf(registered_name, scalar_range, rgb_points, opacity_points)
+    return src, calc, rep
+
 
 view = GetActiveViewOrCreate('RenderView')
-view.Background = [0.0, 0.0, 0.0]
+view.Background = [1.0, 1.0, 1.0]    # white background — black hides the
+                                     # axes grid badly
 view.OrientationAxesVisibility = 1
 view.UseColorPaletteForBackground = 0
 view.ViewSize = cfg['image_size']
 
-system_src, system_rep = make_volume(
-    cfg['system_files'], cfg['array_name'],
-    cfg['system_color_preset'],
-    cfg['system_opacity_points'],
+# ---- Axes grid (data axes with bohr ticks) ----------------------------
+ag = view.AxesGrid
+ag.Visibility = 1
+ag.AxesToLabel = 63   # all six faces
+ag.XTitle = 'x (bohr)'
+ag.YTitle = 'y (bohr)'
+ag.ZTitle = 'z (bohr)'
+try:
+    ag.GridColor = [0.4, 0.4, 0.4]
+    ag.XLabelColor = [0.0, 0.0, 0.0]
+    ag.YLabelColor = [0.0, 0.0, 0.0]
+    ag.ZLabelColor = [0.0, 0.0, 0.0]
+    ag.XTitleColor = [0.0, 0.0, 0.0]
+    ag.YTitleColor = [0.0, 0.0, 0.0]
+    ag.ZTitleColor = [0.0, 0.0, 0.0]
+except Exception:
+    pass
+
+# Build the two volumes.
+system_src, system_calc, system_rep = make_volume(
+    cfg['system_files'], 'density_system',
+    cfg['array_name'],
+    cfg['system_rgb_points'], cfg['system_opacity_points'],
     cfg['system_scalar_range'])
-wp_src, wp_rep = make_volume(
-    cfg['wp_files'], cfg['array_name'],
-    cfg['wp_color_preset'],
-    cfg['wp_opacity_points'],
+wp_src, wp_calc, wp_rep = make_volume(
+    cfg['wp_files'], 'density_wp',
+    cfg['array_name'],
+    cfg['wp_rgb_points'], cfg['wp_opacity_points'],
     cfg['wp_scalar_range'])
 
 # Time-aware animation across the union of times from both series.
 scene = GetAnimationScene()
 scene.UpdateAnimationUsingDataTimeSteps()
-n_frames = scene.NumberOfFrames
 
-# Frame the bounds.
+# Frame the bounds before camera placement.
 ResetCamera(view)
 
-# Camera position: explicit so the two views are reproducible regardless
-# of ParaView's azimuth/elevation accumulation order.
+# Camera placement: explicit so the views are reproducible.
 import math
 def set_camera(view, azimuth_deg, elevation_deg, distance_factor):
     cam = view.GetActiveCamera()
-    # Start from the head-on view: camera at -Z far, looking toward +Z.
-    # ParaView's default ResetCamera looks down -Z from +Z; we invert it.
     fp = list(cam.GetFocalPoint())
     pos = list(cam.GetPosition())
-    # Distance from focal point to current position
     dx = pos[0]-fp[0]; dy = pos[1]-fp[1]; dz = pos[2]-fp[2]
     d = math.sqrt(dx*dx + dy*dy + dz*dz) * distance_factor
-    # Place camera at -Z relative to focal point.
+    # Place camera at -Z relative to focal point so we look toward +Z.
     cam.SetPosition(fp[0], fp[1], fp[2] - d)
     cam.SetFocalPoint(fp[0], fp[1], fp[2])
     cam.SetViewUp(0.0, 1.0, 0.0)
-    # Now apply yaw + elevation about the up vector.
     cam.Azimuth(azimuth_deg)
     cam.Elevation(elevation_deg)
     view.Update()
@@ -138,11 +179,11 @@ def set_camera(view, azimuth_deg, elevation_deg, distance_factor):
 set_camera(view, cfg['camera_azimuth_deg'], cfg['camera_elevation_deg'],
            cfg['distance_factor'])
 
-# Render each timestep.
+# Render every timestep.
 times = scene.TimeKeeper.TimestepValues
 out_dir = cfg['frames_dir']
 prefix = cfg['filename_prefix']
-import os; os.makedirs(out_dir, exist_ok=True)
+os.makedirs(out_dir, exist_ok=True)
 n_emitted = 0
 for i, t in enumerate(times):
     scene.AnimationTime = float(t)
@@ -165,22 +206,56 @@ def _opacity_points(p50: float, p99: float) -> list[list[float]]:
     ]
 
 
-def _scalar_range(files: list[Path]) -> tuple[float, float, float]:
-    """Return (vmin, p50, p99) for a series of VTIs."""
+# Explicit RGB control points for the two volume series. Each list is
+# [normalised_position_in_0_1, R, G, B] with R/G/B in [0, 1]. The pvbatch
+# script places these at absolute density values lo + frac * (hi - lo).
+#
+# System ramp: white at the low end (faint molecular tail) → mid-blue at
+# the median → deep blue at the peak. Picks contrast against a white
+# background.
+_SYSTEM_RGB_POINTS = [
+    [0.00, 0.95, 0.95, 1.00],
+    [0.50, 0.40, 0.55, 0.85],
+    [1.00, 0.05, 0.15, 0.55],
+]
+# WP ramp: pale yellow → orange → deep red-orange. Visually distinct from
+# the blue system without overlap.
+_WP_RGB_POINTS = [
+    [0.00, 1.00, 0.95, 0.75],
+    [0.50, 1.00, 0.55, 0.10],
+    [1.00, 0.65, 0.10, 0.00],
+]
+
+
+def _scalar_range(files: list[Path]) -> tuple[float, float, float, float]:
+    """Return (p10, p50, p90, p99) across a 3-frame sample of the series.
+
+    Sampling the start, middle, and end frames captures the dynamic range
+    of the WP density (which is highly localised early but spreads later).
+    The lower-bound for the LUT is p10 (not vmin) because vmin ≈ 0 plus
+    log-or-linear-near-zero density makes the bulk of the volume render
+    at the same colour bin.
+    """
     import numpy as np
     import vtk
     from vtk.util.numpy_support import vtk_to_numpy
-    # Sample the centre frame to estimate the range cheaply.
-    centre = files[len(files) // 2]
-    reader = vtk.vtkXMLImageDataReader()
-    reader.SetFileName(str(centre))
-    reader.Update()
-    arr = vtk_to_numpy(reader.GetOutput().GetPointData().GetArray(0))
-    vmin = float(arr.min()); p50 = float(np.percentile(arr, 50))
+    n = len(files)
+    sample_idx = sorted({0, n // 2, n - 1})
+    samples: list[np.ndarray] = []
+    for i in sample_idx:
+        reader = vtk.vtkXMLImageDataReader()
+        reader.SetFileName(str(files[i]))
+        reader.Update()
+        samples.append(vtk_to_numpy(
+            reader.GetOutput().GetPointData().GetArray(0)))
+    arr = np.concatenate(samples)
+    p10 = float(np.percentile(arr, 10))
+    p50 = float(np.percentile(arr, 50))
+    p90 = float(np.percentile(arr, 90))
     p99 = float(np.percentile(arr, 99))
-    if p99 <= vmin:
-        p99 = vmin + 1.0
-    return vmin, p50, p99
+    if p99 <= p10:
+        p99 = p10 + 1.0
+    return p10, p50, p90, p99
 
 
 def run(results_dir: Path, *, run_name: str, rebuild: bool, **_) -> dict:
@@ -200,9 +275,10 @@ def run(results_dir: Path, *, run_name: str, rebuild: bool, **_) -> dict:
     out_dir = _common.ensure_dir(
         results_dir / "analysis" / "density" / "paraview_3d")
 
-    # Estimate per-series scalar range + opacity control points.
-    sys_min, sys_p50, sys_p99 = _scalar_range(sys_files)
-    wp_min, wp_p50, wp_p99 = _scalar_range(wp_files)
+    # Estimate per-series scalar range. Use p10 (not min) as the lower
+    # bound so the bulk near-zero volume doesn't dominate the LUT.
+    sys_p10, sys_p50, sys_p90, sys_p99 = _scalar_range(sys_files)
+    wp_p10,  wp_p50,  wp_p90,  wp_p99  = _scalar_range(wp_files)
 
     # The two camera setups — see plan §2.7.
     views = [
@@ -229,12 +305,14 @@ def run(results_dir: Path, *, run_name: str, rebuild: bool, **_) -> dict:
                 "system_files": [str(p) for p in sys_files],
                 "wp_files":     [str(p) for p in wp_files],
                 "array_name":   "density",
-                "system_color_preset": "Blue to Red Rainbow",  # Blues-style
-                "wp_color_preset":     "Orange",
+                "system_rgb_points":     _SYSTEM_RGB_POINTS,
+                "wp_rgb_points":         _WP_RGB_POINTS,
                 "system_opacity_points": _opacity_points(sys_p50, sys_p99),
                 "wp_opacity_points":     _opacity_points(wp_p50, wp_p99),
-                "system_scalar_range":   [max(sys_min, 1e-12), sys_p99],
-                "wp_scalar_range":       [max(wp_min, 1e-12),  wp_p99],
+                # Linear (not log) range, clamped to [p10, p99] per series so
+                # the bulk near-zero density doesn't crush the LUT.
+                "system_scalar_range":   [sys_p10, sys_p99],
+                "wp_scalar_range":       [wp_p10,  wp_p99],
                 "image_size":            [800, 800],
                 "frames_dir":            str(frames_dir),
                 "filename_prefix":       view_name,
