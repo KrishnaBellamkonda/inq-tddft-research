@@ -129,20 +129,32 @@ def _build_variants(signal):
     }
 
 
-def _hann_fft(signal_processed, dt_au: float):
-    """Apply Hann window and FFT. Returns (freq_au, omega_au, energy_ev,
-    amplitude). amplitude is normalised by N (Hann sum is N/2 in the limit;
-    we keep |X|/N to make spectra comparable across variants of the same
-    length)."""
+def _hann_fft(signal_processed, dt_au: float, pad_factor: int = 4):
+    """Apply Hann window, zero-pad, and FFT.
+
+    Zero-padding by ``pad_factor`` (default 4×) makes the discrete frequency
+    grid denser without altering the underlying signal — it's standard
+    sinc-interpolation in the frequency domain, used to produce a visually
+    smoother spectrum. The intrinsic frequency resolution
+    (peak width ~ 1/(N·dt_au)) is unchanged; pad_factor only refines how
+    finely it is sampled. Set pad_factor=1 to disable.
+
+    Returns (freq_au, omega_au, energy_ev, amplitude). Amplitude is
+    normalised by N (NOT N_padded) so peak heights are comparable across
+    variants and across runs with different N.
+    """
     import numpy as np
     s = np.asarray(signal_processed, dtype=np.float64)
     N = s.size
     if N < 4:
         return None
+    pad_factor = max(int(pad_factor), 1)
+    N_pad = N * pad_factor
     win = np.hanning(N)
-    sw = s * win
+    sw = np.zeros(N_pad, dtype=np.float64)
+    sw[:N] = s * win                              # zero-pad after windowing
     spec = np.fft.rfft(sw)
-    freq_au = np.fft.rfftfreq(N, d=dt_au)         # cycles / a.u.-time
+    freq_au = np.fft.rfftfreq(N_pad, d=dt_au)     # cycles / a.u.-time
     omega_au = 2.0 * np.pi * freq_au              # angular frequency [Ha]
     energy_ev = _HA_TO_EV * omega_au              # photon-energy axis
     amplitude = np.abs(spec) / N
