@@ -162,9 +162,9 @@ def _eigenvalue_plots(results_dir: Path, out_dir: Path, raw_dir: Path,
     if _common.need_rebuild(table_path, rebuild):
         with table_path.open("w") as fh:
             fh.write("# state_index, eigenvalue_ha, eigenvalue_ev, occupation\n")
-            for si, ev, o in zip(state_idx,
-                                 eig_data[:, 1], occ):
-                fh.write(f"{si:4d}  {eig_data[si, 1]:18.10f}  {ev:14.6f}  {o:6.4f}\n")
+            for si, eh, ev, o in zip(state_idx,
+                                     eig_data[:, 1], eig_ev, occ):
+                fh.write(f"{si:4d}  {eh:18.10f}  {ev:14.6f}  {o:6.4f}\n")
 
     # 2. Level diagram (horizontal lines per state, eV scale).
     levels_png = out_eig / "eigenvalues_levels.png"
