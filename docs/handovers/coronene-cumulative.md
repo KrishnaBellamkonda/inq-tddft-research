@@ -179,17 +179,34 @@ produced the full `analysis/` tree minus `paraview_3d/` (skipped by
 default; needs `--with-paraview`). Run_base was re-run separately on
 Branch 2 with --with-paraview.
 
-### Phase-3 closeout (in progress, 28 Apr)
+### Phase-3 closeout (28 Apr)
 
 | Item | Status |
 |---|---|
-| Re-run save_gs/* to populate eigenvalues.csv in checkpoints | 🔄 in progress (gs_35x35x60 + gs_35x35x80 launched 11:06; gs_35x35x40 queued) |
-| Run `scripts/retrofit_eigenvalues.py` over all 10 propagation runs | 📋 pending (blocked on save_gs) |
-| Re-postprocess `gs` phase per run (eigenvalue viz) | 📋 pending (blocked on retrofit) |
-| 6 hypothesis comparisons | 🔄 in progress (started 11:06; 00_base done 4 s; rest expected ≤ 5 min) |
-| ParaView 3D videos for the 9 Branch-3 runs (`--with-paraview`) | 📋 pending (run_base already has them) |
-| Commit & merge `coronene-fft-fixed-rerun` into main | 📋 pending |
+| Re-run save_gs/* to populate eigenvalues.csv in checkpoints | ✅ done (all three GS_60/GS_80/GS_40 ran cleanly; GS energy = -150.837 Ha across all three boxes; 62 states / 54 occupied) |
+| Run `scripts/retrofit_eigenvalues.py` over all 10 propagation runs | ✅ done (all 10 runs now have eigenvalues.csv + occupations.csv in `results/raw/observables/eigenvalues/`) |
+| Re-postprocess `observables` phase per run (eigenvalue viz) | ✅ done (eigenvalue_table.txt + eigenvalues_levels.png + eigenvalues_dos.png in every run's `analysis/observables/eigenvalues/`) |
+| Eigenvalue table eV-column bug | ✅ fixed (commit `867839c`) — table previously wrote Hartree twice; now correctly resolves -22.92 eV for state 0, HOMO ≈ -5.5 eV, LUMO ≈ -2.7 eV, HOMO-LUMO gap = 2.78 eV |
+| 6 hypothesis comparisons | ✅ done (run via `scripts/hypotheses_only.sh`; 38 s total) |
+| ParaView 3D videos for the 10 runs (`--with-paraview`) | 🔄 in progress (run via `scripts/paraview3d_only.sh`) |
+| Commit & merge `coronene-fft-fixed-rerun` into main | 📋 pending (waiting on paraview_3d batch) |
 | Update this handover (Phase-3 section + closeout) | ✅ done (this section) |
+
+### Phase-3 sanity-check observations on FFT-fixed data
+
+- **Transmission screens now show diffraction**, not the static
+  coronene electron cloud. Confirmed on `run_base/screen_03` and the
+  `screens/total/all_screens_grid.png` for every run.
+- **Per-screen window classification** (`screen_config.csv`) shows
+  forward (z<0) windows starting after `(b + 2σ − z)/|k|` and running
+  to `N_STEPS·dt`; backscatter (z≥0) windows starting at the same
+  expression and ending at `(b + L_z/2 − 2σ)/|k|`.
+- **HOMO-LUMO gap = 2.78 eV** on coronene (LDA, cutoff 40 Ha, all
+  three box variants) — consistent with the LDA underestimate of the
+  experimental ~3.0-3.4 eV gap.
+- **Total GS energy = -150.837 Ha** across all three GS variants
+  (gs_35x35x{40,60,80}_cut40), confirming the box length is well past
+  saturation for the energy.
 
 ---
 
