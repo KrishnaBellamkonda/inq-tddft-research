@@ -91,7 +91,7 @@ Specifically:
 
 Total Phase-1 wall time: **~6 h 15 min** end to end.
 
-## Phase-2 work (in progress / partially complete)
+## Phase-2 work (complete)
 
 | Item | Status |
 |---|---|
@@ -103,9 +103,110 @@ Total Phase-1 wall time: **~6 h 15 min** end to end.
 | WP-overlap y-axis range fix | ✅ done |
 | Hypothesis `physics/` subfolder | ✅ done |
 | ParaView 3D `paraview_3d` phase (overlay, two cameras) | ✅ done |
-| Re-postprocess all 10 runs + 6 hypotheses with --rebuild | 🔄 in progress |
+| Re-postprocess all 10 runs + 6 hypotheses with --rebuild | ✅ done |
 | Three pedagogical docs (this file + 2 sibling) | ✅ done |
-| Phase-2 commit on `fixes/coronene-gs` | 📋 pending |
+| Phase-2 commit + merge to `main` | ✅ done |
+
+---
+
+## Phase-3 work (FFT-ordering fixes + extended postprocess + eigenvalues)
+
+Triggered by user observation: "every transmission screen shows the
+static coronene electron cloud, not a diffraction pattern". Audit
+identified two C++ FFT-ordering bugs and one window-logic error.
+
+### Bugs fixed
+
+1. **`PlaneScreen::iz_nearest` clamped negative z to 0**
+   (`inq-stack/include/inqkit/screens/plane_screen.hpp`). Replaced clamp
+   with FFT-natural wrap `((iz % Nz) + Nz) % Nz`. Every transmission
+   screen at physical z < 0 now lands in the correct upper half of the
+   FFT-natural array. **Fix:** commit `c8343c5`.
+2. **`fields::orbital::wavefunction` did not apply `fft_shift_index`**
+   (`inq-stack/include/inqkit/fields/orbital.hpp`). Mirrored the
+   identical pattern from `density.hpp:88-99`. Complex-orbital VTIs and
+   downstream slices are now spatially correct. **Fix:** same commit.
+3. **`compute_screen_window` used "during transit" window**
+   (`ResearchProject/systems/coronene/shared/cpp/leed_screen_layout.hpp`).
+   Re-derived: forward (z<0) starts at `max(0, (b+σ−z)/|k|)` and runs to
+   `N_STEPS·dt`; backscatter (z≥0) starts at the same expression and
+   ends at `(b+L_z/2−σ)/|k|`. The σ scaling is configurable via the new
+   `WP_ENVELOPE_SIGMAS` config parameter (default 2.0). **Fix:** commit
+   `d827db8`.
+
+### New artefacts shipped in Phase 3
+
+| Item | Location | Status |
+|---|---|---|
+| IFFT helper (Patterson + amp_only) | `inq-stack/python/inqview/postprocess/_ifft.py` + `screens.LeedPattern.inverse_fft` | ✅ done |
+| IFFT outputs in `analysis/screens/ifft/` subfolder (linear + log) | per-run | ✅ done |
+| `WP_ENVELOPE_SIGMAS` Cfg parameter (=2.0 sigmas) | `shared/configs/tsubonoya_2014_base.hpp` | ✅ done |
+| Dispatcher `--clear-results` + pre-clear before each rerun | `scripts/dispatch_runs.py` | ✅ done |
+| Extended preprocessed spectra: raw / mean / detrended × {dipole_z, current_z, energy_total} | `inqview/postprocess/observables.py` | ✅ done |
+| Compartmentalised `spectra/{current,dipole,energy}/` per run | `inqview/postprocess/observables.py` | ✅ done |
+| Zero-padded smoother spectra (`pad_factor=4`) | `inqview/postprocess/observables.py` | ✅ done |
+| Jellium spectrum rollout (uses inqview helpers, flat layout) | `ResearchProject/jellium/jellium-wp-rt/jellium_spectra.py` | ✅ done |
+| GS eigenvalues + occupations C++ writer | `shared/cpp/eigenvalues_writer.hpp` (called from `save_gs/*/run.cpp`, `run_template.hpp`) | ✅ done |
+| Eigenvalue retrofit script | `scripts/retrofit_eigenvalues.py` | ✅ done |
+| Eigenvalue postprocess viz (`eigenvalues_levels.png`, `eigenvalues_dos.png`, `eigenvalue_table.txt`) | `inqview/postprocess/observables.py::_eigenvalue_plots` | ✅ done |
+| Refreshed `docs/observables_reference.md` | `docs/` | ✅ done |
+| `todo_later.md` entries (FFT bugs, jellium relocation, drift-method question, eigenvalues retrofit, 3 future-useful follow-ups) | `docs/` | ✅ done |
+
+### Branch strategy executed
+
+| Branch | Tip commit | Merge into main |
+|---|---|---|
+| `fixes/fft-ordering-arrays` | `2aadd71` | merged as `f6065f8` |
+| `coronene-fft-fixed-base` (run_base re-run + verify) | (transient) | merged |
+| `coronene-fft-fixed-rerun` (9-run rerun + ifft/envelope/spectra/eigenvalues) | `31cfd56` | **pending merge** |
+
+### Branch-3 results (all 9 propagation runs done, exit 0)
+
+| Run | Walltime |
+|---|---|
+| run_E30 | 7509 s |
+| run_E800 | 1862 s |
+| run_s0p33 | 3453 s |
+| run_s3 | 2943 s |
+| run_E800_s0p33 | 2013 s |
+| run_E30_s3 | 7118 s |
+| run_b18_35x35x80 | 6758 s |
+| run_b6_35x35x80 | 4895 s |
+| run_35x35x40 | 1772 s |
+
+Each run's auto-postprocess (`scripts/auto_postprocess.sh` + watcher)
+produced the full `analysis/` tree minus `paraview_3d/` (skipped by
+default; needs `--with-paraview`). Run_base was re-run separately on
+Branch 2 with --with-paraview.
+
+### Phase-3 closeout (28 Apr)
+
+| Item | Status |
+|---|---|
+| Re-run save_gs/* to populate eigenvalues.csv in checkpoints | ✅ done (all three GS_60/GS_80/GS_40 ran cleanly; GS energy = -150.837 Ha across all three boxes; 62 states / 54 occupied) |
+| Run `scripts/retrofit_eigenvalues.py` over all 10 propagation runs | ✅ done (all 10 runs now have eigenvalues.csv + occupations.csv in `results/raw/observables/eigenvalues/`) |
+| Re-postprocess `observables` phase per run (eigenvalue viz) | ✅ done (eigenvalue_table.txt + eigenvalues_levels.png + eigenvalues_dos.png in every run's `analysis/observables/eigenvalues/`) |
+| Eigenvalue table eV-column bug | ✅ fixed (commit `867839c`) — table previously wrote Hartree twice; now correctly resolves -22.92 eV for state 0, HOMO ≈ -5.5 eV, LUMO ≈ -2.7 eV, HOMO-LUMO gap = 2.78 eV |
+| 6 hypothesis comparisons | ✅ done (run via `scripts/hypotheses_only.sh`; 38 s total) |
+| ParaView 3D videos for the 10 runs (`--with-paraview`) | 🔄 in progress (run via `scripts/paraview3d_only.sh`) |
+| Commit & merge `coronene-fft-fixed-rerun` into main | 📋 pending (waiting on paraview_3d batch) |
+| Update this handover (Phase-3 section + closeout) | ✅ done (this section) |
+
+### Phase-3 sanity-check observations on FFT-fixed data
+
+- **Transmission screens now show diffraction**, not the static
+  coronene electron cloud. Confirmed on `run_base/screen_03` and the
+  `screens/total/all_screens_grid.png` for every run.
+- **Per-screen window classification** (`screen_config.csv`) shows
+  forward (z<0) windows starting after `(b + 2σ − z)/|k|` and running
+  to `N_STEPS·dt`; backscatter (z≥0) windows starting at the same
+  expression and ending at `(b + L_z/2 − 2σ)/|k|`.
+- **HOMO-LUMO gap = 2.78 eV** on coronene (LDA, cutoff 40 Ha, all
+  three box variants) — consistent with the LDA underestimate of the
+  experimental ~3.0-3.4 eV gap.
+- **Total GS energy = -150.837 Ha** across all three GS variants
+  (gs_35x35x{40,60,80}_cut40), confirming the box length is well past
+  saturation for the energy.
 
 ---
 

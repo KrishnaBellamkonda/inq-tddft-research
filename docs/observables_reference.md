@@ -290,3 +290,95 @@ For full derivations see `docs/notes/postprocess-algorithms.md`.
 | 6 | `density_rt_total` | pointwise add of `system + wp` at write time |
 | 7 | LEED fftshift | `data ← np.fft.fftshift(data)` on read; origin overridden to `-L/2` |
 | 8 | Patterson IFFT | `IFFT(|F|²) = ρ ⋆ ρ` (Wiener–Khinchin) |
+
+---
+
+## 11. Extended preprocessed spectra
+
+For each of `dipole_z`, `current_z`, and `energy_total`, the postprocess
+builds three preprocessed signals before FFT-ing:
+
+| Variant | Preprocessing | Purpose |
+|---|---|---|
+| **raw_subtracted** | `s − s(0)` | Removes the initial value; cheapest detrend; preserves any drift correlated with `t = 0`. |
+| **mean_subtracted** | `s − ⟨s⟩` | Removes DC; minimum bias on stationary signals. |
+| **detrended** | `scipy.signal.detrend(s, type='linear')` | Removes a linear least-squares fit; isolates oscillatory content from packet drift. Most physical for WP scattering runs. |
+
+All three variants use the same downstream pipeline: Hann window →
+zero-pad by `pad_factor = 4` → `np.fft.rfft` → `np.fft.rfftfreq(N_pad, dt_au)`.
+Zero-padding **only smooths the visible curve**; the intrinsic spectral
+resolution (peak width ≈ `1/(N·dt_au)`) is unchanged.
+
+**Frequency / energy axes**:
+
+```
+freq_au   = np.fft.rfftfreq(N_pad, d=dt_au)        # cycles / a.u.-time
+omega_au  = 2π · freq_au                           # angular frequency, Ha
+energy_ev = 27.21138625 · omega_au                 # photon-energy axis
+```
+
+Plots cap the displayed range at 200 eV (a comfortable upper bound for
+KS-orbital-difference physics in coronene).
+
+**Output paths** (per run, compartmentalised by quantity):
+
+```
+results/analysis/observables/spectra/
+  current/   spectrum_current_z_{raw_subtracted,mean_subtracted,detrended,compare}.png
+  dipole/    spectrum_dipole_z_{raw_subtracted,mean_subtracted,detrended,compare}.png
+  energy/    spectrum_energy_total_{raw_subtracted,mean_subtracted,detrended,compare}.png
+
+results/raw/observables/spectra/
+  current/   spectrum_current_z_<variant>.csv     (cols: freq_au, omega_au, energy_ev, amplitude)
+  dipole/    spectrum_dipole_z_<variant>.csv
+  energy/    spectrum_energy_total_<variant>.csv
+```
+
+The `_compare.png` per quantity overlays the three variants on a single
+axes for direct comparison — peaks that survive in *detrended* are most
+physically meaningful.
+
+**Code**: `inq-stack/python/inqview/postprocess/observables.py`
+(`_extended_spectra`, `_hann_fft`, `_build_variants`, `_plot_compare`).
+
+---
+
+## 12. Ground-state orbital eigenvalues + occupations
+
+The KS orbital eigenvalues (`ε_i`) and their fractional occupations (`f_i`)
+of the ground state are essential context for every WP-RT run: they fix
+the HOMO/LUMO gap, mark the WP injection slot's energy, and seed the
+overlap analysis. Every coronene run therefore writes them once, right
+after `electrons.load(<checkpoint>)` and before WP injection.
+
+**Writer**: `run_template.hpp::run_propagation` calls a small helper
+`coronene::run_template::dump_eigenvalues(electrons, dir)` that flushes
+two CSVs.
+
+**Output paths**:
+
+```
+results/raw/observables/eigenvalues/
+  eigenvalues.csv      # cols: state_index, eigenvalue_ha, eigenvalue_ev
+  occupations.csv      # cols: state_index, occupation
+```
+
+The state index runs `0..n_states-1` (with `n_states = n_occupied +
+extra_states`); the WP slot is `state_index = n_occupied + extra_states - 1`
+(populated to occupation 1.0 only after the WP injection block runs).
+
+**Retrofit for existing runs**: `scripts/extract_eigenvalues_from_log.py`
+parses each `save_gs/<sig>/run.log` (the GS save's INQ log already prints
+all eigenvalues per state at SCF convergence) and copies the resulting
+CSVs into every run that loaded the matching checkpoint.
+
+**Postprocess viz** in `analysis/observables/eigenvalues/`:
+
+| File | Content |
+|---|---|
+| `eigenvalues_levels.png` | horizontal level diagram, eV scale, occupied vs unoccupied colour-coded; HOMO/LUMO marked; WP slot dashed-line annotated. |
+| `eigenvalues_dos.png` | density-of-states histogram (Gaussian-broadened, `σ_DOS = 0.1 eV` default), eV axis. |
+| `eigenvalue_table.txt` | plain-text dump of state, ε_ha, ε_ev, occ for quick reference. |
+
+These are produced by the `observables` postprocess phase whenever the
+input CSVs exist; phase is skipped silently otherwise.

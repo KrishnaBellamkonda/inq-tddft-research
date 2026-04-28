@@ -131,3 +131,160 @@ shifted, so total / system / wp **density** outputs were correct; only the
 **Resolution:** `fft_shift_index` mapping added in Phase 3, mirroring
 `density.hpp:88-99`. The Phase-3 re-run regenerates the file correctly
 on every run.
+
+---
+
+## Jellium runs need to be moved to the right folder
+
+The 8 jellium WP-RT runs currently live at
+`ResearchProject/jellium/jellium-wp-rt/run_0[1-8]_*/`, predating the
+unified `ResearchProject/systems/<material>/` layout used by the
+coronene framework. They should be relocated under
+`ResearchProject/systems/jellium/` (mirroring `systems/coronene/`)
+so:
+
+* The two material subtrees share the same conventions: `shared/`
+  configs, `scripts/` for postprocess + dispatch, `run_*/` flat
+  siblings, `hypotheses/` for cross-run comparisons.
+* `inqview.postprocess.pipeline` can run unchanged on jellium results,
+  not just coronene. Today the jellium runs use a flat
+  `results/observables.csv` instead of the spec
+  `results/raw/observables/observables.csv`, which is why a
+  separate `jellium_spectra.py` script is needed.
+* The cumulative handover at `docs/handovers/coronene-cumulative.md`
+  can grow into a `wp-rt-cumulative.md` covering both materials.
+
+**Action**:
+1. Move `ResearchProject/jellium/jellium-wp-rt/run_0[1-8]_*` to
+   `ResearchProject/systems/jellium/<run_name>/`.
+2. Reshape each run's `results/` into the
+   `docs/results_folder_structure_spec.md` layout
+   (`results/raw/observables/observables.csv` etc.).
+3. Drop `jellium_spectra.py` once the unified pipeline can be invoked
+   directly via `coronene_postprocess.py run --results <jellium_run>/results`.
+
+---
+
+## Choice of drift-removal method for spectra: open question
+
+The current postprocess builds three spectrum variants per quantity
+(see `docs/observables_reference.md` §11):
+
+| Variant | Subtraction |
+|---|---|
+| **raw_subtracted** | `s − s(0)` (initial value) |
+| **mean_subtracted** | `s − ⟨s⟩` (mean) |
+| **detrended** | `s − (linear fit)` |
+
+**The open question is whether mean-subtraction or initial-value
+subtraction is the more physically appropriate "DC removal" for a WP
+scattering run.**
+
+Arguments for **mean-subtraction (`s − ⟨s⟩`)**:
+
+* Removes DC exactly. For a stationary or quasi-stationary signal the
+  Fourier representation has no DC component, so removing the mean
+  before windowing avoids a low-frequency artifact at ω = 0 that would
+  leak into the first few non-zero bins.
+* Standard in optical-response TDDFT post-processing.
+* Symmetric in time: doesn't privilege t = 0.
+
+Arguments for **initial-value subtraction (`s − s(0)`)**:
+
+* Physically meaningful for an *induced* response: at t = 0 the system
+  is in the ground state plus an idealised WP (or at the kick), so
+  `s(t) − s(0)` is exactly the dynamical response to the perturbation.
+* Equivalent to enforcing `(s − s(0))|t=0 = 0`, which is the natural
+  initial condition for an induced dipole or current.
+* For a current that should integrate to a small dipole change over
+  the run, `J_z − J_z(0)` is more interpretable than `J_z − ⟨J_z⟩`
+  (the mean is a windowed-time average, not a physically meaningful
+  baseline).
+
+For the **WP scattering runs specifically**:
+
+* The WP injection at t = 0 is the stimulus; everything after is the
+  response. So initial-value subtraction matches the linear-response
+  framework most directly.
+* The mean over the propagation window mixes the induced signal with
+  the stimulus's own contribution, which biases the baseline.
+
+**Recommendation (to be confirmed)**: prefer **initial-value
+subtraction** (the `raw_subtracted` variant) as the default for
+*current* and *dipole* spectra; keep mean_subtracted available for
+diagnostic comparison; keep linearly-detrended as the variant most
+robust to packet drift. For *energy*, neither is obviously better
+because total-energy drift is a numerical-conservation artefact,
+not a physical response — `mean_subtracted` is fine there.
+
+**Decision pending** — once chosen, the spectrum block in
+`inq-stack/python/inqview/postprocess/observables.py::_extended_spectra`
+should mark the chosen variant as the canonical one (e.g. by emitting
+it under a `spectrum_<col>.png` alias alongside the variant grid).
+
+---
+
+## Ground-state KS eigenvalues + occupations
+
+The HOMO/LUMO gap, the WP slot's energy, and the seed for the overlap
+analysis are all encoded in the GS KS eigenvalues `ε_i` and their
+fractional occupations `f_i`. These are *not* currently emitted by any
+run; the SCF log carries them but no post-run consumer can read them
+back without parsing log text.
+
+**Action — future runs**:
+
+* Add `coronene::run_template::dump_eigenvalues(electrons, out_dir)`
+  to `shared/cpp/run_template.hpp`, called once right after
+  `electrons.load(<gs_checkpoint>)` and before the WP injection.
+* Output CSVs at:
+  ```
+  results/raw/observables/eigenvalues/
+    eigenvalues.csv      # state_index, eigenvalue_ha, eigenvalue_ev
+    occupations.csv      # state_index, occupation
+  ```
+* Postprocess phase `observables` reads these and produces, in
+  `results/analysis/observables/eigenvalues/`:
+  - `eigenvalues_levels.png` (horizontal level diagram, HOMO/LUMO + WP slot marked)
+  - `eigenvalues_dos.png` (Gaussian-broadened DOS, σ default 0.1 eV)
+  - `eigenvalue_table.txt`
+
+**Action — already-completed runs**: retrofit via
+`scripts/extract_eigenvalues_from_log.py` which parses the SCF log
+under each `save_gs/<sig>/run.log` (eigenvalues are printed per state
+at SCF convergence) and copies the CSVs into every run that loaded the
+matching checkpoint.
+
+Documented in `docs/observables_reference.md` §12.
+
+---
+
+## Other useful additions to consider
+
+Three things that would improve interpretability or reproducibility but
+are not yet in the framework:
+
+1. **HOMO/LUMO orbital character on screens** — for each transmission /
+   backscattering screen, project the diffracted density onto the
+   GS orbitals (HOMO, HOMO−1, LUMO) and plot which orbital character
+   dominates the scattered signal. Tells us whether the WP excited a
+   π-resonance, σ*, etc., rather than a generic continuum response.
+   Cheap to add given the eigenvalues + the existing per-step
+   `wp_overlap_with_gs_orbitals.csv`.
+
+2. **Norm-conservation diagnostic** — write `norm_per_state.csv` at
+   every WRITE_EVERY step (`Σ_r |ψ_i(r,t)|² · dV`) for every
+   evolved orbital including the WP. Lets us track WP norm over the
+   propagation directly (currently only `injection_report.txt` carries
+   the t=0 norm). Also catches numerical leakage if any orbital's norm
+   drifts beyond ~1e-3.
+
+3. **Energy-component decomposition spectrum** — same Hann + zero-pad
+   pipeline as §11 but applied to `energy_kinetic`, `energy_hartree`,
+   `energy_xc` separately, not just `energy_total`. The KE spectrum in
+   particular shows whether the post-collision excitation is dominated
+   by single-particle motion or by collective modes. Trivial to add
+   to the existing extended-spectra columns tuple.
+
+All three are deferred until the GS-eigenvalue retrofit + post-Branch-3
+verification cycle completes.

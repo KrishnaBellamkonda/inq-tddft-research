@@ -17,6 +17,7 @@
 #include <inqkit/io/real_field_3d_writer.hpp>
 
 #include "../../shared/configs/tsubonoya_2014_base.hpp"
+#include "../../shared/cpp/eigenvalues_writer.hpp"
 
 #include <cmath>
 #include <filesystem>
@@ -101,6 +102,14 @@ int main() {
     std::filesystem::create_directories(CHECKPOINT_DIR);
     electrons.save(CHECKPOINT_DIR);
     std::cout << "  Wrote checkpoint to " << CHECKPOINT_DIR << "\n";
+
+    // Eigenvalues + occupations live alongside the checkpoint as the
+    // canonical source; every propagation that loads from this checkpoint
+    // copies them into its results/raw/observables/eigenvalues/.
+    coronene::eigenvalues::dump(electrons, CHECKPOINT_DIR);
+    coronene::eigenvalues::dump(electrons,
+                                "results/raw/observables/eigenvalues");
+    std::cout << "  Wrote eigenvalues + occupations CSVs\n";
 
     // GS density VTIs alongside the checkpoint, for spot-checking.
     std::filesystem::create_directories("results/density_gs_system");
