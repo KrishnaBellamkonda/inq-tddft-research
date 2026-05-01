@@ -1,3 +1,0 @@
-# Grid metadata for run_003
-# Columns: Nx Ny Nz dx_bohr dy_bohr dz_bohr Lx_bohr Ly_bohr Lz_bohr
-60 60 60 3.33333333e-01 3.33333333e-01 3.33333333e-01 2.00000000e+01 2.00000000e+01 2.00000000e+01

@@ -5,6 +5,13 @@ venv/
 ParaView-6.1.0-MPI-Linux-Python3.12-x86_64.tar.gz
 ParaView-6.1.0-MPI-Linux-Python3.12-x86_64/
 
+# Subprojects tracked by their own independent git repositories
+Tutorial/
+QuantumKickExtension/
+
+# Restructure scratch dir
+.restructure-backups/
+
 # Build folders
 build/
 **/build/
