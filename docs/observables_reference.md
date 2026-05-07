@@ -382,3 +382,192 @@ CSVs into every run that loaded the matching checkpoint.
 
 These are produced by the `observables` postprocess phase whenever the
 input CSVs exist; phase is skipped silently otherwise.
+
+---
+
+## 13. Jellium project — addendum (2026-05-05)
+
+This section adds the project-wide observable rules and TODO entries
+for the jellium WP–jellium scattering work under
+`ResearchProject/systems/jellium/`. The coronene-specific sections
+above (1–12) are unchanged.
+
+### 13.1 Plot styling rules (all jellium postprocess artefacts)
+
+1. **No ambiguous y-axis offsets.** Matplotlib's default tick formatter
+   shows things like `1e-6 + 9.124` (an additive constant *plus* a
+   multiplicative scale), which is unreadable. Every plot must use
+   `ScalarFormatter(useOffset=False, useMathText=True)` with
+   `set_powerlimits((-3, 3))` for any axis whose values lie outside
+   `1e-3..1e3`. Spectrum plots in `inqview/plots.py::plot_spectrum`
+   already enforce this; carry it over to any new plot you write.
+
+2. **Choose the y-range to highlight the data scale.** When the signal
+   is small relative to a constant offset (energy drift, density
+   fluctuation), zoom or subtract the t=0 baseline up front rather than
+   relying on auto-zoom.
+
+3. **HOMO dashed-line annotation on KS-energy bar plots.** In any plot
+   showing per-state quantities ordered by initial energy
+   (`ks_energies_absolute.gif`, `ks_energies_delta.gif`, the `_no_wp`
+   variants), draw a vertical dashed black line at the rank position of
+   the HOMO (highest state with occupation ≥ 0.5 read from
+   `raw/observables/eigenvalues/occupations.csv`). The line goes
+   *between* the HOMO bar and the next bar (rank + 0.5). This is
+   implemented in
+   `inqview/postprocess/state_energies.py::_add_homo_line` and
+   `_add_bath_homo_line`. The plot legend should label it
+   "HOMO (state <index>)".
+
+4. **Fixed colour scale across animation frames.** Every density GIF
+   uses a single global `(vmin, vmax)` computed from the full series
+   and applied uniformly to every frame. This is enforced by
+   `inqview/postprocess/density.py::_global_vmin_vmax`. New animation
+   modules must copy this pattern.
+
+5. **Smooth FFT spectra (QBall-style).** The
+   `inqview.fourier.FourierTransform` accepts `zero_pad` (default 4)
+   and `smooth_sigma_bins` (default 0). Set `zero_pad ≥ 4` for visually
+   smooth spectra in the QBall/QuantumKickExtension style; the extra
+   samples are pure interpolation (no information added) but they
+   eliminate the staircase look. Combine with a Hann or Kaiser window
+   to suppress sidelobe ripple. For very ragged signals, set
+   `smooth_sigma_bins = 0.5` to apply a 1-D Gaussian smoother in the
+   frequency-bin domain (mild physical resolution loss; cleans
+   high-frequency Gibbs).
+
+### 13.2 Per-step occupations dump (added 2026-05-05)
+
+Implemented in
+`inq-stack/include/inqkit/observables/occupations_writer.hpp`. Wired
+into `run_template.hpp` at 5 × WRITE_EVERY cadence alongside
+`StateEnergyWriter`. Output:
+
+- `results/raw/observables/occupations_vs_time.csv` — long format
+  `step, time_au, kpoint_index, state_index, occupation`.
+
+In INQ TDDFT the occupations are FROZEN — they are propagated as
+fixed coefficients on a moving basis. This dump therefore primarily
+serves as an **audit** (a non-flat trace would be a numerics red
+flag). The companion postprocess phase
+`inqview.postprocess.occupations` consumes the CSV and produces:
+
+- `analysis/observables/occupations_absolute.gif` — animated bar plot
+  of f_i(t) per state index, with vertical dashed HOMO line.
+- `analysis/observables/occupations_delta.gif` — animated diverging
+  bar plot of Δf_i(t) = f_i(t) − f_i(0), red = gain / blue = loss,
+  HOMO line, no-offset y-axis.
+
+The `gs` phase also produces a **static GS occupations bar chart**
+at `analysis/ground_state/gs_occupations.png` (state index → f_i,
+HOMO dashed line at the highest state with f ≥ 0.5). Reads
+`raw/observables/eigenvalues/occupations.csv` written by
+`jellium::eigenvalues::dump`.
+
+The "physically dynamic" companion quantity is the GS-projected
+occupation `n_i^GS(t) = Σ_j f_j |⟨ψ_i^GS|ψ_j(t)⟩|²`, which lives in
+the planned `projected_occupation` phase that requires the full
+overlap matrix (still TODO).
+
+### 13.3 Observables we should be measuring but are not yet
+
+#### Time-dependent occupation of GS orbitals (NEW — to add)
+
+INQ's KS occupations f_i are **time-independent** — they're propagated
+as fixed coefficients on a moving orbital basis. The physically
+meaningful "occupation in time" is the **projected occupation** onto
+the GS basis:
+
+  `n_i^GS(t) = Σ_j f_j |<ψ_i^GS | ψ_j(t)>|²`
+
+This is exactly what the professor's
+`projected_occupation_array(gs)` (in
+`ResearchProject/literature/misc/viewables.hpp` lines 132–181)
+computes, and what `inqkit::observables::OrbitalOverlapMatrix::snapshot()`
+(the *full* matrix variant) provides. We currently use the cheap
+WP-only variant. Implementation status:
+
+- For runs at `n_states ≤ ~100` the full matrix is affordable (~7-15k
+  GPU reductions per snapshot, ~30-90 s wall) — should be **enabled**
+  alongside `snapshot_wp_only` going forward.
+- The new `inqview.postprocess.projected_occupation` phase (to be
+  written) reads the full overlap CSVs and emits:
+  - `analysis/observables/occupations_vs_time.gif` — animated bar
+    plot of `n_i^GS(t)` for the lowest ~80 GS states, with HOMO
+    dashed line per styling rule 3.
+  - `analysis/observables/occupations_excitation_summary.png` —
+    static plot of "total occupation in initially-empty states" vs
+    time (the integrated e-h excitation rate).
+
+#### Energy balance bookkeeping (NEW — to add)
+
+Required diagnostic for any inelastic-scattering run: at each
+checkpoint, report
+
+- `ΔE_WP(t)   = E_WP(t) − E_WP(0)`        (single-state, unweighted)
+- `ΔE_bath(t) = Σ_{i ≠ WP} f_i [E_i(t) − E_i(0)]`   (occ-weighted)
+- `ΔE_total(t) = E_total_obs(t) − E_total_obs(0)`   (drift sanity)
+- `Unaccounted = −ΔE_WP − ΔE_bath − (small drift)`
+  → suggests excitation into initially-empty states.
+
+This should run as a postprocess phase
+`inqview.postprocess.energy_balance` (TBD), producing a single
+`analysis/observables/energy_balance.png` summary plot and a CSV.
+
+### 13.4 TODO / to-read list (jellium)
+
+- **Wave-packet revival dynamics in periodic boxes.** The WP that
+  reverses direction in `run_base_n138_L30_E5` may be a kinematic
+  revival of the periodic-box quantum walk rather than (or in
+  addition to) inelastic drag. Read:
+  - Robinett, "Quantum wave packet revivals," *Phys. Rep.* 392, 1 (2004).
+  - Aronstein and Stroud, "Fractional revivals," *Phys. Rev. A* 55, 4526 (1997).
+  Required to separate kinematic from inelastic-scattering signatures
+  of slowdown.
+- Validate the `projected_occupation` phase against a free-particle
+  WP in vacuum (zero coupling expected; `n_i^GS(t)` should be flat).
+- Tune the FFT smoothing/windowing defaults to match QBall reference
+  output on a known signal (use `QuantumKickExtension/codebase/`
+  spectra as the gold standard).
+
+### 13.5 Per-component energy graphs (rule, added 2026-05-05)
+
+Every jellium WP run must, in addition to `total_energy_vs_time.png`,
+produce **individual time-series PNGs for each energy component**:
+
+- `analysis/observables/energy_kinetic_vs_time.png`
+- `analysis/observables/energy_hartree_vs_time.png`
+- `analysis/observables/energy_xc_vs_time.png`
+- (and `energy_external_vs_time.png` / `energy_ion_ion_vs_time.png` if
+  the run records them — for jellium WP runs only the first three are
+  populated by `ObservablesWriter`).
+
+Rationale: when `Δenergy_total` is in the noise (≲ 10⁻⁶ Ha) the
+*physics* lives in the cancellation between the components. Plotting
+only the total hides the true signal. Each component PNG must use
+`ScalarFormatter(useOffset=False, useMathText=True)` per styling rule
+13.1.1 and start its y-range at the t=0 baseline so a 0.5 eV swing on
+top of a 5 Ha kinetic-energy baseline is visible.
+
+The companion overlay `all_energies_vs_time.png` (already produced by
+`observables.py`) stays — but is read-only complementary to the
+per-component PNGs, not a substitute. Implementation: extend
+`inqview/postprocess/observables.py::_plot_energies` to emit the
+per-component files. Naming convention `energy_<component>_vs_time.png`
+matches the column names in `raw/observables/observables.csv`.
+
+### 13.6 FFT preprocessing — transient exclusion (rule, added 2026-05-05)
+
+Spectra of any time-series observable that contains an initial
+**transient region** (the first ~1–2 plasmon periods of WP-injection
+shake-up; see Correa 2018 Sec. 6 for the canonical definition) must be
+computed on the time series with the transient *removed*. The
+`FourierTransform` class in `inq-stack/python/inqview/fourier.py`
+should accept a `t_start_au` cutoff; any spectrum produced from
+`observables.csv` must declare the cutoff used in its caption and in
+the saved CSV header. Default for jellium WP runs at WP_EKIN ≤ 5 eV:
+`t_start_au = 5.0` (i.e. discard the first 5 a.u. ≈ 0.12 fs). The QBall
+reference scripts at `QuantumKickExtension/qball-codebase/Li/td_kicks/`
+implement the same idea by detrending against the *plateau mean*
+(`dE_osc = dE − dE[N//2:].mean()`) before windowing — see
+`docs/reports/qball-spectra-comparison.md` for the side-by-side.
