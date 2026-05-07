@@ -2,7 +2,7 @@
 
 ## Current status
 
-**Complete.** Three ground-state simulations done (H, Li, Al), each in a 30 bohr cubic finite cell at LDA/60 Ry with `extra_states(30)`. Per-run outputs:
+**Complete (with VTI output).** Three ground-state simulations done (H, Li, Al), each in a 30 bohr cubic finite cell at LDA/60 Ry with `extra_states(30)`. Per-run outputs are written **directly as ParaView-ready `.vti` files** via `inqkit::io::RealField3DWriter` / `ComplexField3DWriter` configured with `.emit_raw = false, .emit_vti = true, .vti_format = binary`. No Python post-processing step is required.
 
 | Atom | n_states | ∫ρ | GS energy (Ha) | SCF iters | Occupied states |
 |---|---|---|---|---|---|
@@ -10,7 +10,21 @@
 | Li | 32 | 3.0 | −0.044338 | (converged) | [0] 1s (occ 2.0), [1] 2s (occ 1.0) |
 | Al | 32 | 3.0 | −0.057946 | (converged) | [0] 3s (occ 2.0), [1] 3p (occ 1.0) |
 
-All three runs wrote total density, per-orbital `|ψ|²`, and per-orbital complex `ψ` to `results/`. SCF reached the 1e-6 Ha tolerance for every atom.
+All three runs wrote total density, per-orbital `|ψ|²`, and per-orbital complex `ψ` to `results/` as `.vti` files (binary base64 inline, single file per field). SCF reached the 1e-6 Ha tolerance for every atom.
+
+Per-run output layout:
+
+```
+results/
+  density/
+    density_total.vti                  # total electron density
+  orbital_density/
+    orbital_NNNN_density.vti           # |psi_i|^2, one per state
+  orbitals/
+    orbital_NNNN.vti                   # complex psi_i (real + imag PointData arrays)
+```
+
+Counts: H = 1 + 31 + 31, Li = 1 + 32 + 32, Al = 1 + 32 + 32. Per-orbital `.vti` size ≈ 4.3 MB (real density) and ≈ 8.6 MB (complex wavefunction) at 75³ grid points.
 
 ## What changed
 
@@ -86,36 +100,30 @@ User-side, **not yet performed**:
 
 ## Assumptions still in play
 
-- The `.raw + .meta.txt` files written by `RealField3DWriter` are correctly consumable by `inqview.fields.RealField3D.from_file(...)` and convertible to VTI by `inqview.vti.convert_real_series_to_vti`. **Not yet verified for this task** — relies on the existing `Tutorial/hf-gs-with-inqkit` validation.
-- ParaView will render these without grid-orientation issues. The inqkit writer does its own FFT-shift to publish a left-to-right physical layout (see `density.hpp:fft_shift_index`), which is established for HF.
+- ParaView will render the inqkit-emitted `.vti` files without grid-orientation issues. The inqkit writer does its own FFT-shift to publish a left-to-right physical layout (see `density.hpp:fft_shift_index`) and the VTI writer reorders to x-fastest VTK PointData order (see `vti_image_data_writer.hpp` header comment). Spot-checked on the H output: header reports `WholeExtent 0 74 0 74 0 74`, `Origin -14.8 -14.8 -14.8`, `Spacing 0.4 0.4 0.4`, which matches the 30-bohr cubic cell at 60 Ry → dx ≈ 0.4 bohr and a centred origin.
 
 ## Exact next steps
 
-1. **Convert results to VTI.** From the venv:
+1. **Open in ParaView directly.** No conversion step needed — the run
+   already emits `.vti`. From the project root:
    ```bash
-   source venv/bin/activate
-   python -c "
-   from inqview.data import SimulationData
-   from inqview.vti import convert_real_series_to_vti
-   for atom in ['h','li','al']:
-       base = f'Tutorial/single-atom-orbitals/{atom}'
-       for series in ['orbital_density']:
-           convert_real_series_to_vti(f'{base}/results/{series}', f'{base}/results/{series}_vti')
-   "
+   /local/data/public/skcb2/tddft/ParaView-6.1.0-MPI-Linux-Python3.12-x86_64/bin/paraview \
+     Tutorial/single-atom-orbitals/h/results/orbital_density/orbital_0000_density.vti
    ```
-   (Adjust API call to match current `inqview.vti` signature; see existing
-   `Tutorial/hf-gs-with-inqkit/analysis.py` for working invocation.)
+   ParaView auto-groups numbered `.vti` series, so opening
+   `orbital_0000_density.vti` lets you scrub through the orbital index
+   like an animation.
 
-2. **Open in ParaView.** Load the `_vti` series for the orbital you want
-   to inspect. Recommended starting orbitals:
+2. **Recommended starting orbitals (use a contour or volume render):**
    - H: index 0 (1s), 1–4 (n=2 box modes), 5–7 (n=3 box modes).
-   - Li: index 0 (1s), 1 (2s), 2–4 (2p), 5+ (mixed Rydberg/box).
+   - Li: index 0 (1s, tightly localised), 1 (2s, diffuse), 2–4 (2p),
+     5+ (mixed Rydberg/box).
    - Al: index 0 (3s), 1 (3p), 2–4 (3p complementary), 5+ (3d / box).
 
-3. **For complex wavefunctions**, render real and imaginary parts as separate
-   scalar fields in ParaView; phase information is in their relative sign.
-   Most pedagogical orbital visualisations use just `|ψ|²` from
-   `orbital_density/`.
+3. **For complex wavefunctions** (`results/orbitals/orbital_NNNN.vti`),
+   the file contains two PointData arrays `wavefunction_real` and
+   `wavefunction_imag`. Render either as an isosurface, or compute
+   `sqrt(real^2 + imag^2)` in a Calculator filter to get `|ψ|`.
 
 4. **Optional: a journal entry** under `docs/journals/` documenting the
    first orbital screenshot per atom, once ParaView output is captured.
