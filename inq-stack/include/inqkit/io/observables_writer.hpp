@@ -34,6 +34,12 @@ struct ObservableSelection {
     bool dipole_x       = false;
     bool dipole_y       = false;
     bool dipole_z       = false;
+    // WP centre-of-density and integrated dn^2; populated by the run-template
+    // before each call to append() (left zero if disabled).
+    bool cod_x          = false;
+    bool cod_y          = false;
+    bool cod_z          = false;
+    bool density_l2     = false;
 };
 
 // Streams selected scalar and vector observables to a CSV file.
@@ -60,6 +66,11 @@ public:
             file_ << name;
             first = false;
         };
+        // Flush after the header so that even an early-abort run produces
+        // a readable schema on disk.
+        struct _flush_at_end {
+            std::ofstream& f; ~_flush_at_end() { f.flush(); }
+        } _fae{file_};
         if (sel_.step)           col("step");
         if (sel_.time_au)        col("time_au");
         if (sel_.energy_total)   col("energy_total");
@@ -72,6 +83,10 @@ public:
         if (sel_.dipole_x)       col("dipole_x");
         if (sel_.dipole_y)       col("dipole_y");
         if (sel_.dipole_z)       col("dipole_z");
+        if (sel_.cod_x)          col("cod_x_bohr");
+        if (sel_.cod_y)          col("cod_y_bohr");
+        if (sel_.cod_z)          col("cod_z_bohr");
+        if (sel_.density_l2)     col("density_l2");
         file_ << '\n';
     }
 
@@ -95,7 +110,14 @@ public:
         if (sel_.dipole_x)       val(ctx.dipole[0]);
         if (sel_.dipole_y)       val(ctx.dipole[1]);
         if (sel_.dipole_z)       val(ctx.dipole[2]);
+        if (sel_.cod_x)          val(ctx.wp_center[0]);
+        if (sel_.cod_y)          val(ctx.wp_center[1]);
+        if (sel_.cod_z)          val(ctx.wp_center[2]);
+        if (sel_.density_l2)     val(ctx.density_l2);
         file_ << '\n';
+        file_.flush();   // Important: without this an aborted run leaves
+                         // observables.csv at 0 bytes, since the destructor
+                         // never executes when the process is killed.
     }
 
     void finish() {

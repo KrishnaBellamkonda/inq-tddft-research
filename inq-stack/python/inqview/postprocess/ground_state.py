@@ -88,6 +88,40 @@ def run(results_dir: Path, *, run_name: str, rebuild: bool, **_) -> dict:
             fig.savefig(out_xy); plt.close(fig)
         notes["density_xy"] = str(out_xy)
 
+    # ---- GS density z-profile <n(z)>_xy --------------------------------
+    out_zprof = out_dir / "density_gs_z_profile.png"
+    if has_vti and _common.need_rebuild(out_zprof, rebuild):
+        import numpy as np
+        vti = next(raw_vti_gs.glob("*.vti"))
+        cube, origin, spacing = _load_vti_cube(vti)
+        ox, oy, oz = origin
+        dx, dy, dz = spacing
+        nz = cube.shape[2]
+        z = oz + (np.arange(nz) + 0.5) * dz
+        nz_xy = cube.mean(axis=(0, 1))
+        n_mean = float(cube.mean())
+        spread_pct = 100.0 * (nz_xy.max() - nz_xy.min()) / max(n_mean, 1e-30)
+
+        fig, ax = plt.subplots(figsize=(7, 4), dpi=120)
+        ax.plot(z, nz_xy, color="#1a4ea0", lw=1.6)
+        ax.axhline(n_mean, color="#888888", lw=0.8, ls="--",
+                   label=f"<n>_xyz = {n_mean:.4e}")
+        ax.set_xlabel("z (bohr)")
+        ax.set_ylabel(r"$\langle n(z) \rangle_{xy}$ (bohr$^{-3}$)")
+        ax.set_title(_common.title(
+            run_name,
+            f"GS density z-profile  (z-spread {spread_pct:.2f} %)"
+        ))
+        ax.grid(alpha=0.3)
+        ax.legend(loc="upper right", fontsize="x-small")
+        fig.tight_layout()
+        fig.savefig(out_zprof); plt.close(fig)
+        notes["density_z_profile"] = {
+            "path": str(out_zprof),
+            "spread_pct": spread_pct,
+            "n_mean_bohr_m3": n_mean,
+        }
+
     # ---- GS orbital gallery (raw or VTI) -------------------------------
     out_gallery = out_dir / "gs_orbital_gallery.png"
     raw_orb = raw_gs / "density_gs_orbitals"
@@ -137,5 +171,43 @@ def run(results_dir: Path, *, run_name: str, rebuild: bool, **_) -> dict:
         fig.tight_layout()
         fig.savefig(out_gallery); plt.close(fig)
         notes["orbital_gallery"] = str(out_gallery)
+
+    # ---- GS occupations bar chart (with HOMO line) ------------------
+    occ_csv = (results_dir / "raw" / "observables" / "eigenvalues"
+               / "occupations.csv")
+    out_occ = out_dir / "gs_occupations.png"
+    if occ_csv.exists() and _common.need_rebuild(out_occ, rebuild):
+        try:
+            import pandas as pd
+            occ_df = pd.read_csv(occ_csv)
+            states = occ_df["state_index"].to_numpy()
+            occs   = occ_df["occupation"].to_numpy()
+            # HOMO = highest state with occupation >= 0.5 (per
+            # observables_reference.md §13.1 styling rule 3).
+            filled = occ_df[occ_df["occupation"] >= 0.5]
+            homo = int(filled["state_index"].max()) if not filled.empty else None
+
+            import matplotlib.pyplot as plt
+            from matplotlib.ticker import ScalarFormatter
+            fig, ax = plt.subplots(figsize=(9, 4))
+            ax.bar(states, occs, color="steelblue", width=1.0)
+            if homo is not None:
+                ax.axvline(homo + 0.5, color="black", lw=1.0, ls="--",
+                           alpha=0.7,
+                           label=f"HOMO (state {homo})")
+                ax.legend(loc="upper right", fontsize=8)
+            ax.set_xlabel("state index")
+            ax.set_ylabel(r"GS occupation $f_i$")
+            ax.set_title(f"{run_name}: ground-state occupations")
+            ax.grid(alpha=0.3, axis="y")
+            fmt = ScalarFormatter(useOffset=False, useMathText=True)
+            fmt.set_powerlimits((-3, 3))
+            ax.yaxis.set_major_formatter(fmt)
+            fig.tight_layout()
+            fig.savefig(out_occ, dpi=160)
+            plt.close(fig)
+            notes["gs_occupations"] = str(out_occ)
+        except Exception as exc:  # pragma: no cover
+            notes["gs_occupations_error"] = str(exc)
 
     return notes

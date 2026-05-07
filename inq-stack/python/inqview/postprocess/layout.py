@@ -166,11 +166,21 @@ def run(results_dir: Path, *, run_name: str, rebuild: bool, **_) -> dict:
 
     summary = _parse_run_summary(summary_path)
     cell = summary.get("cell_bohr", "")
-    parts = cell.split()
-    if len(parts) < 3:
-        _pipeline.skip(f"could not parse cell_bohr from {summary_path!s}")
-    Lx_bohr = float(parts[0])
-    Lz_bohr = float(parts[2])
+    # Two formats are emitted in practice:
+    #   "60^3 (cubic, periodic)"     — jellium runs (cubic shorthand)
+    #   "X Y Z (orthorhombic, ...)"  — coronene runs (three lengths)
+    # Detect "<int>^3" up front; otherwise fall back to whitespace-split.
+    cube_match = re.match(r"^\s*(\d+(?:\.\d+)?)\s*\^\s*3", cell)
+    if cube_match:
+        L = float(cube_match.group(1))
+        Lx_bohr = L
+        Lz_bohr = L
+    else:
+        parts = cell.split()
+        if len(parts) < 3:
+            _pipeline.skip(f"could not parse cell_bohr from {summary_path!s}")
+        Lx_bohr = float(parts[0])
+        Lz_bohr = float(parts[2])
 
     wp_cx, wp_cy, wp_cz = (
         summary.get("wp_center_bohr", "0 0 0").split()[:3])

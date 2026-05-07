@@ -29,7 +29,8 @@ _PLANES = {
     "yz": (0, "y (bohr)", "z (bohr)"),
 }
 
-_CATEGORIES = ("density_rt_total", "density_rt_system", "density_rt_wp")
+_CATEGORIES = ("density_rt_total", "density_rt_system", "density_rt_wp",
+               "density_rt_delta", "density_rt_delta_coarse")
 
 
 def _load_vti_array(path: Path) -> tuple[np.ndarray, dict]:
@@ -85,6 +86,47 @@ def _global_vmin_vmax(arrs: list[np.ndarray], percentile: float | None) -> tuple
     return vmin, vmax
 
 
+def _render_z_profile_animation(frames, out_stem, *, run_name, cat,
+                                 plt, _common):
+    """Emit GIF/MP4 of <n(z,t)>_xy line-plot evolving in time, fixed y-range."""
+    profiles = [f[2].mean(axis=(0, 1)) for f in frames]
+    meta = frames[0][3]
+    oz = meta["origin"][2]
+    dz = meta["spacing"][2]
+    nz = meta["nz"]
+    z = oz + (np.arange(nz) + 0.5) * dz
+    y_min = min(float(p.min()) for p in profiles)
+    y_max = max(float(p.max()) for p in profiles)
+    if y_max <= y_min:
+        y_max = y_min + 1.0
+    pad = 0.05 * (y_max - y_min)
+
+    tmp_dir = _common.ensure_dir(out_stem.parent / f".__tmp_{cat}_zprof")
+    png_paths = []
+    last_step = frames[-1][0]
+    for i, (step, t_au, _cube, _meta) in enumerate(frames):
+        fig, ax = plt.subplots(figsize=(7, 4), dpi=120)
+        ax.plot(z, profiles[i], color="#1a4ea0", lw=1.4)
+        ax.set_xlabel("z (bohr)")
+        ax.set_ylabel(r"$\langle n(z, t) \rangle_{xy}$ (bohr$^{-3}$)")
+        ax.set_title(_common.title(
+            run_name, f"{cat}: z-profile",
+            step=step, total_steps=last_step, time_au=t_au,
+        ))
+        ax.set_ylim(y_min - pad, y_max + pad)
+        ax.grid(alpha=0.3)
+        fig.tight_layout()
+        p = tmp_dir / f"frame_{i:04d}.png"
+        fig.savefig(p)
+        plt.close(fig)
+        png_paths.append(p)
+    outs = _common.write_animation(out_stem, png_paths, fps=8)
+    for p in png_paths:
+        p.unlink(missing_ok=True)
+    tmp_dir.rmdir()
+    return outs
+
+
 def run(results_dir: Path, *, run_name: str, rebuild: bool,
         percentile: float | None = 99.0, dt_au: float = 0.020,
         write_every: int = 10, **_) -> dict:
@@ -112,6 +154,22 @@ def run(results_dir: Path, *, run_name: str, rebuild: bool,
             time_au = step * dt_au if step > 0 else 0.0
             cube, meta = _load_vti_array(f)
             frames.append((step, time_au, cube, meta))
+
+        # ---- z-profile animation (single line per frame, fixed y-range) ----
+        zprof_stem = out_dir / f"{cat[len('density_rt_'):]}_z_profile"
+        zprof_gif = zprof_stem.with_suffix(".gif")
+        if _common.need_rebuild(zprof_gif, rebuild):
+            outs = _render_z_profile_animation(
+                frames, zprof_stem,
+                run_name=run_name, cat=cat,
+                plt=plt, _common=_common,
+            )
+            notes[f"{cat}_z_profile"] = {
+                "gif": str(outs["gif"]),
+                "mp4": str(outs["mp4"]) if outs["mp4"] else None,
+            }
+        else:
+            notes[f"{cat}_z_profile"] = str(zprof_gif) + " (cached)"
 
         # Per-plane: emit linear + log animation pairs (each pair as gif+mp4).
         for plane, (axis, xlab, ylab) in _PLANES.items():

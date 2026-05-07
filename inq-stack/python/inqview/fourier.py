@@ -72,15 +72,29 @@ class FourierTransform:
         Window function and its parameters. Default: Hann window.
     detrend : bool
         If True, subtract a linear trend before transforming (removes DC drift).
+    zero_pad : int
+        Multiplier on signal length applied via zero-padding before the FFT.
+        Larger values give a smoother frequency-axis interpolation (no extra
+        spectral information, just denser sampling). Default 4 for spectra
+        comparable to QBall's smooth-noise output. Set 1 to disable.
+    smooth_sigma_bins : float
+        Optional Gaussian smoothing kernel width (in frequency bins) applied
+        to the magnitude spectrum AFTER the FFT. Default 0 (no smoothing).
+        Mild values (0.5–1.0) clean up high-frequency Gibbs ripple at the
+        cost of slight resolution loss; pair with a Hann or Kaiser window.
     """
 
     def __init__(
         self,
         window: WindowSpec | None = None,
         detrend: bool = True,
+        zero_pad: int = 4,
+        smooth_sigma_bins: float = 0.0,
     ) -> None:
         self.window = window if window is not None else WindowSpec("hann")
         self.detrend = detrend
+        self.zero_pad = max(1, int(zero_pad))
+        self.smooth_sigma_bins = float(smooth_sigma_bins)
 
     # ------------------------------------------------------------------
     # Core
@@ -117,12 +131,29 @@ class FourierTransform:
         win = self.window.build(n)
         sig_win = sig * win
 
-        raw = np.fft.rfft(sig_win)
-        freq = np.fft.rfftfreq(n, d=dt)
+        # Zero-pad to the requested length (better frequency-axis interpolation)
+        n_pad = n * self.zero_pad
+        if self.zero_pad > 1:
+            sig_padded = np.zeros(n_pad, dtype=float)
+            sig_padded[:n] = sig_win
+        else:
+            sig_padded = sig_win
 
-        # One-sided normalisation: divide by N; double non-DC and non-Nyquist bins
+        raw = np.fft.rfft(sig_padded)
+        freq = np.fft.rfftfreq(n_pad, d=dt)
+
+        # One-sided normalisation: divide by N (original length, NOT padded
+        # length) so the magnitude has the right physical units; double the
+        # interior bins so the one-sided spectrum integrates to the full
+        # power.
         amplitude = np.abs(raw) / n
         amplitude[1:-1] *= 2.0
+
+        # Optional Gaussian smoothing in the frequency-bin domain.
+        if self.smooth_sigma_bins > 0.0:
+            from scipy.ndimage import gaussian_filter1d
+            amplitude = gaussian_filter1d(
+                amplitude, sigma=self.smooth_sigma_bins, mode="nearest")
 
         return FourierResult(
             frequency_au=freq,

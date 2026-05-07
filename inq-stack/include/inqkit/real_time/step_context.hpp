@@ -31,6 +31,11 @@ struct StepContext {
     double energy_xc      = 0.0;
     inq::vector3<double> current = {0.0, 0.0, 0.0};
     inq::vector3<double> dipole  = {0.0, 0.0, 0.0};
+
+    // Slots populated by jellium-side per-step callbacks (centre of WP
+    // density, integrated dn^2). Left zero when not computed.
+    inq::vector3<double> wp_center = {0.0, 0.0, 0.0};
+    double density_l2 = 0.0;
 };
 
 } // namespace inqkit

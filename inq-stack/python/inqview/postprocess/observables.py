@@ -23,7 +23,11 @@ from . import _common
 from . import pipeline as _pipeline
 
 
-def run(results_dir: Path, *, run_name: str, rebuild: bool, **_) -> dict:
+def run(results_dir: Path, *, run_name: str, rebuild: bool,
+        spectra_axes=("z",),
+        t_skip_fs: float = 0.0,
+        plateau_frac: float = 0.5,
+        **_) -> dict:
     csv = results_dir / "raw" / "observables" / "observables.csv"
     if not csv.exists():
         _pipeline.skip(f"observables.csv missing at {csv}")
@@ -105,7 +109,10 @@ def run(results_dir: Path, *, run_name: str, rebuild: bool, **_) -> dict:
     # window each with a Hann window, FFT, convert to omega (a.u.) and eV,
     # save numerical CSVs alongside per-variant PNGs and a 3-curve overlay.
     notes["extended_spectra"] = _extended_spectra(
-        df, out_dir, raw_dir, run_name, rebuild)
+        df, out_dir, raw_dir, run_name, rebuild,
+        spectra_axes=spectra_axes,
+        t_skip_fs=t_skip_fs,
+        plateau_frac=plateau_frac)
     notes["eigenvalues"] = _eigenvalue_plots(
         results_dir, out_dir, raw_dir, run_name, rebuild)
     return notes
@@ -199,7 +206,69 @@ def _eigenvalue_plots(results_dir: Path, out_dir: Path, raw_dir: Path,
         fig.savefig(levels_png)
         plt.close(fig)
 
-    # 3. Density of states (Gaussian-broadened histogram).
+    # 3. Bar chart: one bar per state, x = state index, y = eigenvalue (eV),
+    # bar colour = shell (eigenvalue-cluster id). Inferred shells use a
+    # 0.05 eV gap threshold; for jellium this matches the |G|^2 shell
+    # structure to numerical precision.
+    bars_png = out_eig / "eigenvalue_bars.png"
+    if _common.need_rebuild(bars_png, rebuild):
+        order = np.argsort(eig_ev)
+        ev_sorted = eig_ev[order]
+        si_sorted = state_idx[order]
+        occ_sorted = occ[order]
+        gap_thresh_ev = 0.05
+        shell_id = np.zeros(ev_sorted.size, dtype=int)
+        for i in range(1, ev_sorted.size):
+            shell_id[i] = (shell_id[i-1] + 1
+                           if ev_sorted[i] - ev_sorted[i-1] > gap_thresh_ev
+                           else shell_id[i-1])
+
+        cmap = plt.get_cmap("tab20")
+        colours = [cmap(s % 20) for s in shell_id]
+        bar_edge = ["#000000" if o > 1e-3 else "#888888"
+                    for o in occ_sorted]
+        bar_alpha = [0.95 if o > 1e-3 else 0.45 for o in occ_sorted]
+
+        fig, ax = plt.subplots(figsize=(max(7, 0.10 * ev_sorted.size), 5),
+                               dpi=120)
+        for k, (ev, c, ec, a) in enumerate(zip(ev_sorted, colours,
+                                               bar_edge, bar_alpha)):
+            ax.bar(k, ev, width=0.85, color=c, edgecolor=ec,
+                   linewidth=0.5, alpha=a)
+
+        if homo_idx >= 0:
+            ax.axhline(eig_ev[homo_idx], color="#cc0000", linewidth=0.8,
+                       linestyle="--", label=f"HOMO = {eig_ev[homo_idx]:.3f} eV")
+        if lumo_idx >= 0:
+            ax.axhline(eig_ev[lumo_idx], color="#cc0000", linewidth=0.8,
+                       linestyle=":", label=f"LUMO = {eig_ev[lumo_idx]:.3f} eV")
+
+        for s in range(int(shell_id.max()) + 1):
+            mask = shell_id == s
+            count = int(mask.sum())
+            x_centre = float(np.where(mask)[0].mean())
+            y_top = float(ev_sorted[mask].max())
+            ax.text(x_centre, y_top + 0.01, f"|G|² shell\n×{count}",
+                    ha="center", va="bottom", fontsize="xx-small",
+                    color="#444444")
+
+        ax.set_xlabel("state index (sorted by ε)")
+        ax.set_ylabel("ε (eV)")
+        ax.set_title(f"{run_name}: KS eigenvalue bar chart "
+                     f"(N_states = {ev_sorted.size}, "
+                     f"shell gap > {gap_thresh_ev} eV)")
+        ax.legend(loc="lower right", fontsize="x-small")
+        ax.set_xticks(range(0, ev_sorted.size,
+                             max(1, ev_sorted.size // 20)))
+        ax.set_xticklabels([str(int(si_sorted[k]))
+                            for k in range(0, ev_sorted.size,
+                                           max(1, ev_sorted.size // 20))],
+                           rotation=45, fontsize="xx-small")
+        fig.tight_layout()
+        fig.savefig(bars_png)
+        plt.close(fig)
+
+    # 4. Density of states (Gaussian-broadened histogram).
     dos_png = out_eig / "eigenvalues_dos.png"
     if _common.need_rebuild(dos_png, rebuild):
         sigma_dos_ev = 0.1
@@ -253,15 +322,27 @@ def _eigenvalue_plots(results_dir: Path, out_dir: Path, raw_dir: Path,
 _HA_TO_EV = 27.21138625
 
 
-def _build_variants(signal):
-    """Return dict {variant_name: 1-D processed signal (numpy array)}."""
+def _build_variants(signal, *, plateau_frac: float = 0.5):
+    """Return dict {variant_name: 1-D processed signal (numpy array)}.
+
+    The ``plateau_detrend`` variant subtracts the mean of the last
+    ``(1 - plateau_frac)`` fraction of the signal — matching the QBall
+    analyse.py:245-271 recipe used in Santervás-Arranz et al. (PRR 7,
+    033292) and the standalone scripts/analyse_inq.py. Required to kill
+    the post-kick DC offset that otherwise leaks into the low-ω band
+    and contaminates the e-h / plasmon peak region.
+    """
     import numpy as np
     from scipy.signal import detrend
     s = np.asarray(signal, dtype=np.float64)
+    N = s.size
+    plateau_start = int(N * plateau_frac)
+    plateau_mean = s[plateau_start:].mean() if plateau_start < N else s.mean()
     return {
-        "raw_subtracted":  s - s[0],
-        "mean_subtracted": s - s.mean(),
-        "detrended":       detrend(s, type="linear"),
+        "raw_subtracted":   s - s[0],
+        "mean_subtracted":  s - s.mean(),
+        "detrended":        detrend(s, type="linear"),
+        "plateau_detrend":  s - plateau_mean,
     }
 
 
@@ -363,7 +444,10 @@ def _quantity_subfolder(column: str) -> str:
 
 
 def _extended_spectra(df, out_dir: Path, raw_dir: Path,
-                      run_name: str, rebuild: bool) -> dict:
+                      run_name: str, rebuild: bool,
+                      spectra_axes=("z",),
+                      t_skip_fs: float = 0.0,
+                      plateau_frac: float = 0.5) -> dict:
     """Run the 3-variant spectrum pipeline for dipole_z, current_z,
     energy_total. Outputs are compartmentalised into per-quantity
     subfolders so dipole / current / energy spectra don't crowd a single
@@ -380,6 +464,7 @@ def _extended_spectra(df, out_dir: Path, raw_dir: Path,
 
     # Time step from observables.csv (assumed uniform; the C++ writer
     # appends every step at dt_au, so dt = time_au[1] - time_au[0]).
+    import numpy as np
     if "time_au" not in df.columns or len(df) < 4:
         return {"skipped": "time_au column missing or too few rows"}
     t = df["time_au"].to_numpy()
@@ -387,13 +472,34 @@ def _extended_spectra(df, out_dir: Path, raw_dir: Path,
         return {"skipped": "fewer than 4 time samples"}
     dt_au = float(t[1] - t[0])
 
+    # Optional transient skip: drop the first t_skip_fs of the signal
+    # before any variant building or FFT. dt_au is unchanged (uniform
+    # grid). We track the start index so all column slices stay aligned.
+    AU2FS = 0.02418884
+    skip_idx = 0
+    if t_skip_fs > 0.0:
+        t_skip_au = t_skip_fs / AU2FS
+        skip_idx = int(np.searchsorted(t - t[0], t_skip_au))
+        if skip_idx >= t.size - 4:
+            return {"skipped": f"t_skip_fs={t_skip_fs} leaves <4 samples"}
+
     # Cap the displayed energy range. 200 eV easily covers all coronene
     # KS-orbital eigenvalue differences; the spectra at higher energies
     # are dominated by FFT noise from the finite Hann window.
     energy_max_ev = 200.0
 
-    columns = ("dipole_z", "current_z", "energy_total")
-    notes: dict = {"dt_au": dt_au, "n": int(t.size), "columns": []}
+    cols: list[str] = ["energy_total"]
+    for ax in spectra_axes:
+        cols += [f"dipole_{ax}", f"current_{ax}"]
+    columns = tuple(cols)
+    notes: dict = {
+        "dt_au": dt_au,
+        "n": int(t.size),
+        "n_after_skip": int(t.size - skip_idx),
+        "t_skip_fs": float(t_skip_fs),
+        "plateau_frac": float(plateau_frac),
+        "columns": [],
+    }
 
     for col in columns:
         if col not in df.columns:
@@ -402,8 +508,8 @@ def _extended_spectra(df, out_dir: Path, raw_dir: Path,
         sub = _quantity_subfolder(col)
         out_specs = _common.ensure_dir(base_out_specs / sub)
         raw_specs = _common.ensure_dir(base_raw_specs / sub)
-        signal = df[col].to_numpy()
-        variants = _build_variants(signal)
+        signal = df[col].to_numpy()[skip_idx:]
+        variants = _build_variants(signal, plateau_frac=plateau_frac)
         per_variant_results: dict = {}
         for variant, processed in variants.items():
             res = _hann_fft(processed, dt_au)

@@ -279,6 +279,15 @@ def plot_spectrum(
     ax.set_title(f"Spectrum: {result.column}")
     if log_scale:
         ax.set_yscale("log")
+    else:
+        # Force a clean scientific-notation y-axis without the
+        # offset-with-additive-constant ambiguity (e.g. 1e-6 + 9.12).
+        # See observables_reference.md for the project rule.
+        from matplotlib.ticker import ScalarFormatter
+        fmt = ScalarFormatter(useOffset=False, useMathText=True)
+        fmt.set_powerlimits((-3, 3))
+        ax.yaxis.set_major_formatter(fmt)
+    ax.grid(alpha=0.25)
 
     fig.tight_layout()
     fig.savefig(output_path)

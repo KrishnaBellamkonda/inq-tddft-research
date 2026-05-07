@@ -16,13 +16,20 @@ from typing import Callable, Iterable
 
 from . import (
     density,
+    eigenvalues_gs,
+    gamma_transitions,
     ground_state,
     layout,
+    momentum,
     observables,
+    occupations,
     orbitals,
     overlap,
     run_summary,
     screens,
+    state_energies,
+    state_energy_spectra,
+    wp_trajectory,
 )
 
 PathLike = str | Path
@@ -32,6 +39,13 @@ PHASES: tuple[str, ...] = (
     "gs",
     "layout",
     "observables",
+    "eigenvalues_gs",
+    "gamma_transitions",
+    "wp_trajectory",
+    "state_energies",
+    "state_energy_spectra",
+    "occupations",
+    "momentum",
     "density",
     "screens",
     "overlap",
@@ -42,14 +56,21 @@ PHASES: tuple[str, ...] = (
 
 # Phase -> module entry point
 _PHASE_FUNCS: dict[str, Callable] = {
-    "summary":     run_summary.run,
-    "gs":          ground_state.run,
-    "layout":      layout.run,
-    "observables": observables.run,
-    "density":     density.run,
-    "screens":     screens.run,
-    "overlap":     overlap.run,
-    "orbitals":    orbitals.run,
+    "summary":            run_summary.run,
+    "gs":                 ground_state.run,
+    "layout":             layout.run,
+    "observables":        observables.run,
+    "eigenvalues_gs":     eigenvalues_gs.run,
+    "gamma_transitions":  gamma_transitions.run,
+    "wp_trajectory":      wp_trajectory.run,
+    "state_energies":     state_energies.run,
+    "state_energy_spectra": state_energy_spectra.run,
+    "occupations":        occupations.run,
+    "momentum":           momentum.run,
+    "density":            density.run,
+    "screens":            screens.run,
+    "overlap":            overlap.run,
+    "orbitals":           orbitals.run,
 }
 
 
