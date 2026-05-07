@@ -4,11 +4,13 @@
 
 **Complete (with VTI output).** Three ground-state simulations done (H, Li, Al), each in a 30 bohr cubic finite cell at LDA/60 Ry with `extra_states(30)`. Per-run outputs are written **directly as ParaView-ready `.vti` files** via `inqkit::io::RealField3DWriter` / `ComplexField3DWriter` configured with `.emit_raw = false, .emit_vti = true, .vti_format = binary`. No Python post-processing step is required.
 
-| Atom | n_states | ∫ρ | GS energy (Ha) | SCF iters | Occupied states |
-|---|---|---|---|---|---|
-| H  | 31 | 1.0 | −0.027639 | 69 | [0] 1s (occ 1.0) |
-| Li | 32 | 3.0 | −0.044338 | (converged) | [0] 1s (occ 2.0), [1] 2s (occ 1.0) |
-| Al | 32 | 3.0 | −0.057946 | (converged) | [0] 3s (occ 2.0), [1] 3p (occ 1.0) |
+| Atom | n_states | ∫ρ | GS energy (Ha) | Lowest eigenvalues (Ha) |
+|---|---|---|---|---|
+| H  | 31 | 1.0 | −0.4461 | 1s −0.2338, 2s −0.0026, 2p (×3) +0.0151 |
+| Li | 32 | 3.0 | −7.0546 | 1s −1.8817, 2s −0.1057, 2p (×3) −0.0412, 3s −0.0073 |
+| Al | 32 | 3.0 | −2.1653 | 3s −0.2853, 3p (×3) −0.1020 (occ 1/3 each), 3d/box +… |
+
+The 2p (×3) and 3p (×3) triplets in H/Li/Al are perfectly degenerate to 5 d.p., confirming spherical symmetry of the isolated atoms inside the cubic finite cell. For Al the smearing distributes the single 3p valence electron symmetrically over the three degenerate p orbitals (occ = 1/3 each, sum = 1.0).
 
 All three runs wrote total density, per-orbital `|ψ|²`, and per-orbital complex `ψ` to `results/` as `.vti` files (binary base64 inline, single file per field). SCF reached the 1e-6 Ha tolerance for every atom.
 
@@ -90,7 +92,7 @@ User-side, **not yet performed**:
 
 ## Known issues / blockers
 
-1. **Pseudopotentials are softer than expected.** The INQ default pseudo set treats Li and Al as expected (3s²3p¹ for Al with [Ne] core, all-electron for Li). H has very weak binding (1s eigenvalue ≈ −0.024 Ha vs. the all-electron −0.5 Ha). The orbital *shapes* are still correct for visualisation purposes — that is the user's stated goal — but absolute energies should not be quoted as physical values.
+1. **(Resolved.) Atom placement bug — atoms were initially put at the +corner of the finite cell.** First implementation used `ions.insert(sym, {L/2, L/2, L/2})` thinking that was the centre. INQ's finite cell is centred on the *origin* (spans -L/2 .. +L/2), so the canonical isolated-atom placement is `{0.0_b, 0.0_b, 0.0_b}` — see `Tutorial/n2-with-inqkit/run.cpp` and `Tutorial/n2-cell-center-test/`. The bug clipped each electron's tail against the finite-cell boundary, giving an artificially soft H 1s eigenvalue (−0.024 Ha vs. the corrected −0.234 Ha). Fixed by moving every atom to the origin and rerunning.
 
 2. **Initial spec assumed Li had 1 valence electron.** Reality: INQ's default Li pseudo is all-electron (3 valence: 1s²2s¹), giving `n_states = 32` instead of the spec's 31. The Li `run.cpp` comment header was updated to reflect this. Li is now actually a stronger pedagogical example because both the inner 1s and outer 2s are visible.
 
