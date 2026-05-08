@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Callable, Iterable
 
 from . import (
+    bath_energy,
     density,
     eigenvalues_gs,
     gamma_transitions,
@@ -29,6 +30,7 @@ from . import (
     screens,
     state_energies,
     state_energy_spectra,
+    stopping,
     wp_trajectory,
 )
 
@@ -44,6 +46,8 @@ PHASES: tuple[str, ...] = (
     "wp_trajectory",
     "state_energies",
     "state_energy_spectra",
+    "bath_energy",
+    "stopping",
     "occupations",
     "momentum",
     "density",
@@ -65,6 +69,8 @@ _PHASE_FUNCS: dict[str, Callable] = {
     "wp_trajectory":      wp_trajectory.run,
     "state_energies":     state_energies.run,
     "state_energy_spectra": state_energy_spectra.run,
+    "bath_energy":        bath_energy.run,
+    "stopping":           stopping.run,
     "occupations":        occupations.run,
     "momentum":           momentum.run,
     "density":            density.run,
