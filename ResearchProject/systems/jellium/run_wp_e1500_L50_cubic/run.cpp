@@ -1,6 +1,6 @@
 // ============================================================================
 // run_wp_e1500_L50_cubic/run.cpp  (v2) — Gaussian wave-packet projectile in
-// a cubic 50 x 50 x 50 Bohr periodic jellium bath at N=162, dx=0.248.
+// a cubic 50 x 50 x 50 Bohr periodic jellium bath at N=162, dx=0.30.
 //
 // Cfg: jellium::config::Electron_Proj_E1500_L50_cubic_WP. WP is a Gaussian
 // at (0, 0, -10) Bohr (3 sigma from -z face in INQ centred Cartesian),
@@ -85,7 +85,7 @@ int main() {
     const std::string RUN_NAME = "run_wp_e1500_L50_cubic";
     const std::string GS_DIR =
         "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/"
-        "checkpoints/gs_L50_cubic_N162_dx0p248";
+        "checkpoints/gs_L50_cubic_N162_dx0p30";
 
     std::cout << "\n=== " << RUN_NAME << " ===\n"
               << "  cell = " << Cfg::L_BOHR << "^3 Bohr (cubic, periodic)\n"
@@ -213,31 +213,23 @@ int main() {
           << "max_overlap      = " << report.max_overlap << "\n"
           << "passed_tolerance = " << (report.passed_tolerance ? "yes" : "no") << "\n";
     }
-    {
-        inqkit::io::RealField3DWriter wp_d(
-            "results/raw/vti/density_wp_initial", vti_layout, {.overwrite=true});
-        wp_d.write(inqkit::fields::density::orbital(electrons, wp_idx),
-                   "density_wp_initial");
-
-        inqkit::io::ComplexField3DLayout cvti_layout{
-            .field_name   = "psi_wp",
-            .include_meta = false,
-            .emit_raw     = false,
-            .emit_vti     = true,
-            .vti_format   = inqkit::io::VTIWriteOptions::Format::binary,
-        };
-        inqkit::io::ComplexField3DWriter wp_psi(
-            "results/raw/wavefunction/wavefunction_wp_initial",
-            cvti_layout, {.overwrite=true});
-        wp_psi.write(inqkit::fields::orbital::wavefunction(electrons, wp_idx),
-                     "wavefunction_wp_initial");
-    }
+    // Initial WP density / wavefunction VTI writes SKIPPED. They each
+    // call inqkit::fields::*::orbital(electrons, wp_idx), which uses
+    // a per-element GPU->host loop costing ~10–30 min per 4.7M-cell
+    // extraction at this grid size. The diagnostic value (knowing what
+    // the initial WP looks like in real space) is small relative to the
+    // wallclock cost; postprocess can reconstruct the WP density at any
+    // time from density_total - density_bath_t0 if needed.
 
     // ----- Real-time outputs --------------------------------------------
+    // Only the WP-only overlap (n_ref complex dot products / call) is
+    // affordable. The full-matrix variant requires ~n_ref+1 wavefunction
+    // extractions per snapshot, each of which is currently O(30 min) per
+    // call at this grid size due to per-element GPU->host loops in
+    // inqkit/fields/orbital.hpp::wavefunction. Re-enable when those
+    // extractions are bulk-copy-patched.
     inqkit::observables::OrbitalOverlapMatrix overlap_obs(
         electrons, wp_idx, "results/raw/observables/overlap");
-    inqkit::observables::OrbitalOverlapMatrix overlap_full_obs(
-        electrons, wp_idx, "results/raw/observables/overlap_full");
 
     inqkit::io::RealField3DWriter total_wr(
         "results/raw/vti/density_total", vti_layout, {.overwrite=true});
@@ -285,41 +277,54 @@ int main() {
         {.emit_raw_vti = true, .emit_coarse_vti = true,
          .compute_l2 = true, .coarse_bin_bohr = 3.0});
 
-    // 3 full-matrix overlap snapshots: at step 0, N/2, N.
-    const int FULL_OVERLAP_STEP_MID  = Cfg::N_STEPS / 2;
-    const int FULL_OVERLAP_STEP_END  = Cfg::N_STEPS;
-    overlap_full_obs.snapshot(electrons, 0.0, 0);
-    std::cout << "  Full overlap snapshot at step 0\n";
+    // Full-matrix overlap snapshots at {0, N/2, N} are SKIPPED in this
+    // build — see the explanatory comment near overlap_obs declaration.
 
-    // ----- Real-time session callbacks ----------------------------------
+    // ----- Real-time session callbacks (MINIMAL, post-debug) ------------
+    //
+    // After multiple stalls debugging slow GPU->host density extractions,
+    // we have stripped the WP per-step callback to the absolute minimum:
+    //   - obs_writer.append(ctx): step/time/energy/current/dipole CSV
+    //     (these come from INQ's viewables, no density extraction needed)
+    //   - overlap_obs.snapshot_wp_only every 10 steps: 1 wavefunction
+    //     extraction, ~1-2 sec per call
+    //
+    // What we DROPPED (and why):
+    //   - density::total per step: bulk-copy patch is unreliable, can stall
+    //   - density::orbital per step: per-element loop, ~30 min per call
+    //   - density VTI series writes (system/wp/total)
+    //   - density_delta.snapshot (needs density)
+    //   - cod (needs density::orbital)
+    //   - 3 full-matrix overlap snapshots (each does n_ref+1 extractions
+    //     = 100+ calls × 1.5 sec = ~3 min per snapshot, plus n_ref^2
+    //     dot products on GPU; the cumulative cost was making step 0
+    //     take many minutes)
+    //
+    // What postprocess gets for the WP run:
+    //   - results/raw/observables/observables.csv with energy/current/
+    //     dipole vs time (the standard Bethe stopping-power observable
+    //     channel)
+    //   - results/raw/observables/state_energies.csv (per-orbital ⟨H⟩)
+    //   - results/raw/observables/occupations_vs_time.csv
+    //   - results/raw/observables/momentum_distribution.csv
+    //   - results/raw/observables/overlap/* (WP-only overlap every 10 steps)
+    //   - results/raw/observables/eigenvalues/* (mirrored from GS)
+    //   - results/raw/vti/density_gs_system/density_gs_system_*.vti (t=0)
+    //
+    // What postprocess does NOT get for the WP run:
+    //   - density VTI series (no animated 3D density)
+    //   - cod_z time series (no WP centroid trajectory)
+    //   - full-matrix overlap snapshots
     inqkit::RealTimeSession rt_obs(ions, electrons, Cfg::WRITE_EVERY);
     rt_obs.add([&](inqkit::StepContext const &ctx) {
-        auto sys_f   = inqkit::fields::density::total(*ctx.electrons);
-        auto wp_f    = inqkit::fields::density::orbital(*ctx.electrons, wp_idx);
-        auto total_f = add_real_fields(sys_f, wp_f);
-        system_wr.write(sys_f,   ctx.time_au, ctx.step);
-        wp_wr.write(    wp_f,    ctx.time_au, ctx.step);
-        total_wr.write( total_f, ctx.time_au, ctx.step);
+        // Append the cheap CSV row.
+        obs_writer.append(ctx);
 
-        const double l2 = density_delta.snapshot(sys_f, ctx.time_au, ctx.step);
-        const auto cod  = inqkit::observables::center_of_density(wp_f);
-
-        inqkit::StepContext ctx_out = ctx;
-        ctx_out.wp_center  = {cod.x_bohr, cod.y_bohr, cod.z_bohr};
-        ctx_out.density_l2 = l2;
-        obs_writer.append(ctx_out);
-
-        // Cheap WP-only overlap every 10 propagator steps.
+        // WP-only overlap every 10 propagator steps (1 wavefunction
+        // extraction, fast).
         if (ctx.step % 10 == 0) {
             overlap_obs.snapshot_wp_only(*ctx.electrons,
                                          ctx.time_au, ctx.step);
-        }
-
-        // Mid-trajectory full-matrix snapshot.
-        if (ctx.step == FULL_OVERLAP_STEP_MID) {
-            overlap_full_obs.snapshot(*ctx.electrons, ctx.time_au, ctx.step);
-            std::cout << "  Full overlap snapshot at step "
-                      << ctx.step << " (mid)\n";
         }
     });
 
@@ -340,11 +345,7 @@ int main() {
             .observables_current()
             .observables_dipole());
 
-    // Final full-matrix snapshot at the end of propagation.
-    overlap_full_obs.snapshot(electrons,
-        Cfg::DT_AU * Cfg::N_STEPS, FULL_OVERLAP_STEP_END);
-    std::cout << "  Full overlap snapshot at step "
-              << FULL_OVERLAP_STEP_END << " (end)\n";
+    // Final full-matrix overlap snapshot SKIPPED — see overlap_obs comment.
 
     auto t_wallclock_end = std::chrono::steady_clock::now();
     double wall_seconds =

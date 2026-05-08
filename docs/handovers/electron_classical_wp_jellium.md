@@ -1,5 +1,40 @@
 # Handover: electron-classical-wavepacket-jellium comparison
 
+## v2 dx=0.30 update (2026-05-08, mid-day)
+
+The v2 GS at dx=0.248 ran into a GPU memory wall: eigensolver workspaces
+(6 wavefunction-sized buffers ≈ 90 GB nominal) exceeded the 24 GB A30
+memory, forcing PCIe paging. Single-GPU iter 0 took **5.55 hours**.
+MPI-2 with domain-parallel decomposition didn't help meaningfully
+(both GPUs at 100 % util but only 35–60 W vs 165 W peak — same
+memory-pressure pattern, just split across two GPUs).
+
+**User pivot**: relax the grid to dx=0.30 (half the cells, fits one A30
+comfortably) and accept ~6 % WP-tail aliasing at k_0+3σ_k=11.10 vs
+Nyquist k=10.47. User's "each run on exactly one GPU" rule remains:
+GS uses GPU 0 only, then WP+Classical concurrent on GPU 0 + GPU 1.
+
+**Result on dx=0.30**:
+```
+SCF iter 0 : wtime =  62.2s   e = 923.32   dn=1e-01  dst=5e+01
+SCF iter 1 : wtime =  59.8s   e = 428.40   dn=1e-01  dst=7e+00
+```
+
+That's **62 s/iter at dx=0.30 vs 19,959 s/iter at dx=0.248 — 320×
+speedup per iter**. Total GS now estimated ~10–20 minutes
+(vs the projected 8–15 hours at dx=0.248).
+
+**Other v2 fix**: classical run.cpp now uses `.ehrenfest()` ion
+dynamics (was `.impulsive()`) so the bath's electronic forces actually
+decelerate the projectile — this is the whole point of the classical
+comparison. With `.impulsive()` we'd only have seen bath response,
+no projectile slowdown.
+
+**File status**: `electron_proj_E1500_L50_cubic.hpp` SPACING_BOHR
+changed 0.248→0.30, paths in 4 files updated dx0p248→dx0p30, save_gs
+dir renamed (build/ cleaned to fix CMake cache). Both run.cpps
+re-built successfully on dx=0.30 Cfg.
+
 ## v2 reconfiguration (2026-05-08)
 
 User stopped the v1 production GS mid-SCF and switched to a different

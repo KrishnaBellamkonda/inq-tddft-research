@@ -22,8 +22,13 @@
         is_coulomb      F -> T
                         (declares this as a bare local Coulomb PP)
 
-   2. PP_NONLOCAL block removed entirely
+   2. PP_NONLOCAL block PRESENT BUT EMPTY (with empty PP_DIJ child)
         (no bound electrons to scatter, no KB projectors needed)
+        UPDATE 2026-05-08: pseudopod's UPF2 parser
+        (inq/external_libs/pseudopod/formats/upf2.hpp:159) null-derefs
+        if PP_NONLOCAL is missing, even when number_of_proj=0. So the
+        block exists but is empty. The DIJ stub has size=0; the parser
+        loop iterates zero times because nprojectors()==0.
 
    3. This is the main change. PP_LOCAL extended from r = 6.01 -> 50.00 Bohr
         Extension uses the bare -2/r form (Rydberg, e^2 = 2, conversion from Bohr)
@@ -2667,6 +2672,13 @@
      4.0032025620E-02     4.0024014409E-02     4.0016006403E-02     4.0008001600E-02
      4.0000000000E-02
   </PP_LOCAL>
+ <PP_NONLOCAL>
+   <!-- empty: number_of_proj = 0 in PP_HEADER, so no PP_BETA.* projectors. -->
+   <!-- PP_DIJ stub kept so pseudopod's upf2.hpp parser doesn't null-deref -->
+   <!-- root_node_->first_node("PP_NONLOCAL")->first_node("PP_DIJ"): line 159. -->
+   <PP_DIJ type="real" size="0" columns="4">
+   </PP_DIJ>
+ </PP_NONLOCAL>
  <PP_PSWFC>
  </PP_PSWFC>
  <PP_RHOATOM type="real"  size="5001" columns="4">

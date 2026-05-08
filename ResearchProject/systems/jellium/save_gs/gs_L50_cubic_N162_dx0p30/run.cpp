@@ -1,25 +1,27 @@
 // ============================================================================
-// save_gs/gs_L50_cubic_N162_dx0p248/run.cpp  (v2 of the comparison plan)
+// save_gs/gs_L50_cubic_N162_dx0p30/run.cpp  (v2 of the comparison plan)
 //
 // Jellium GS at cell = 50^3 Bohr cubic-periodic, N = 162 (closed-shell magic
 // |G|^2 <= 6 — same lineage as the L=50 / N=162 base run, the plasmon
 // variants, and the positive-ion companion). Density n = 162/125000 =
 // 1.296e-3 e/Bohr^3, r_s = 5.69 Bohr, Lithium-like.
 //
-// Spacing 0.248 Bohr (= pi/g_max for cutoff 80 Ha = 160 Ry) — required by
-// the v2 high-energy WP at k_0 = 10.50 Bohr^-1 (E = 1500 eV, sigma = 5.0).
-// Nyquist k = pi/0.248 = 12.66 Bohr^-1 ⇒ ~14 % margin above k_0+3 sigma_k.
+// Spacing 0.30 Bohr (relaxed from user-spec 0.248 to fit the eigensolver
+// workspaces in 24 GB GPU memory). Nyquist k = pi/0.30 = 10.47 Bohr^-1
+// sits just below WP k_0 = 10.50; the WP centre is at the edge of the
+// resolved k-space, and its 3 sigma_k = 0.6 high-k tail aliases by ~6 %.
+// For Bethe-regime stopping at 1500 eV (k_0 dominates) this is acceptable;
+// a publication-quality run would tighten back to 0.248 on a workstation
+// with >24 GB GPU memory.
 //
 // Reused by both v2 run dirs:
 //   * run_wp_e1500_L50_cubic/         (Gaussian wave-packet projectile)
 //   * run_classical_e1500_L50_cubic/  (classical-electron projectile)
 //
-// Cost estimate: grid will land near 200^3 = 8.0M points (INQ rounds to FFT-
-// friendly sizes). With 91 occupied + 20 extra = 111 spatial states this GS
-// is comparable in cost to the v1 L=40x40x150 / N=162 setup that ran for
-// many hours; we expect this v2 GS to converge faster because the bath is
-// at the standard r_s=5.69 (denser, less near-degenerate manifold than
-// the v1 r_s=7.07 dilute case).
+// Cost estimate: grid lands at ~167^3 = 4.66M points (half of dx=0.248).
+// With 91 occupied + 20 extra = 111 spatial states this GS should fit
+// comfortably on one A30 (eigensolver buffers ~ 6 x 7.5 GB = 45 GB
+// nominal but only 2-3 are simultaneously resident, fitting in 24 GB).
 // ============================================================================
 #include <inq/inq.hpp>
 #include <inqkit/fields/density.hpp>
@@ -53,9 +55,9 @@ int main() {
 
     const std::string CHECKPOINT_DIR =
         "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/"
-        "checkpoints/gs_L50_cubic_N162_dx0p248";
+        "checkpoints/gs_L50_cubic_N162_dx0p30";
 
-    std::cout << "\n=== save_gs/gs_L50_cubic_N162_dx0p248 ===\n"
+    std::cout << "\n=== save_gs/gs_L50_cubic_N162_dx0p30 ===\n"
               << "  cell = " << Cfg::L_BOHR << "^3 Bohr (cubic, periodic)\n"
               << "  volume = " << (Cfg::L_BOHR * Cfg::L_BOHR * Cfg::L_BOHR)
               << " Bohr^3\n"
@@ -126,7 +128,7 @@ int main() {
     if (electrons.root()) {
         std::ofstream summary("results/run_summary.txt");
         summary << std::setprecision(16);
-        summary << "run = save_gs/gs_L50_cubic_N162_dx0p248\n"
+        summary << "run = save_gs/gs_L50_cubic_N162_dx0p30\n"
                 << "system = jellium_N162_L50_cubic_E1500_runs\n"
                 << "checkpoint_dir = " << CHECKPOINT_DIR << "\n"
                 << "cell_bohr = " << Cfg::L_BOHR << "^3 (cubic, periodic)\n"

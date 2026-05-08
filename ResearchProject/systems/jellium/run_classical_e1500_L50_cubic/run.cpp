@@ -1,7 +1,9 @@
 // ============================================================================
 // run_classical_e1500_L50_cubic/run.cpp  (v2) — classical-electron projectile
 // (custom UPF + mass override = m_e) through the cubic 50^3 Bohr periodic
-// jellium bath at N=162, dx=0.248. Companion of run_wp_e1500_L50_cubic/.
+// jellium bath at N=162, dx=0.40 (coarser than the WP run's 0.30 — see
+// the .ehrenfest() force-memory note in the Cfg struct). Companion of
+// run_wp_e1500_L50_cubic/.
 //
 // Cfg: jellium::config::Electron_Proj_E1500_L50_cubic_Classical.
 // Velocity match with WP is automatic: KE = 1500 eV (= 55.13 Ha), m = 1
@@ -13,9 +15,15 @@
 // Mass override: ionic::species("H").mass(1.0/1822.8885) ⇒ exact m_e
 //   (verified to machine precision in scripts/.../C2_mass_override).
 //
-// The propagation uses .impulsive() ion dynamics, so the projectile moves
-// at constant velocity (no force feedback into ion motion). The bath still
-// sees the moving -1 Coulomb potential and responds via TDDFT.
+// The propagation uses .ehrenfest() ion dynamics: at each step INQ
+// computes the force on the projectile from the bath electronic structure
+// (gradient of the local pseudopotential * density, summed over the grid),
+// and integrates Newton's equation r''(t) = F/m with m = m_e via velocity
+// Verlet. This is essential for the WP-vs-classical comparison: with
+// .impulsive() the classical particle would not slow down, so we'd only
+// see the bath response. With .ehrenfest() the projectile decelerates as
+// it loses energy to the bath, and the deceleration is the direct
+// stopping-power signal we want to compare against the WP cod_z slowdown.
 // ============================================================================
 
 #include <inq/inq.hpp>
@@ -46,7 +54,12 @@
 
 using namespace inq;
 using namespace inq::magnitude;
-using Cfg = jellium::config::Electron_Proj_E1500_L50_cubic_Classical;
+// Use the dx=0.40 variant: forces_stress::calculate (vector3<complex>
+// orbital buffer) wouldn't fit in 24 GB on the dx=0.30 grid. dx=0.40
+// halves the orbital memory and Nyquist=π/0.40=7.85 bohr⁻¹ is plenty
+// for bath physics (no high-k content needed, the WP is on a separate
+// dx=0.30 grid and run).
+using Cfg = jellium::config::Electron_Proj_E1500_L50_cubic_Classical_dx0p40;
 
 static std::string iso_now() {
     auto t  = std::time(nullptr);
@@ -65,7 +78,7 @@ int main() {
     const std::string RUN_NAME = "run_classical_e1500_L50_cubic";
     const std::string GS_DIR =
         "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/"
-        "checkpoints/gs_L50_cubic_N162_dx0p248";
+        "checkpoints/gs_L50_cubic_N162_dx0p40";
 
     std::cout << "\n=== " << RUN_NAME << " ===\n"
               << "  cell = " << Cfg::L_BOHR << "^3 Bohr (cubic, periodic)\n"
@@ -128,7 +141,7 @@ int main() {
               << Cfg::PROJ_VEL_X << ", " << Cfg::PROJ_VEL_Y
               << ", " << Cfg::PROJ_VEL_Z << ") bohr/atu\n";
     std::cout << "  KE_check (½·m·v²) = " << ions.kinetic_energy()
-              << " Ha (expect 36.75)\n";
+              << " Ha (expect 55.13 = ½·1·10.5²)\n";
 
     const int n_states    = electrons.states().num_states();
     const int n_electrons = electrons.states().num_electrons();
@@ -268,20 +281,20 @@ int main() {
         }
     });
 
-    // electron_track.csv writer — every step. Force may not be available in
-    // .impulsive() mode (forces are computed only when ion dynamics need
-    // them); in that case ctx.forces is null and we emit zero. Position
-    // and velocity are always available.
+    // electron_track.csv writer — every step. inqkit::StepContext does NOT
+    // currently expose forces, even though .ehrenfest() computes them
+    // internally. Position and velocity ARE always available. Force is
+    // therefore reconstructed in postprocess as F_z = m * dv_z/dt =
+    // dv_z/dt at electron mass. The CSV keeps fz columns (zero) so the
+    // schema stays uniform with the QBall reference.
     inqkit::RealTimeSession rt_track(ions, electrons, 1);
     rt_track.add([&](inqkit::StepContext const &ctx) {
         auto const &p = ctx.ions->positions()[0];
         auto const &v = ctx.ions->velocities()[0];
-        auto const &f = ctx.forces ? (*ctx.forces)[0]
-                                   : vector3<double>{0.0, 0.0, 0.0};
         electron_csv << ctx.step << "," << ctx.time_au << ","
                      << p[0] << "," << p[1] << "," << p[2] << ","
                      << v[0] << "," << v[1] << "," << v[2] << ","
-                     << f[0] << "," << f[1] << "," << f[2] << "\n";
+                     << 0.0 << "," << 0.0 << "," << 0.0 << "\n";
     });
 
     real_time::propagate(
@@ -299,7 +312,7 @@ int main() {
         options::real_time{}
             .num_steps(Cfg::N_STEPS)
             .dt(Cfg::DT_AU * 1.0_atomictime)
-            .impulsive()                       // constant-velocity ion
+            .ehrenfest()                       // electronic forces decelerate ion
             .observables_current()
             .observables_dipole());
 
@@ -343,7 +356,7 @@ int main() {
                                   << Cfg::PROJ_VEL_Y << " "
                                   << Cfg::PROJ_VEL_Z << "\n"
           << "KE_eV           = " << Cfg::WP_EKIN_EV << "\n"
-          << "ion_dynamics    = impulsive (constant velocity)\n\n"
+          << "ion_dynamics    = ehrenfest (electronic forces decelerate ion)\n\n"
           << "6. Real-time configuration\n--------------------------\n"
           << "rt_num_steps    = " << Cfg::N_STEPS << "\n"
           << "dt_au           = " << Cfg::DT_AU << "\n"

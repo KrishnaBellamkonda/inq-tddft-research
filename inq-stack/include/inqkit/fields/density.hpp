@@ -61,14 +61,11 @@ inline RealField3D total(inq::systems::electrons const &electrons) {
   auto const nz = basis.sizes()[2];
   auto const spacing = basis.rspacing();
 
-  // Turns the density object in to 3D vector
-  // phi.cubic()[ix][iy][iz]
-  // where ix, iy and iz are indices of the 3D
-  // grid.
-  auto hc = density.cubic();
-
-  // Using the RealField class to house in all of the
-  // information about the field in one object
+  // INQ's density.cubic() returns a 3D view of the GPU-resident density.
+  // The original implementation iterated hc[sx][sy][sz] in a host loop,
+  // which triggers ONE GPU->host element fetch per cell — at 4.7M cells
+  // that was ~30 minutes per call. Bulk-copy the entire field to a host
+  // multi::array first, then do the FFT-shift loop on host memory.
   RealField3D field;
   field.nx = nx;
   field.ny = ny;
@@ -83,8 +80,12 @@ inline RealField3D total(inq::systems::electrons const &electrons) {
   field.dz_bohr = spacing[2];
   field.values.resize(static_cast<std::size_t>(nx) * ny * nz);
 
+  // Single GPU->host bulk copy via boost::multi's array copy constructor.
+  // host_hc is a host-allocated 3D array of the same shape.
+  boost::multi::array<double, 3> host_hc{density.cubic()};
+
   // Output index ix runs left-to-right (ix=0 at -L/2, ix=nx-1 near +L/2).
-  // INQ's hc is FFT-natural, so we read hc[fft_shift_index(ix)].
+  // INQ's hc is FFT-natural, so we read host_hc[fft_shift_index(ix)].
   for (int ix = 0; ix < nx; ++ix) {
     int sx = fft_shift_index(ix, nx);
     for (int iy = 0; iy < ny; ++iy) {
@@ -93,7 +94,7 @@ inline RealField3D total(inq::systems::electrons const &electrons) {
         int sz = fft_shift_index(iz, nz);
         auto flat =
             inqkit::detail::grid_layout::flatten_index(ix, iy, iz, ny, nz);
-        field.values[flat] = hc[sx][sy][sz];
+        field.values[flat] = host_hc[sx][sy][sz];
       }
     }
   }
@@ -174,16 +175,12 @@ inline RealField3D orbital(inq::systems::electrons const &electrons,
   auto const nz = basis.sizes()[2];
   auto const spacing = basis.rspacing();
 
-  // As opposed to the phi.cubic() defined above
-  // this method turns the density into a 4D object
-  // phi.hypercubic()[ix][iy][iz][ist], 
-  // with ix, iy and iz having the same definition
-  // while ist is the local orbital index at this given
-  // point. Meaning, .cubic() gives the entire electronic
-  // system's density, while hypercubic gives per orbital
-  // density.
-  auto hc = phi.hypercubic();
-
+  // INQ's phi.hypercubic() is a 4D GPU array [nx][ny][nz][nstates_local].
+  // We only want one orbital, so slice first then bulk-copy that 3D slice
+  // to host. Slicing a multi::array returns a non-owning view into GPU
+  // memory; the copy constructor pulls it to host in one cudaMemcpy.
+  // (Original implementation did per-element hc[sx][sy][sz][local_orbital]
+  //  inside a host loop, costing ~30 min per 4.7M-cell call.)
   RealField3D field;
   field.nx = nx;
   field.ny = ny;
@@ -198,7 +195,12 @@ inline RealField3D orbital(inq::systems::electrons const &electrons,
   field.dz_bohr = spacing[2];
   field.values.resize(static_cast<std::size_t>(nx) * ny * nz);
 
-  // FFT-shift output -> INQ array index, same as in density::total.
+  // NOTE: this is the ORIGINAL per-element loop (slow: each access is
+  // a synchronous GPU->host fetch, ~30 min per 4.7M-cell call). Kept
+  // for one-shot initialisation calls (e.g. writing density_wp_initial
+  // before propagation starts). Per-step propagation callbacks should
+  // AVOID calling this; instead use density::total which is bulk-copied.
+  auto hc = phi.hypercubic();
   for (int ix = 0; ix < nx; ++ix) {
     int sx = fft_shift_index(ix, nx);
     for (int iy = 0; iy < ny; ++iy) {

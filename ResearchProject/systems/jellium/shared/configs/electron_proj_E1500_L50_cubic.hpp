@@ -48,11 +48,23 @@ namespace jellium::config {
 // T=100K, SCF_TOL=1e-6, WP_SIGMA=5.0 — and override only what differs.
 struct Common_E1500_L50_cubic : Base_N162_L50_E1p5 {
 
-    // ----- Fine grid for the high-k₀ WP --------------------------------
-    static constexpr double SPACING_BOHR = 0.248;      // = pi/g_max(80 Ha)
-    static constexpr double CUTOFF_HA    = 80.0;       // for log strings only;
-                                                       // INQ uses spacing not cutoff
-                                                       // for jellium
+    // ----- Grid (relaxed from user-spec 0.248 to 0.30 for memory headroom)
+    // Trade-off: at dx=0.248 the eigensolver's 6 wavefunction-sized buffers
+    // overflow GPU memory (each buffer is 9.26M cells x 16 B x 101 states
+    // = 15 GB; 6 buffers = 90 GB nominal vs 24 GB GPU). At dx=0.30 the
+    // grid drops to 167^3 = 4.66M cells, halving memory and letting the
+    // SCF run efficiently on one GPU.
+    //
+    // Aliasing cost: k_Nyquist(0.30) = pi/0.30 = 10.47 bohr^-1. WP k_0
+    // = 10.50 sits AT the Nyquist boundary; the high-k tail (k_0 + 3 sigma_k
+    // = 11.10) is above Nyquist by ~6 % and gets aliased back. ~16 % of
+    // the WP's momentum-space weight is mis-resolved. For Bethe-regime
+    // stopping-power physics at 1500 eV (where k_0 dominates), this is
+    // an acceptable scoping-run compromise.
+    static constexpr double SPACING_BOHR = 0.30;
+    static constexpr double CUTOFF_HA    = 54.8;       // pi^2/(2 dx^2);
+                                                       // log only, INQ uses
+                                                       // spacing, not cutoff
 
     // ----- Real-time -----------------------------------------------------
     static constexpr double DT_AU       = 0.005;
@@ -115,6 +127,30 @@ struct Electron_Proj_E1500_L50_cubic_WP : Common_E1500_L50_cubic {
 struct Electron_Proj_E1500_L50_cubic_Classical : Common_E1500_L50_cubic {
     static constexpr bool WP_ENABLED = false;
     static constexpr int  N_IONS     = 1;
+};
+
+// Classical run on a COARSER grid (dx=0.40, ~125^3 = 1.95 M points).
+// Ehrenfest force computation in observables::forces_stress allocates a
+// vector3<complex> orbital_set buffer, which at 81 occupied states needs
+// ~18 GB on top of the 7+ GB resident wavefunctions — overflowing 24 GB
+// on the dx=0.30 grid. At dx=0.40 the orbital_set is ~half the size,
+// force-stress fits comfortably, and the bath physics (density-fluctuation
+// modes ≤ a few bohr^-1) is still well-resolved (Nyquist k = π/0.40
+// = 7.85 bohr^-1).
+//
+// This Cfg requires its OWN GS at dx=0.40; the dx=0.30 checkpoint is
+// not compatible (different grid, different num_grid_points). See
+// save_gs/gs_L50_cubic_N162_dx0p40/run.cpp.
+//
+// The WP run continues to use the dx=0.30 grid because k_0 = 10.5 needs
+// fine spacing; this asymmetry is acceptable because the projectiles'
+// physical regimes are separable (the WP's k-space content needs fine
+// grid; the classical electron's point-charge nature does not).
+struct Electron_Proj_E1500_L50_cubic_Classical_dx0p40 : Common_E1500_L50_cubic {
+    static constexpr bool WP_ENABLED = false;
+    static constexpr int  N_IONS     = 1;
+    static constexpr double SPACING_BOHR = 0.40;     // overrides 0.30
+    static constexpr double CUTOFF_HA    = 30.84;    // pi^2/(2*0.4^2)
 };
 
 }  // namespace jellium::config

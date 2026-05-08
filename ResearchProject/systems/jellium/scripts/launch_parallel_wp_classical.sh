@@ -8,7 +8,7 @@
 #
 # Preconditions (script will check):
 #   - GS checkpoint dir present:
-#       checkpoints/gs_L50_cubic_N162_dx0p248/
+#       checkpoints/gs_L50_cubic_N162_dx0p30/
 #   - Both A30s available (no CUDA processes on either)
 #
 # What it does:
@@ -25,7 +25,7 @@ set -euo pipefail
 
 REPO=/local/data/public/skcb2/tddft
 JELLIUM=$REPO/ResearchProject/systems/jellium
-GS_DIR=$JELLIUM/checkpoints/gs_L50_cubic_N162_dx0p248
+GS_DIR=$JELLIUM/checkpoints/gs_L50_cubic_N162_dx0p30
 WP_DIR=$JELLIUM/run_wp_e1500_L50_cubic
 CL_DIR=$JELLIUM/run_classical_e1500_L50_cubic
 
@@ -37,7 +37,7 @@ echo "=== launch_parallel_wp_classical ==="
 # 1. Check GS checkpoint exists.
 if [[ ! -d "$GS_DIR" ]]; then
     echo "FATAL: GS checkpoint missing: $GS_DIR"
-    echo "Run save_gs/gs_L50_cubic_N162_dx0p248/run.cpp first."
+    echo "Run save_gs/gs_L50_cubic_N162_dx0p30/run.cpp first."
     exit 1
 fi
 echo "[ok] GS checkpoint present: $GS_DIR"
