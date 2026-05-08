@@ -130,6 +130,89 @@ public:
         index_file_.flush();
     }
 
+    // ----- Proxy variant -------------------------------------------------
+    // Compute O_{i, j} for fixed i in 0..n_ref-1 and j in proxy_indices
+    // (typically 2 orbitals per shell of degeneracy). This is the scalable
+    // form for the GS-projected occupation observable:
+    //
+    //   n_i^GS(t) ≈ sum_shells (g_s / N_proxies(s)) sum_{j in P_s}
+    //                f_j(0) * |<psi_i^GS | psi_j(t)>|^2
+    //
+    // Cost: |proxy_indices| evolved-wavefunction extractions and
+    //       n_ref * |proxy_indices| dot products per call.
+    //
+    // Output format:
+    //   overlap_XXXXXX.csv:
+    //     # step=N time_au=T n_ref=R n_proxies=P proxy_indices=p1,p2,...
+    //     row 0: O_{0,p1}, O_{0,p2}, ..., O_{0,pP}
+    //     row 1: O_{1,p1}, O_{1,p2}, ..., O_{1,pP}
+    //     ...
+    //   index.csv: step,time_au,file (shared with snapshot/snapshot_wp_only)
+    //
+    // The caller is expected to also write a sibling shells.csv mapping
+    // proxy_indices to (shell_id, degeneracy) so that the postprocess can
+    // do the shell-averaged projection — this method does not write it.
+    void snapshot_proxies(inq::systems::electrons const& electrons,
+                          std::vector<int> const& proxy_indices,
+                          double time_au, int step)
+    {
+        const int P = static_cast<int>(proxy_indices.size());
+
+        // Extract evolved wavefunctions for proxies only.
+        std::vector<fields::ComplexField3D> evolved;
+        evolved.reserve(P);
+        for (int p = 0; p < P; ++p)
+            evolved.push_back(
+                fields::orbital::wavefunction(electrons, proxy_indices[p]));
+
+        std::size_t n_pts = ref_wfns_.empty() ? 0 : ref_wfns_[0].values.size();
+
+        std::vector<std::vector<double>> O(n_ref_, std::vector<double>(P, 0.0));
+        for (int i = 0; i < n_ref_; ++i) {
+            for (int p = 0; p < P; ++p) {
+                std::complex<double> inner(0.0, 0.0);
+                auto const& ri = ref_wfns_[i].values;
+                auto const& ej = evolved[p].values;
+                for (std::size_t r = 0; r < n_pts; ++r)
+                    inner += std::conj(ri[r]) * ej[r];
+                inner *= dv_;
+                O[i][p] = std::norm(inner);
+            }
+        }
+
+        std::ostringstream ss;
+        ss << output_dir_ << "/overlap_"
+           << std::setfill('0') << std::setw(6) << step << ".csv";
+        std::string fname = ss.str();
+
+        std::ofstream f(fname);
+        if (!f)
+            throw std::runtime_error("OrbitalOverlapMatrix: cannot open " + fname);
+
+        f << "# step=" << step
+          << " time_au=" << std::fixed << std::setprecision(6) << time_au
+          << " n_ref=" << n_ref_ << " n_proxies=" << P
+          << " proxy_indices=";
+        for (int p = 0; p < P; ++p) {
+            f << proxy_indices[p];
+            if (p + 1 < P) f << ",";
+        }
+        f << "\n";
+        for (int i = 0; i < n_ref_; ++i) {
+            for (int p = 0; p < P; ++p) {
+                f << std::fixed << std::setprecision(8) << O[i][p];
+                if (p + 1 < P) f << ",";
+            }
+            f << "\n";
+        }
+
+        std::string basename = std::filesystem::path(fname).filename().string();
+        index_file_ << step << ","
+                    << std::fixed << std::setprecision(6) << time_au << ","
+                    << basename << "\n";
+        index_file_.flush();
+    }
+
     // Compute O_ij(t) and write to output_dir/overlap_XXXXXX.csv.
     // Rows = GS reference orbital index i (0..n_ref-1).
     // Columns = evolved orbital index j (0..n_ref); last column is the WP.

@@ -37,6 +37,7 @@
 #include <inqkit/observables/occupations_writer.hpp>
 #include <inqkit/observables/orbital_overlap.hpp>
 #include <inqkit/observables/state_energy_writer.hpp>
+#include <inqkit/jellium/shells.hpp>
 #include <inqkit/real_time/real_time_session.hpp>
 #include <inqkit/real_time/step_context.hpp>
 
@@ -200,9 +201,27 @@ int main() {
     }
 
     // ----- Real-time output writers --------------------------------------
-    // No WP slot; n_ref = n_occupied for the overlap matrix.
+    // n_ref = n_states - 1 so the reference set covers BOTH occupied and
+    // unoccupied GS orbitals. This lets the GS-projected occupation
+    // postprocess detect single-particle excitations into the empty
+    // shells above E_F (without this, only the "loss from occupied"
+    // signal is visible).
+    const int n_ref = n_states - 1;
     inqkit::observables::OrbitalOverlapMatrix overlap_full_obs(
-        electrons, n_occupied, "results/raw/observables/overlap_full");
+        electrons, n_ref, "results/raw/observables/overlap_full");
+
+    // Proxy snapshot infrastructure: enumerate jellium degenerate shells
+    // for n_states and pick 2 fixed orbitals per shell as proxies. The
+    // GS-projected occupation observable is computed on the proxy data
+    // with shell-degeneracy weighting (postprocess).
+    auto shell_table = inqkit::jellium::shells::enumerate_for_n_states(n_states);
+    auto proxies     = inqkit::jellium::shells::pick_proxies(shell_table, 2);
+    inqkit::observables::OrbitalOverlapMatrix overlap_proxy_obs(
+        electrons, n_ref, "results/raw/observables/overlap_proxies");
+    inqkit::jellium::shells::write_shells_csv(
+        shell_table, proxies, "results/raw/observables/overlap_proxies");
+    std::cout << "  Shell table: " << shell_table.size() << " shells, "
+              << proxies.size() << " proxies (2 per shell)\n";
 
     inqkit::io::RealField3DWriter total_wr(
         "results/raw/vti/density_total", vti_layout, {.overwrite=true});
@@ -259,8 +278,14 @@ int main() {
     overlap_full_obs.snapshot(electrons, 0.0, 0);
     std::cout << "  Full overlap snapshot at step 0\n";
 
+    // Proxy overlap at t=0 (sanity check: each proxy column should be ≈ unit
+    // vector with 1 at its proxy_index row and 0 elsewhere).
+    overlap_proxy_obs.snapshot_proxies(electrons, proxies, 0.0, 0);
+
     const int FULL_OVERLAP_STEP_MID = Cfg::N_STEPS / 2;
     const int FULL_OVERLAP_STEP_END = Cfg::N_STEPS;
+    // Proxy snapshots every 5*WRITE_EVERY = 20 propagator steps.
+    const int PROXY_SNAPSHOT_STRIDE = 5 * Cfg::WRITE_EVERY;
 
     // ----- Real-time session callbacks -----------------------------------
     inqkit::RealTimeSession rt_dens(ions, electrons, Cfg::WRITE_EVERY);
@@ -278,6 +303,14 @@ int main() {
             overlap_full_obs.snapshot(*ctx.electrons, ctx.time_au, ctx.step);
             std::cout << "  Full overlap snapshot at step "
                       << ctx.step << " (mid)\n";
+        }
+
+        // Proxy snapshot every PROXY_SNAPSHOT_STRIDE steps. Cheap (~18
+        // wavefunction extractions vs the full 81+) so we can sample
+        // the time evolution densely.
+        if (ctx.step > 0 && ctx.step % PROXY_SNAPSHOT_STRIDE == 0) {
+            overlap_proxy_obs.snapshot_proxies(
+                *ctx.electrons, proxies, ctx.time_au, ctx.step);
         }
     });
 
@@ -315,6 +348,11 @@ int main() {
             .ehrenfest()                       // electronic forces decelerate ion
             .observables_current()
             .observables_dipole());
+
+    // Final proxy snapshot at end.
+    overlap_proxy_obs.snapshot_proxies(
+        electrons, proxies,
+        Cfg::DT_AU * Cfg::N_STEPS, FULL_OVERLAP_STEP_END);
 
     // Final full-matrix snapshot.
     overlap_full_obs.snapshot(electrons,

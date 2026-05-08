@@ -37,6 +37,7 @@
 #include <inqkit/real_time/step_context.hpp>
 #include <inqkit/wavepacket/injection_report.hpp>
 #include <inqkit/wavepacket/wavepacket.hpp>
+#include <inqkit/jellium/shells.hpp>
 
 #include "../shared/configs/electron_proj_E1500_L50_cubic.hpp"
 #include "../shared/cpp/eigenvalues_writer.hpp"
@@ -222,14 +223,27 @@ int main() {
     // time from density_total - density_bath_t0 if needed.
 
     // ----- Real-time outputs --------------------------------------------
-    // Only the WP-only overlap (n_ref complex dot products / call) is
-    // affordable. The full-matrix variant requires ~n_ref+1 wavefunction
-    // extractions per snapshot, each of which is currently O(30 min) per
-    // call at this grid size due to per-element GPU->host loops in
-    // inqkit/fields/orbital.hpp::wavefunction. Re-enable when those
-    // extractions are bulk-copy-patched.
+    // overlap_obs (WP-only): 1 wavefunction extraction per call, used
+    // every 10 propagation steps to track WP decoherence into the GS basis.
     inqkit::observables::OrbitalOverlapMatrix overlap_obs(
         electrons, wp_idx, "results/raw/observables/overlap");
+
+    // overlap_proxy_obs (proxy variant): tracks the time-dependent
+    // GS-basis-projected occupations of all 81 occupied + 19 unoccupied
+    // bath orbitals via 2 fixed proxies per shell. Cheap enough to
+    // snapshot every 5*WRITE_EVERY = 20 propagation steps. See
+    // inqkit/observables/orbital_overlap.hpp::snapshot_proxies for the
+    // GS-projected occupation formula consumed by the postprocess.
+    auto shell_table = inqkit::jellium::shells::enumerate_for_n_states(n_states);
+    auto proxies     = inqkit::jellium::shells::pick_proxies(shell_table, 2);
+    inqkit::observables::OrbitalOverlapMatrix overlap_proxy_obs(
+        electrons, wp_idx, "results/raw/observables/overlap_proxies");
+    inqkit::jellium::shells::write_shells_csv(
+        shell_table, proxies, "results/raw/observables/overlap_proxies");
+    std::cout << "  Shell table: " << shell_table.size() << " shells, "
+              << proxies.size() << " proxies (2 per shell)\n";
+
+    const int PROXY_SNAPSHOT_STRIDE = 5 * Cfg::WRITE_EVERY;
 
     inqkit::io::RealField3DWriter total_wr(
         "results/raw/vti/density_total", vti_layout, {.overwrite=true});
@@ -280,6 +294,10 @@ int main() {
     // Full-matrix overlap snapshots at {0, N/2, N} are SKIPPED in this
     // build — see the explanatory comment near overlap_obs declaration.
 
+    // t=0 sanity snapshots:
+    overlap_obs.snapshot_wp_only(electrons, 0.0, 0);
+    overlap_proxy_obs.snapshot_proxies(electrons, proxies, 0.0, 0);
+
     // ----- Real-time session callbacks (MINIMAL, post-debug) ------------
     //
     // After multiple stalls debugging slow GPU->host density extractions,
@@ -317,14 +335,22 @@ int main() {
     //   - full-matrix overlap snapshots
     inqkit::RealTimeSession rt_obs(ions, electrons, Cfg::WRITE_EVERY);
     rt_obs.add([&](inqkit::StepContext const &ctx) {
-        // Append the cheap CSV row.
+        // CSV row from INQ-supplied viewables (cheap).
         obs_writer.append(ctx);
 
         // WP-only overlap every 10 propagator steps (1 wavefunction
-        // extraction, fast).
+        // extraction). This is the WP decoherence diagnostic.
         if (ctx.step % 10 == 0) {
             overlap_obs.snapshot_wp_only(*ctx.electrons,
                                          ctx.time_au, ctx.step);
+        }
+
+        // Proxy overlap every PROXY_SNAPSHOT_STRIDE steps. ~18 wavefunction
+        // extractions × n_ref dot products. Used by the postprocess to
+        // compute n_i^GS(t) excitation pattern.
+        if (ctx.step > 0 && ctx.step % PROXY_SNAPSHOT_STRIDE == 0) {
+            overlap_proxy_obs.snapshot_proxies(
+                *ctx.electrons, proxies, ctx.time_au, ctx.step);
         }
     });
 
