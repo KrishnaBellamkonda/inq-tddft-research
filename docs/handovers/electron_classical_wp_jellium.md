@@ -1,5 +1,48 @@
 # Handover: electron-classical-wavepacket-jellium comparison
 
+## v2 reconfiguration (2026-05-08)
+
+User stopped the v1 production GS mid-SCF and switched to a different
+scientific configuration. The v1 sections below `---` divider remain
+for traceability but are obsolete; the active config is v2.
+
+**v2 config**:
+- Cubic 50³ Bohr periodic (replaces 40×40×150 orthorhombic)
+- N = 162 electrons, r_s = 5.69 (matches L=50 N=162 base lineage)
+- Spacing 0.248 Bohr (= π/g_max for cutoff 80 Ha = 160 Ry)
+- WP: KE=1500 eV, k₀=10.50 bohr⁻¹, σ=5 Bohr
+- Launch (corner-origin): (25, 25, 15) = INQ centred (0, 0, −10),
+  i.e. 3σ from −z face — cleaner injection than the v1 5-Bohr buffer
+- dt=0.005 atu, N_STEPS=860, total t=4.3 atu (one full periodic wrap
+  during the simulation)
+- Concurrent execution on two GPUs: WP on GPU 0, classical on GPU 1,
+  via `CUDA_VISIBLE_DEVICES`
+
+**v2 file changes** (committed alongside this handover update):
+- NEW: `shared/configs/electron_proj_E1500_L50_cubic.hpp`
+- NEW: `save_gs/gs_L50_cubic_N162_dx0p248/run.cpp`
+- NEW: `run_wp_e1500_L50_cubic/run.cpp`
+- NEW: `run_classical_e1500_L50_cubic/run.cpp`
+- NEW: `scripts/classical_electron_smoke/Cv2_pre_gs_dryrun/dryrun.cpp`
+- v1 versions are SUPERSEDED but retained on disk and in the prior
+  commit `b277a0d` for traceability.
+
+**v2 smoke gates passed**:
+- v2 pre-GS dryrun PASS — INQ accepts cubic 50³ at dx=0.248, allocates
+  210×210×210 = 9.26 M grid points (cube is comparable to v1's 9.11 M
+  total) with 101 states.
+- C1, C2, C3 from v1 carry over (config-independent: tested UPF
+  parsing, mass override = m_e exact, impulsive propagator at 1.78e−15
+  Bohr machine precision).
+
+**v2 GS launched 11:46 BST 2026-05-08** as background task `ba2osvh2z`
+on GPU 0 (`CUDA_VISIBLE_DEVICES=0`). Build phase was only ~4 min
+(libxc cache reused from dryrun); SCF started at 11:50.
+
+**v1 GS task `bfsl7dela`** killed at 11:08; orphan `./run` PID
+1556242 also cleaned up. Both GPUs returned to idle (13 MiB each)
+before v2 GS launch.
+
 ## Current status
 
 Phases 0–4 of the plan (`.claude/plans/the-objective-in-this-dapper-moon.md`)
