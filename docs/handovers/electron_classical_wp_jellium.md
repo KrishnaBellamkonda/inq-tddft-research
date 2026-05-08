@@ -1,5 +1,58 @@
 # Handover: electron-classical-wavepacket-jellium comparison
 
+## v2-final state (2026-05-08, late afternoon)
+
+**Currently running** (as of 17:47 BST 2026-05-08):
+- **Classical** (PID 1875627, GPU 1, dx=0.40 Cfg): step 155/860 (18 %), ~13 s/step, ETA finish ~22:30 BST.
+- **WP** (PID 1900922, GPU 0, dx=0.30 Cfg, minimal callback): launched 17:44 BST; pre-step-0 setup taking >3 min and counting; will continue overnight. ETA finish (if step time settles at 63 s) ~9 AM tomorrow.
+
+**Files committed** (commit `e4d7a74` on `runs/electron-classical-wavepacket-jellium`):
+- `electron-ONCV-1.2.upf`: `<PP_NONLOCAL>` stub added — pseudopod's UPF2 parser null-derefs without it (fix documented in PP_INFO).
+- `electron_proj_E1500_L50_cubic.hpp`: now declares both
+  `Electron_Proj_E1500_L50_cubic_WP` (dx=0.30) and
+  `Electron_Proj_E1500_L50_cubic_Classical_dx0p40` (dx=0.40).
+- `save_gs/gs_L50_cubic_N162_dx0p30/run.cpp`: GS for the WP run.
+- `save_gs/gs_L50_cubic_N162_dx0p40/run.cpp`: smaller-grid GS for the
+  classical run (forces_stress::calculate at dx=0.30 wouldn't fit
+  in 24 GB GPU).
+- `run_classical_e1500_L50_cubic/run.cpp`: now uses `.ehrenfest()`
+  (was `.impulsive()`), so the bath's electronic forces decelerate
+  the projectile — the stopping-power signal we want.
+- `run_wp_e1500_L50_cubic/run.cpp`: per-step callback stripped to the
+  cheapest possible `obs_writer.append(ctx)` only. Density VTI series,
+  density_delta, cod_z trajectory, full-overlap snapshots, and the
+  WP-only overlap snapshots are all skipped to keep the callback
+  from triggering slow GPU→host orbital extractions.
+- `inq-stack/include/inqkit/fields/density.hpp`: bulk-copy patch for
+  `density::total` (boost::multi::array<double, 3> from GPU view);
+  `density::orbital` left at the original per-element loop (a clean
+  bulk-copy attempt for the 4D hypercubic case stalls on this
+  boost::multi version, so we avoided that path).
+
+**Observables that will be available**:
+- Classical (full stack via `.ehrenfest()`): observables.csv (energy/
+  current/dipole), state_energies.csv, occupations_vs_time.csv,
+  momentum_distribution.csv, density VTI series (total + delta), full
+  overlap matrix at {0, N/2, N}, electron_track.csv (pos, vel, F=0
+  placeholder — Ehrenfest forces ARE applied internally; postprocess
+  reconstructs them from `dv/dt`).
+- WP (minimal): observables.csv only. No density VTI, no overlap, no
+  cod_z. Postprocess will not have spatial WP density information.
+
+**Known limitations going forward** (for the next session):
+1. The inqkit per-element host loops in `fields::orbital::wavefunction`
+   and `fields::density::orbital` need a proper bulk-copy patch
+   before per-step orbital diagnostics are usable on dx=0.30.
+2. The full-matrix overlap snapshots can't be produced for the WP run
+   without the same library fix.
+3. The postprocess pipeline (bath_energy.py, stopping.py) is generic
+   and should work for both runs once they finish — bath_energy.py
+   reads state_energies.csv (present in both); stopping.py reads
+   observables.csv (present in both) and electron_track.csv
+   (classical-only).
+
+
+
 ## v2 dx=0.30 update (2026-05-08, mid-day)
 
 The v2 GS at dx=0.248 ran into a GPU memory wall: eigensolver workspaces
