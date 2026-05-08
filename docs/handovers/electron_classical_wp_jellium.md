@@ -1,5 +1,43 @@
 # Handover: electron-classical-wavepacket-jellium comparison
 
+## v2-final state (2026-05-08, evening — WP abandoned)
+
+After multiple attempts (4 separate WP launches with progressively
+stripped callbacks), the WP run at dx=0.30 / 102 states cannot reach
+SCF step 1 in less than 30 minutes of pre-step-0 setup. The process
+remains alive (CPU 60–92 %, GPU 0 at 100 % util / 35 W power — same
+memory-bound thrashing pattern as the v2 dx=0.248 GS), but never emits
+the step-0 propagation log line. INQ's TDDFT internal init
+(density.calculate, ks_hamiltonian construction, time_zero, etc.) at
+this state count + grid + 24 GB GPU = effective deadlock from
+cudaMallocAsync paging.
+
+**Final WP status: NOT COMPLETED in this session.** Stripped callback
+(only `obs_writer.append(ctx)` per WRITE_EVERY=4 steps) was
+insufficient.
+
+**Classical run status: PROGRESSING.** 253/860 = 29 % at 18:10. ETA
+finish ~22:30 BST tonight. Full observable stack (energy, current,
+dipole, density, momentum, ehrenfest projectile track via velocity
+differences).
+
+**Next-session work plan**:
+1. Properly patch `inqkit/fields/orbital.hpp::wavefunction` and
+   `density.hpp::orbital` with a bulk GPU→host copy. Test on a 1-element
+   benchmark first. Expect this to bring WP per-step callback back to
+   ~5 sec from 30 min.
+2. Find why INQ's TDDFT init (density.calculate, ks_hamiltonian
+   construction, etc.) appears to deadlock at dx=0.30 / 102 states. May
+   be unrelated to inqkit — could be in INQ's gpu-pool allocation.
+   Possible mitigation: run WP at dx=0.40 with same N=162 GS as
+   classical and accept the WP momentum aliasing at k_0=10.5
+   > Nyquist=7.85 (loss of physics validity, but the WP-vs-classical
+   comparison is still informative for stopping power if interpreted
+   carefully).
+3. Implement a "fast WP" variant that propagates only the WP orbital
+   (frozen-bath approximation) — single-orbital propagation skips most
+   of the memory pressure.
+
 ## v2-final state (2026-05-08, late afternoon)
 
 **Currently running** (as of 17:47 BST 2026-05-08):
