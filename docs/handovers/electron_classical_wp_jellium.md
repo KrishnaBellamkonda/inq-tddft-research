@@ -1,5 +1,52 @@
 # Handover: electron-classical-wavepacket-jellium comparison
 
+## v2-final state (2026-05-08, evening — CLASSICAL DONE, WP abandoned)
+
+**Classical run completed at 20:27 BST.** Wall time **3 h 17 m** (11844 s).
+All 860 propagation steps executed cleanly. `run_completed = true`,
+`Done. Wall time 11844.3 s.` Exit 0.
+
+**Physics signal extracted from electron_track.csv + observables.csv:**
+
+| Quantity | Value |
+|---|---|
+| Distance traveled | 45.14 Bohr (single transit + small wrap, L=50 box) |
+| v_z initial → final | 10.4999 → 10.4966 bohr/atu (drop = 0.0033) |
+| Velocity drop | 0.031 % |
+| Projectile KE loss | **0.937 eV** (= 0.06 % of 1500 eV) |
+| System total energy gain | 0.939 eV |
+| **Energy conservation residual** | **+0.002 eV** (machine precision) |
+| Bath kinetic-energy gain | 0.891 eV |
+| Bath Hartree+xc rearrangement | 0.048 eV |
+| **Stopping power S(v=10.5)** | **0.021 eV/Bohr** |
+
+The stopping power 0.021 eV/Bohr at v=10.5 in r_s=5.69 jellium is in
+the high-velocity Bethe regime: S(v) ∝ ln(v)/v² rather than the v_F-peak
+Lindhard regime. Physically the projectile's kinetic energy is going
+predominantly into bath single-particle e-h excitations (kinetic gain
+≫ Hartree+xc rearrangement), as expected for a fast (k_0 ≫ k_F) charged
+projectile.
+
+**Postprocess pipeline ran cleanly** on the classical results: 6 phases
+(summary, observables, state_energies, bath_energy, stopping,
+occupations) all PASS. 17 PNGs + CSVs in
+`results/analysis/observables/`:
+- `dE_kinetic_vs_z.png` — bath KE gain vs projectile z (stopping curve)
+- `stopping_force_vs_z.png` — F_z reconstructed from dv/dt
+- `bath_energy_vs_time.png` + CSV — band-structure-summed bath E(t)
+- `observables_summary.png`, `total_energy_vs_time.png`,
+  `current_components_vs_time.png`, `dipole_components_vs_time.png`
+- `fft_total_energy.png`, `fft_current_*.png`, `dipole_spectrum_*.png`
+  — frequency-domain spectra
+- `ks_energies_absolute.gif`, `ks_energies_delta.gif`,
+  `occupations_absolute.gif`, `occupations_delta.gif` — animated bar
+  charts
+
+**WP run abandoned** (not viable in this session at dx=0.30/102 states/
+24 GB GPU). The v2 plan's WP-vs-classical comparison is therefore
+incomplete — only the classical half is available. A follow-up session
+should fix the inqkit per-element-loop bulk-copy and retry the WP path.
+
 ## v2-final state (2026-05-08, evening — WP abandoned)
 
 After multiple attempts (4 separate WP launches with progressively
