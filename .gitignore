@@ -94,6 +94,13 @@ Si
 run.startup
 *.log.mpi
 
+# Compiled smoke-test / proxy binaries (sources kept; binaries are not)
+smoke_C1
+smoke_C2
+smoke_C3
+dryrun
+syntax_check
+
 # Office/binary/archive docs — keep tracked history pure text
 *.pptx
 *.xlsx
