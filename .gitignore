@@ -119,3 +119,13 @@ docs/presentations/
 docs/sources/
 docs/inq-docs/
 
+# Track ONLY authored workflow content under .claude/ (rules + skills).
+# Everything else in .claude/ (credentials, runtime state, history, plugins,
+# project memory, tasks, sessions, caches) stays local-only.
+# Re-include the dir first (it is excluded by the .* rule above), then
+# re-exclude all its contents except the two authored subfolders.
+!.claude/
+.claude/*
+!.claude/rules/
+!.claude/skills/
+
