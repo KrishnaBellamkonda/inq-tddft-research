@@ -177,20 +177,25 @@ def run(results_dir: Path, *, run_name: str, rebuild: bool, **opts) -> dict:
         plt.close(fig)
 
     # ── opposite-phase pair diagnostic (e-h fingerprint) ──────────────────
-    # Restrict to k=0 (Gamma) to match the paper's gamma_transitions
-    # diagnostic. For each (n, n') with n in occupied (occ > 0.5) and n'
-    # in unoccupied (occ < 0.1), compute cross-spectrum and look for
-    # peaks near omega = ε_n' - ε_n with phase ≈ π.
+    # Loop over each kpoint independently (vertical transitions stay
+    # within one k by construction). Thresholds are normalised against
+    # the per-kpoint full-occupation value (which in INQ equals the
+    # kpoint weight times spin pairing — typically 0.25 for an 8-kpoint
+    # spin-paired metal). occupied = occ > 50% of full; unoccupied =
+    # occ < 10% of full.
     pairs_rows = []
-    if 0 in df["kpoint_index"].unique():
-        g = per_state[per_state["kpoint_index"] == 0]
-        occ_states = g[g["occupation"] > 0.5]["state_index"].tolist()
-        unocc_states = g[g["occupation"] < 0.1]["state_index"].tolist()
+    occ_full = float(per_state["occupation"].max())
+    occ_thresh_high = 0.50 * occ_full
+    occ_thresh_low  = 0.10 * occ_full
+    for k_target in sorted(per_state["kpoint_index"].unique()):
+        g = per_state[per_state["kpoint_index"] == int(k_target)]
+        occ_states = g[g["occupation"] > occ_thresh_high]["state_index"].tolist()
+        unocc_states = g[g["occupation"] < occ_thresh_low]["state_index"].tolist()
         # Prevent O(N²) blowup at k=0 by capping search to
         # |ε_n' - ε_n| < 10 eV (covers the paper's regimes 0–7 eV).
         eps0_by_state = dict(zip(g["state_index"], g["epsilon_t0_ev"]))
         for n in occ_states:
-            spec_n = spectra.get((0, n))
+            spec_n = spectra.get((int(k_target), n))
             if spec_n is None:
                 continue
             energy_ev_n, _, _, S_n = spec_n
@@ -198,7 +203,7 @@ def run(results_dir: Path, *, run_name: str, rebuild: bool, **opts) -> dict:
                 de_ev = eps0_by_state[np_] - eps0_by_state[n]
                 if de_ev <= 0.5 or de_ev > 10.0:
                     continue
-                spec_np = spectra.get((0, np_))
+                spec_np = spectra.get((int(k_target), np_))
                 if spec_np is None:
                     continue
                 _, _, _, S_np = spec_np
@@ -212,6 +217,7 @@ def run(results_dir: Path, *, run_name: str, rebuild: bool, **opts) -> dict:
                 # = 1.0 for perfect anti-phase, ≤ 0 for in-phase.
                 opp_phase = float(np.cos(np.radians(180.0 - abs(phase_deg))))
                 pairs_rows.append({
+                    "kpoint_index":   int(k_target),
                     "n_occ":          int(n),
                     "n_unocc":        int(np_),
                     "delta_epsilon_ev": float(de_ev),

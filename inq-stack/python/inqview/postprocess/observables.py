@@ -23,9 +23,61 @@ from . import _common
 from . import pipeline as _pipeline
 
 
+def _plot_per_component_energy(df, out_dir: Path, rebuild: bool) -> dict:
+    """§13.5: a separate PNG per available energy component.
+
+    Each plot uses ScalarFormatter(useOffset=False) and starts the y-axis
+    at the t=0 baseline so a 0.5 eV swing on top of a 5 Ha baseline is
+    visible. Y-axis labels include Δ (relative to t=0) and absolute (Ha).
+    """
+    import matplotlib.pyplot as plt
+    from matplotlib.ticker import ScalarFormatter
+    import numpy as np
+
+    HA = 27.21138625
+    columns = [
+        ("energy_total",    "$E_{\\rm total}$"),
+        ("energy_kinetic",  "$E_{\\rm kinetic}$"),
+        ("energy_hartree",  "$E_{\\rm Hartree}$"),
+        ("energy_xc",       "$E_{\\rm xc}$"),
+        ("energy_external", "$E_{\\rm external}$"),
+        ("energy_ion_ion",  "$E_{\\rm ion-ion}$"),
+    ]
+    out: dict[str, str] = {}
+    t = df["time_au"].to_numpy() if "time_au" in df.columns else None
+    if t is None or len(t) < 2:
+        return {"skipped": "no time_au"}
+
+    for col, label in columns:
+        if col not in df.columns:
+            continue
+        out_png = out_dir / f"{col}_vs_time.png"
+        if not _common.need_rebuild(out_png, rebuild):
+            out[col] = str(out_png) + " (cached)"
+            continue
+        y_ha = df[col].to_numpy()
+        y0 = float(y_ha[0])
+        # Δ in eV (left axis), absolute in Ha (right axis annotation)
+        fig, ax = plt.subplots(figsize=(8, 4.5))
+        ax.plot(t, (y_ha - y0) * HA, color="C1", lw=1.3)
+        ax.yaxis.set_major_formatter(ScalarFormatter(useOffset=False,
+                                                     useMathText=True))
+        ax.set_xlabel("time (a.u.)")
+        ax.set_ylabel(f"Δ{label} relative to t=0 (eV)")
+        ax.set_title(f"{label}(t) — baseline at t=0: {y0:+.6f} Ha")
+        ax.grid(True, alpha=0.3)
+        ax.axhline(0.0, color="0.6", lw=0.7)
+        fig.tight_layout()
+        fig.savefig(out_png, dpi=150)
+        plt.close(fig)
+        out[col] = str(out_png)
+    return out
+
+
 def run(results_dir: Path, *, run_name: str, rebuild: bool,
         spectra_axes=("z",),
         t_skip_fs: float = 0.0,
+        t_start_au: float = 0.0,
         plateau_frac: float = 0.5,
         **_) -> dict:
     csv = results_dir / "raw" / "observables" / "observables.csv"
@@ -70,22 +122,28 @@ def run(results_dir: Path, *, run_name: str, rebuild: bool,
             fig.savefig(out)
             plt.close(fig)
 
-    # FFT spectra
-    ft = FourierTransform()
+    # §13.5 per-component energy time-series — separate PNG per component.
+    # The cancellation between components is the physics signal when
+    # ΔE_total is in the noise; total_energy_vs_time alone hides this.
+    notes["energy_components"] = _plot_per_component_energy(df, out_dir, rebuild)
+
+    # FFT spectra — honour §13.6 t_start_au transient cutoff.
+    ft = FourierTransform(t_start_au=t_start_au)
     spectra: dict[str, str] = {}
 
     def _fft_one(col: str, raw_csv_name: str, png_name: str):
         if col not in df.columns:
             return
         result = ft.transform_column(df, col)
-        # Save numerical FFT to raw/observables/
+        # Save numerical FFT to raw/observables/ (header declares cutoff).
         out_csv = raw_dir / raw_csv_name
         if _common.need_rebuild(out_csv, rebuild):
             import numpy as np
             arr = np.column_stack([result.frequency_au, result.amplitude])
-            header = f"frequency_au,amplitude  ({col})"
+            header = (f"frequency_au,amplitude  ({col}; "
+                      f"t_start_au={result.t_start_au})")
             np.savetxt(out_csv, arr, delimiter=",", header=header)
-        # Plot
+        # Plot — caption mentions cutoff if non-zero.
         out_png = out_dir / png_name
         if _common.need_rebuild(out_png, rebuild):
             plot_spectrum(result, out_png)

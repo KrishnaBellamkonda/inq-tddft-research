@@ -61,6 +61,7 @@ class FourierResult:
     column: str
     dt_au: float
     window: WindowSpec
+    t_start_au: float = 0.0       # §13.6 transient cutoff applied (0 = none)
 
 
 class FourierTransform:
@@ -82,6 +83,14 @@ class FourierTransform:
         to the magnitude spectrum AFTER the FFT. Default 0 (no smoothing).
         Mild values (0.5–1.0) clean up high-frequency Gibbs ripple at the
         cost of slight resolution loss; pair with a Hann or Kaiser window.
+    t_start_au : float
+        Transient-region cutoff: discard all samples with ``time_au -
+        time_au[0] < t_start_au`` before windowing + FFT (per
+        observables_reference §13.6). Default 0 (no skip). Use this to
+        exclude the WP-injection shake-up so the spectrum reflects the
+        steady-state response. The cutoff is recorded on the returned
+        ``FourierResult.t_start_au`` field for downstream captions / CSV
+        headers.
     """
 
     def __init__(
@@ -90,11 +99,13 @@ class FourierTransform:
         detrend: bool = True,
         zero_pad: int = 4,
         smooth_sigma_bins: float = 0.0,
+        t_start_au: float = 0.0,
     ) -> None:
         self.window = window if window is not None else WindowSpec("hann")
         self.detrend = detrend
         self.zero_pad = max(1, int(zero_pad))
         self.smooth_sigma_bins = float(smooth_sigma_bins)
+        self.t_start_au = float(t_start_au)
 
     # ------------------------------------------------------------------
     # Core
@@ -123,6 +134,18 @@ class FourierTransform:
             raise ValueError("time_au and values must have the same length.")
         if len(time_au) < 2:
             raise ValueError("Need at least 2 samples for FFT.")
+
+        # §13.6 transient skip: drop samples with t < t_start_au (relative
+        # to the first time point) before windowing / FFT.
+        if self.t_start_au > 0.0:
+            t_cut = float(time_au[0]) + self.t_start_au
+            mask = time_au >= t_cut
+            if mask.sum() < 4:
+                raise ValueError(
+                    f"FourierTransform: t_start_au={self.t_start_au} a.u. "
+                    f"leaves <4 samples ({mask.sum()})")
+            time_au = time_au[mask]
+            values = values[mask]
 
         n = len(time_au)
         dt = float(time_au[1] - time_au[0])
@@ -162,6 +185,7 @@ class FourierTransform:
             column=column,
             dt_au=dt,
             window=self.window,
+            t_start_au=self.t_start_au,
         )
 
     # ------------------------------------------------------------------
