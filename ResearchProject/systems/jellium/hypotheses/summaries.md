@@ -1,0 +1,13 @@
+## 05_electron_capture
+
+Electron-capture diagnostic.
+  focus    = run_02_low_energy    E =   50.0 eV   σ = 1.00 Bohr   k₀ = 1.917
+  baseline = run_01_base    E =  200.0 eV   σ = 1.00 Bohr   k₀ = 3.834
+
+  f_trap(t_final): focus=0.443    baseline=0.168
+  (residual fraction inside ±10 Bohr slab — persistent value indicates trapped density)
+
+  max|<φ_occ | WP(t_final)>|: focus=6.670e-06    baseline=0.000e+00
+  ratio focus/baseline = inf
+
+  Verdict: PARTIAL CAPTURE detected — non-zero residual trapped fraction AND non-zero overlap with occupied orbitals.
