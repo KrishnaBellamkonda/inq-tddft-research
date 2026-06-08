@@ -35,9 +35,15 @@ from .state_energies import _read_homo_index
 
 
 def run(results_dir: Path, *, run_name: str, rebuild: bool, **opts) -> dict:
+    # Accept either the legacy 'occupations_vs_time.csv' or the new
+    # 'occupations.csv' produced by inqkit::observables::OccupationsWriter.
     csv_path = results_dir / "raw" / "observables" / "occupations_vs_time.csv"
     if not csv_path.exists():
-        return {"skipped": f"missing: {csv_path}"}
+        alt_path = results_dir / "raw" / "observables" / "occupations.csv"
+        if alt_path.exists():
+            csv_path = alt_path
+        else:
+            return {"skipped": f"missing: {csv_path} (and {alt_path})"}
     df = pd.read_csv(csv_path)
     if df.empty:
         return {"skipped": "occupations_vs_time.csv is empty"}
