@@ -276,14 +276,16 @@ int run_propagation(std::string const &run_name,
     inqkit::io::RealField3DWriter wp_wr(
         jellium::results::vti_density_wp_dir(), vti_layout, {.overwrite = true});
 
-    // t = 0 frames
+    // t = 0 frames (same corrected convention as the per-step callback:
+    // system = bath = full − wp; total = full DFT density; wp = WP alone).
     {
-        auto sys0   = inqkit::fields::density::total(electrons);
-        auto wp0    = inqkit::fields::density::orbital(electrons, wp_idx);
-        auto total0 = add_real_fields(sys0, wp0);
-        system_wr.write(sys0,   0.0, 0);
-        wp_wr.write(    wp0,    0.0, 0);
-        total_wr.write( total0, 0.0, 0);
+        auto full0 = inqkit::fields::density::total(electrons);
+        auto wp0   = inqkit::fields::density::orbital(electrons, wp_idx);
+        auto bath0 = inqkit::fields::density::total_excluding_orbital(
+            full0, wp0, /*occupation=*/1.0);
+        system_wr.write(bath0,  0.0, 0);   // bath only (WP removed)
+        wp_wr.write(    wp0,    0.0, 0);    // WP alone
+        total_wr.write( full0,  0.0, 0);    // true total (WP incl.)
     }
 
     // Observables CSV
@@ -402,24 +404,29 @@ int run_propagation(std::string const &run_name,
     const double SCREEN_DT_AU = Cfg::DT_AU * Cfg::WRITE_EVERY;
     inqkit::RealTimeSession rt_obs(ions, electrons, Cfg::WRITE_EVERY);
     rt_obs.add([&](inqkit::StepContext const &ctx) {
-        // Single round of density extraction, reused below.
-        // NOTE on naming: `sys_f` is `electrons.density()`, which is the
-        // full DFT density Σᵢ fᵢ |ψᵢ|² and ALREADY includes the WP slot
-        // (occupation 1.0). The `wp_f` is the WP orbital density alone.
-        // The legacy `total = sys + wp` line double-counted the WP; we
-        // keep it for VTI compatibility (the system_wr/wp_wr/total_wr
-        // contract is consumed by existing postprocess) but use the
-        // un-doubled `sys_f` for the density_delta observable.
-        auto sys_f   = inqkit::fields::density::total(*ctx.electrons);
-        auto wp_f    = inqkit::fields::density::orbital(*ctx.electrons, wp_idx);
-        auto total_f = add_real_fields(sys_f, wp_f);
+        // Density fields, corrected convention (2026-05-31):
+        //   full_f  = electrons.density() = Σᵢ fᵢ|ψᵢ|²  — INCLUDES the WP slot
+        //             (occupation 1.0). This is the true TOTAL density.
+        //   wp_f    = the WP orbital density alone (|ψ_wp|²).
+        //   bath_f  = full_f − wp_f = the TARGET-SYSTEM (bath) density, WP
+        //             removed. Integrates to N_electrons (not N_electrons+1).
+        // We write bath_f to system_wr so "density_system" is genuinely the
+        // system response with NO wave-packet contamination (the previous code
+        // wrote full_f to system — WP-included — and wrote full_f+wp_f to
+        // total, which DOUBLE-counted the WP). density_delta now snapshots the
+        // bath, so the induced/z-profile observables are bath-only and directly
+        // comparable to the classical-projectile runs.
+        auto full_f = inqkit::fields::density::total(*ctx.electrons);
+        auto wp_f   = inqkit::fields::density::orbital(*ctx.electrons, wp_idx);
+        auto bath_f = inqkit::fields::density::total_excluding_orbital(
+            full_f, wp_f, /*occupation=*/1.0);
 
-        system_wr.write(sys_f,   ctx.time_au, ctx.step);
-        wp_wr.write(    wp_f,    ctx.time_au, ctx.step);
-        total_wr.write( total_f, ctx.time_au, ctx.step);
+        system_wr.write(bath_f,  ctx.time_au, ctx.step);   // bath only (WP removed)
+        wp_wr.write(    wp_f,    ctx.time_au, ctx.step);    // WP alone
+        total_wr.write( full_f,  ctx.time_au, ctx.step);    // true total (WP incl.)
 
         const double l2 =
-            density_delta.snapshot(sys_f, ctx.time_au, ctx.step);
+            density_delta.snapshot(bath_f, ctx.time_au, ctx.step);
         const auto cod = inqkit::observables::center_of_density(wp_f);
 
         inqkit::StepContext ctx_out = ctx;
