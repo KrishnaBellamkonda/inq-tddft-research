@@ -64,9 +64,28 @@ decision on rewording 2 commit-message filename references.
 - `*.html` global ignore is harmless (no authored html in scope).
 - inqkit headers compile (verified-by-prior-use, not re-built).
 
+## Milestone: sub-repo .gitignore alignment (done)
+Aligned `Tutorial/` and `QuantumKickExtension/` (separate git repos) to the
+main repo's .gitignore format:
+- Appended the missing categories (extended sim outputs, checkpoints/, media,
+  run artifacts, office/archive, LaTeX) — one block per repo, preserving their
+  per-repo exe conventions (`**/run`, `**/li_kick_*`).
+- `git rm --cached` the already-tracked runtime artifacts: Tutorial 25
+  (24 profile.dat + 1 png), QKE 33 (18 profile.dat + 15 png). Files kept on
+  disk. Commits: Tutorial `951fad2`, QKE `15a312d`.
+- Validated: 0 tracked artifacts remain; new `*.png`/`profile.dat` caught; no
+  uncommitted changes. Decision: untrack PNGs too (full consistency).
+- Sub-repos not pushed (their remotes/auth not addressed this session).
+
+## Main-repo validation (passed)
+51 commits ahead of origin/main; no uncommitted/staged changes; only the 2
+excluded literature non-md files remain untracked; `.credentials.json` ignored;
+no compiled binaries tracked.
+
 ## Exact next steps
-1. User decides: reword the 2 `CLAUDE.md`/`CLAUDE-backup.md` filename
-   references, or accept as factual filename refs.
-2. `git push -u origin report1/submission-package` (also publishes the 14
-   prior unpushed commits). No PR.
-3. Confirm push succeeded; update this handover to "complete".
+1. Complete the main-repo push: `git push -u origin report1/submission-package`
+   (user is running it interactively — needs the ssh key passphrase / a key
+   registered on the GitHub account).
+2. If desired, push the two sub-repos to their own remotes.
+3. Accepted: the 2 `CLAUDE.md`/`CLAUDE-backup.md` body references stay as
+   factual filename refs (no reword).
