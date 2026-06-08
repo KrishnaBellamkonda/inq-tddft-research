@@ -6,6 +6,7 @@ under `attachments/<slug>/`.
 
 | Date | Title | Slug | Status |
 |---|---|---|---|
+| 2026-05-17 | **Topical: Jellium 2026-05-21 meeting campaign — design lock** (12-energy stopping-power campaign; 36 tasks; new 4σ/1σ + cadence rules) | [`2026-05-17_jellium_meeting_design`](2026-05-17_jellium_meeting_design.md) | design-locked, no compute yet |
 | 2026-05-06 | **run_plasmon_n162_L50_E3p4_varyv** (variable-v test → **bath plasmon confirmed**, peak invariant) | [`2026-05-06_run_plasmon_n162_L50_E3p4_varyv`](2026-05-06_run_plasmon_n162_L50_E3p4_varyv.md) | complete |
 | 2026-05-06 | **run_plasmon_n162_L50_E15** (L=50, N=162, WP=15 eV → **m=1 plasmon at 3.53 eV**) | [`2026-05-06_run_plasmon_n162_L50_E15`](2026-05-06_run_plasmon_n162_L50_E15.md) | complete |
 | 2026-05-05 | Topical: plasmons, e-h excitations, stopping-power regime | [`plasmons-and-stopping-power`](plasmons-and-stopping-power.md) | complete |

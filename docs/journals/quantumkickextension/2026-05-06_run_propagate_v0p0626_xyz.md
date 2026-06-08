@@ -3,28 +3,18 @@
 **Title:** run_propagate_v0p0626_xyz (li_54_atom_bcc, v=0.0626, plasmon hunt)
 **Run path:** `/local/data/public/skcb2/tddft/QuantumKickExtension/inq-codebase/Li/run_propagate_v0p0626_xyz`
 **Linked results:** `/local/data/public/skcb2/tddft/QuantumKickExtension/inq-codebase/Li/run_propagate_v0p0626_xyz/results`
-**Status:** running
+**Status:** complete
 
-> ⚠️ Entry created while the run is in progress. `run_summary.txt` is
-> written by the run.cpp template only at the end of the propagation,
-> so the canonical config table is not yet available. The
-> "Configured parameters" section below mirrors the source of truth in
-> `shared/configs/base_li_54.hpp` (struct `Li_54_v0p0626`). When the run
-> completes (~25 h from launch on 2026-05-05 22:03 BST), this entry will
-> be updated to (a) replace the configured-parameters table with the
-> verbatim `run_summary.txt` two-column table, (b) flip the status, and
-> (c) append the post-run delta-density investigation requested by the
-> user.
-
-## Configured parameters (placeholder — to be replaced by `run_summary.txt` post-run)
+## Run summary
 
 ### 1. Run identity
 
 | Field | Value |
 |---|---|
-| run_name | run_propagate_v0p0626_xyz |
+| run_name | run_propagate_v0p0626 |
 | run_type | TDDFT impulsive kick on Li 54-atom BCC |
-| date_started | 2026-05-05 22:03 BST |
+| date_finished | 2026-05-07T04:22:34 |
+| wall_time_s | 109161.240628479 |
 | executable | run.cpp built via inq-run |
 | geometry_file | ../shared/li_54_3x3x3.xyz |
 | checkpoint_dir | ../checkpoints/li_54_2x2x2_T200_xyz |
@@ -34,15 +24,15 @@
 | Field | Value |
 |---|---|
 | cell_angstrom | 10.53^3 (cubic, periodic) |
-| n_atoms_expected | 54 |
+| n_atoms | 54 |
 | n_electrons | 162 |
-| num_states | 101 (per kpoint × 8 → 808 total) |
+| num_states | 101 |
 | extra_states | 20 |
-| k_grid | 2 2 2 shifted MP |
+| k_grid | 2 2 2 shifted |
 | smearing | fermi_dirac |
 | smearing_temperature_kelvin | 400 |
 | cutoff_ry | 74 |
-| xc | pbe (adiabatic in TDDFT) |
+| xc | pbe (adiabatic-PBE in TDDFT) |
 
 ### 5. Kick configuration
 
@@ -51,8 +41,6 @@
 | kick_velocity_au | 0.0626 |
 | kick_direction | 1 0 0 (+x) |
 | atoms_dynamics | impulsive |
-| qball_velocity_class | low-v family (0.0123–0.0626 a.u.) |
-| target_peak_ev | ~6.5 (DFT-RPA bulk Li plasmon at 6.56 eV) |
 
 ### 6. Real-time configuration
 
@@ -60,19 +48,20 @@
 |---|---|
 | rt_num_steps | 15500 |
 | dt_au | 0.04 |
-| total_time_fs | ~15.0 |
-| write_every | 100 (density VTI cadence) |
+| total_time_fs | 14.9970808 |
+| write_every | 100 |
 | state_energy_every | 10 |
 | occupations_every | 10 |
 
-### 9. End-of-run diagnostics (pending)
+### 9. End-of-run diagnostics
 
 | Field | Value |
 |---|---|
-| run_completed | (pending) |
-| wall_time_s | (pending) |
-| validation_n_electrons_integrated_gs | 162.000 (verified at GS load) |
-| ground_state_offset_vs_old_fractional_ha | +0.0074 (see source note `li_gs_xyz_vs_fractional_offset_analysis.md`) |
+| run_completed | true |
+| vti_format | binary |
+| validation_n_electrons_integrated_gs | 161.9999999999606 |
+| validation_n_electrons_target | 162 |
+| validation_abs_error | 3.936406756110955e-11 |
 
 ## Observations
 
@@ -86,31 +75,59 @@ making a very rough analysis of the results, I found that one of the
 potential candidates is in the 7 to 8 eV range, which is in line with
 the 6.56 eV signal we are looking at.
 
+## Headline result (added 2026-05-08, post-run)
+
+**Plasmon detected at 6.480 eV in `dipole_x` FFT** — within 0.02 eV of
+the paper's 6.5 eV target and within 0.08 eV of the DFT-RPA bulk Li
+value (6.56 eV; Faleev et al. 2008, cited in BCN:1719P).
+
+The user's manual VTI annotation (7–8 eV) was qualitatively right; the
+precise peak is at the lower end of that range.
+
+| Diagnostic | Peak | Note |
+|---|---:|---|
+| `energy_total` FFT (any variant) | ~0.55 eV | drowned by low-ω drift; argmax misleading |
+| `dipole_x` FFT — top 3 peaks in [5.5, 8.0] eV | 6.480 / 6.411 / 6.549 eV | tight cluster at the paper's 6.5 eV; this is the plasmon |
+| `gamma_transitions` histogram in [6.0, 7.0) eV | 0 transitions in [6.0, 6.5); 1 in [5.5, 6.0) | **paper Figure 5 strong test passes** — no Γ-Γ single-particle transition source |
+| `state_energy_spectra` anti-phase pairs near 6.48 eV | 0 in top 50 | confirms collective character (plasmon) |
+
+The plasmon attribution is reproduced from the paper's Figure 4(a) /
+Figure 5 by three independent diagnostics:
+
+1. **Position match**: 6.48 eV vs paper 6.5 eV (Δ = -0.02 eV).
+2. **Figure 5 cliff-edge test**: `gamma_transitions` histogram cuts off
+   at ~5.5–6.0 eV; the [6.0, 6.5) bin is empty. No single-particle
+   Γ–Γ transition can be the source.
+3. **Anti-phase pair test**: top 50 strongest (n, n′) cross-spectra at
+   any kpoint show no opp_metric > 0.7 near 6.48 eV. Consistent with a
+   collective rather than single-particle mode.
+
+![Excess energy per uc vs time](attachments/2026-05-06_run_propagate_v0p0626_xyz/excess_energy_per_uc_vs_time.png)
+
+![FFT of excess energy](attachments/2026-05-06_run_propagate_v0p0626_xyz/fft_excess_energy_vs_omega.png)
+
+![Dipole_x spectrum (plasmon channel)](attachments/2026-05-06_run_propagate_v0p0626_xyz/dipole_x_spectrum.png)
+
+![Γ-Γ transition histogram (paper Figure 5)](attachments/2026-05-06_run_propagate_v0p0626_xyz/gamma_transitions.png)
+
+![Delta-density xz slice (animation)](attachments/2026-05-06_run_propagate_v0p0626_xyz/delta_xz.gif)
+
+![Coarse delta-density xz slice (animation)](attachments/2026-05-06_run_propagate_v0p0626_xyz/delta_coarse_xz.gif)
+
 ## Open questions / next steps
 
-- Conduct an in-depth post-run study: examine the delta-density signal
-  proper. A very strong delta-density signal would be due to the ions
-  themselves moving (rigid translation of the ionic potential drags the
-  electron cloud with it). The plasmon signal sits *on top* of that.
-- Read the **unfiltered** `density_rt_total/*.vti` frames; compute the
-  density-over-time at every grid point.
-- Apply a temporal Fourier transform of the (delta) density at each
-  grid point. The plasmon should appear as a peak around 6.5 eV in the
-  averaged-over-cell spectrum.
-- If the temporal FFT of the raw delta density does NOT show a clear
-  6.5 eV peak (because the ion-translation component dominates),
-  investigate ways to subtract / weave out the rigid ion-motion
-  component before the FFT (e.g. Galilean shift to the comoving frame,
-  per-pixel polynomial detrend, or projection onto specific Fourier
-  modes).
-- Once a clean approach is identified, write a well-thought-out,
-  scientific plan to identify the plasmon mode in this run. **The plan
-  must be reviewed by the user before execution.**
-- Cross-check the plasmon attribution against:
-  - the existing `dipole_x` FFT (the q→0 longitudinal-density proxy —
-    see `docs/sources/dipole_as_q0_density_projection.md`);
-  - the `gamma_transitions` histogram to confirm the absence of any
-    Γ–Γ vertical transition near 6.5 eV (paper Figure 5);
-  - the new `state_energy_spectra` per-state εN(t) FFT and anti-phase
-    pair diagnostic to confirm no single-particle (n, n′) pair carries
-    the 6.5 eV oscillation.
+- **Deep density-spectra analysis** per the plan in
+  `docs/plans/li_v0p0626_plasmon_density_analysis.md` — gated on user
+  review. The plan starts with Stage A (lab-frame pixel-by-pixel FFT
+  of `density_rt_delta`) to produce a *spatial map* showing where in
+  the cell the 6.48 eV mode lives. Given the dipole_x channel is
+  already clean, Stage A is likely sufficient; Stage B Galilean-shift
+  may not be needed.
+- **GS-offset characterisation**: the new .xyz GS landed 7.4 mHa above
+  the old fractional GS but the plasmon peak position is fully
+  consistent with the paper, confirming the GS divergence was benign
+  (see `docs/sources/li_gs_xyz_vs_fractional_offset_analysis.md`).
+- **Energy FFT drift**: the energy_total FFT is dominated by low-ω
+  drift; investigating whether `t_skip_fs ≥ 1.0` or the linear
+  detrend variant give a clean energy-channel detection of the same
+  6.48 eV peak.
