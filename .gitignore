@@ -88,3 +88,34 @@ ions
 li_bcc
 Si
 
+# Per-run stdout/stderr + runtime artifacts (logs above; keep provenance lean)
+*.stdout
+*.stderr
+run.startup
+*.log.mpi
+
+# Office/binary/archive docs — keep tracked history pure text
+*.pptx
+*.xlsx
+*.zip
+*.epub
+*.html
+
+# LaTeX build artifacts
+*.aux
+*.toc
+*.spl
+*.wcdetail
+
+# Scratch, backups, machine-local tooling
+Misc/
+CLAUDE-backup.md
+todo.txt
+scripts/sync_to_laptop.sh
+
+# Large doc bodies kept local (not tracked this pass)
+docs/reports/
+docs/presentations/
+docs/sources/
+docs/inq-docs/
+
