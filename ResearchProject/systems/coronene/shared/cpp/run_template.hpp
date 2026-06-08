@@ -286,6 +286,15 @@ int run_propagation(std::string const &run_name,
     inqkit::io::RealField3DWriter wp_wr(
         coronene::results::vti_density_wp_dir(), vti_layout, {.overwrite = true});
 
+    // v2: WP complex wavefunction writer for momentum distribution
+    std::filesystem::create_directories("results/raw/vti/wavefunction_wp_rt");
+    inqkit::io::ComplexField3DWriter wp_wf_rt_wr(
+        "results/raw/vti/wavefunction_wp_rt",
+        {.field_name = "wavefunction", .include_meta = false,
+         .emit_raw = false, .emit_vti = true,
+         .vti_format = inqkit::io::VTIWriteOptions::Format::binary},
+        {.overwrite = true});
+
     // t = 0 frames
     {
         auto sys0   = inqkit::fields::density::total(electrons);
@@ -377,6 +386,17 @@ int run_propagation(std::string const &run_name,
         system_wr.write(sys_f,   ctx.time_au, ctx.step);
         wp_wr.write(    wp_f,    ctx.time_au, ctx.step);
         total_wr.write( total_f, ctx.time_au, ctx.step);
+
+        // v2: WP complex wavefunction for momentum distribution analysis.
+        // Cadence: every 5×WRITE_EVERY to limit I/O (complex VTI ~30 MB each).
+        if (ctx.step % (5 * Cfg::WRITE_EVERY) == 0) {
+            auto wp_psi = inqkit::fields::orbital::wavefunction(
+                *ctx.electrons, wp_idx);
+            char wf_name[64];
+            std::snprintf(wf_name, sizeof(wf_name),
+                          "wavefunction_t%06d", ctx.step);
+            wp_wf_rt_wr.write(wp_psi, std::string(wf_name));
+        }
     });
 
     inqkit::RealTimeSession rt_obs(ions, electrons, /*write_every=*/1);
