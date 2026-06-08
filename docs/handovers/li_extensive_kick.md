@@ -13,7 +13,64 @@ parked memory — those are someone else's checkpoint.
 
 ---
 
-## Current status (2026-05-05 22:05 BST, plasmon run launched)
+## Current status (2026-05-08, plasmon + e-h pair both COMPLETE)
+
+### HEADLINE: paper Figure 4–5 reproduced
+
+| v (a.u.) | Regime | Peak (energy or dipole_x) | Paper target | Δ |
+|---:|---|---:|---:|---:|
+| 0.0123 | low-v | 5.722 eV | 6.5 eV | -0.78 |
+| **0.0626** | low-v plasmon | **6.480 eV** (dipole_x) | 6.5 eV | **-0.02** |
+| **0.300** | high-v entry | **2.585 eV** (energy) | 2.8 eV | **-0.21** |
+| 0.450 | high-v | 2.620 eV | 2.8 eV | -0.18 |
+
+**Plasmon attribution at v=0.0626 (PASSES three independent strong tests):**
+- Position match: 6.480 eV vs paper 6.5 eV (Δ -0.02)
+- `gamma_transitions` histogram is empty in [6.0, 6.5) eV — paper Figure 5 cliff-edge confirmed (no Γ-Γ transition can be the source).
+- `state_energy_spectra`: 0 anti-phase pairs (opp_metric > 0.7) in top 50 near 6.48 eV.
+
+**E-h candidate at v=0.300 (passes 1 of 3, "crossover regime" per paper):**
+- Position match: 2.585 eV vs paper 2.8 eV (Δ -0.21)
+- `gamma_transitions` histogram has 103 transitions within ±0.5 eV → e-h plausible.
+- BUT `state_energy_spectra`: 0 anti-phase pairs with opp_metric > 0.7 in 34 candidate pairs near 2.59 eV — argues against a *single* (n, n′) being the source. Paper itself says this regime is a crossover, not a clean e-h. Our diagnostic *quantifies* that uncertainty.
+
+### Latest milestone — full plasmon vs e-h diagnostic suite (post-run)
+
+- v=0.0626 propagation: 30.3 h wall, ∫ρ=162 to 4e-11.
+- v=0.300 propagation: 27.1 h wall, ∫ρ=162 to 4e-11.
+- Both runs done on the new `.xyz`-convention GS checkpoint
+  (`checkpoints/li_54_2x2x2_T200_xyz/`). The 7.4 mHa GS-offset vs the
+  old fractional checkpoint did **not** shift the FFT peak — confirmed
+  benign.
+- Three minor postprocess module fixes applied:
+  1. `state_energy_spectra.py`: occupation thresholds normalised against
+     per-kpoint full-occ value (was hardcoded as 0.5/0.1, but with INQ's
+     spin-paired kpoint-weighted storage the full value is 0.25).
+     k=0 hardcode replaced with loop over all kpoints.
+  2. `occupations.py`: now accepts `occupations.csv` in addition to
+     legacy `occupations_vs_time.csv`.
+  3. (gamma_transitions readback was just my ad-hoc analysis script's
+     column index; module was correct.)
+- Two new pipeline phases (added by user/linter): `bath_energy`,
+  `stopping`. Visible in `pipeline.PHASES`. Not interacted with — left
+  alone per the system reminder.
+- Journal entries:
+  - v=0.0626 entry replaced with canonical post-run version + 6 figures
+  - v=0.300 entry created with same template + 6 figures
+  - index.md updated; both flipped to `complete`.
+
+### Pending — gated on user review
+
+- **Deep density-spectra analysis plan** at
+  `docs/plans/li_v0p0626_plasmon_density_analysis.md` — Stage A
+  (lab-frame pixel-by-pixel FFT) + Stage B (Galilean Fourier-shift to
+  RF2). User to review before execution. Stage A may apply to both
+  v=0.0626 and v=0.300 (the latter to investigate why dipole_x and
+  energy peak at different ω).
+- **Methodology report** (Phase 5 from the original handover plan) —
+  inputs are all now in place.
+
+## Earlier milestone — plasmon run launched (2026-05-05 22:05 BST)
 
 ### Latest milestone — observable bundle + GS rebuild + plasmon run live
 
