@@ -220,4 +220,68 @@ inline RealField3D orbital(inq::systems::electrons const &electrons,
   return field;
 }
 
+/*
+ * Bath density: the full electronic density MINUS one orbital's contribution.
+ *
+ *   rho_bath(r) = rho_total(r) - occupation * |psi_exclude(r)|^2
+ *
+ * Motivation: when a wave-packet (WP) projectile is injected into an extra
+ * Kohn-Sham state at a fixed occupation (typically 1.0), electrons.density()
+ * (and hence density::total) ALREADY INCLUDES that WP orbital. For studying the
+ * *target system's* response (the jellium bath wake, induced density, etc.) the
+ * WP orbital must be removed so the saved "system" density integrates to the
+ * bath electron count (N_electrons), not N_electrons + 1.
+ *
+ * Verified (run_wp_n162_L50_E20_sigma1_v2): total() integrates to 163 e
+ * (162 bath + 1 WP); total_excluding_orbital(wp_idx, 1.0) integrates to 162 e.
+ *
+ * `occupation` defaults to 1.0 (the standard WP injection occupation, set in
+ * wavepacket.hpp). Pass it explicitly rather than reading
+ * electrons.occupations()[k][i] to avoid a synchronous GPU element fetch.
+ *
+ * Cost: one bulk-copied total() + one per-element orbital() (the orbital() call
+ * is the slow per-element loop; acceptable when a WP density is already being
+ * written each frame — reuse that field instead if available, see overload).
+ */
+inline RealField3D total_excluding_orbital(
+    inq::systems::electrons const &electrons, int exclude_index,
+    double occupation = 1.0, int kpoint_index = 0) {
+  RealField3D bath = total(electrons);
+  RealField3D orb  = orbital(electrons, exclude_index, kpoint_index);
+  if (bath.values.size() != orb.values.size() ||
+      bath.nx != orb.nx || bath.ny != orb.ny || bath.nz != orb.nz) {
+    throw std::runtime_error(
+        "inqkit::fields::density::total_excluding_orbital: grid mismatch "
+        "between total and orbital densities.");
+  }
+  for (std::size_t i = 0; i < bath.values.size(); ++i) {
+    bath.values[i] -= occupation * orb.values[i];
+  }
+  return bath;
+}
+
+/*
+ * Overload: subtract an ALREADY-COMPUTED orbital density from an
+ * already-computed total density. Use this in per-step callbacks that already
+ * write the WP density that frame, to avoid a second expensive orbital() call.
+ *   rho_bath = total_field - occupation * orbital_field
+ */
+inline RealField3D total_excluding_orbital(
+    RealField3D const &total_field, RealField3D const &orbital_field,
+    double occupation = 1.0) {
+  if (total_field.values.size() != orbital_field.values.size() ||
+      total_field.nx != orbital_field.nx ||
+      total_field.ny != orbital_field.ny ||
+      total_field.nz != orbital_field.nz) {
+    throw std::runtime_error(
+        "inqkit::fields::density::total_excluding_orbital: grid mismatch "
+        "between total and orbital fields.");
+  }
+  RealField3D bath = total_field;  // copy metadata + values
+  for (std::size_t i = 0; i < bath.values.size(); ++i) {
+    bath.values[i] -= occupation * orbital_field.values[i];
+  }
+  return bath;
+}
+
 } // namespace inqkit::fields::density
