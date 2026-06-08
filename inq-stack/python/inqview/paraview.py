@@ -87,6 +87,12 @@ class VolumeRenderSpec:
     # If None, a default ramp is constructed from scalar_range.
     opacity_points: list[tuple[float, float]] | None = None
 
+    # Simulation-cell outline (bounding box of the VTI data). When draw_outline
+    # is True an Outline filter is drawn on the reader, i.e. the cell edges.
+    draw_outline: bool = False
+    outline_color: tuple[float, float, float] = (0.0, 0.0, 0.0)
+    outline_width: float = 1.5
+
 
 @dataclass
 class AnimationSpec:
@@ -185,6 +191,9 @@ class ParaViewPipeline:
             "camera_elevation_deg": float(render.camera_elevation_deg),
             "background_rgb": [float(x) for x in render.background_rgb],
             "opacity_points": [[float(x), float(y)] for x, y in opacity_points],
+            "draw_outline": bool(render.draw_outline),
+            "outline_color": [float(x) for x in render.outline_color],
+            "outline_width": float(render.outline_width),
             "output_frames_dir": str(animation.output_frames_dir.resolve()),
             "image_size": [int(animation.image_size[0]), int(animation.image_size[1])],
             "frame_stride": int(animation.frame_stride),
@@ -418,6 +427,16 @@ def main() -> None:
     except Exception:
         pass
 
+    # Simulation-cell outline: the Outline filter draws the bounding box of the
+    # VTI data, which (with origin at -L/2) is exactly the periodic cell.
+    if cfg.get("draw_outline", False):
+        outline = Outline(Input=reader)
+        outline_disp = Show(outline, render_view)
+        outline_disp.ColorArrayName = ['POINTS', '']
+        outline_disp.DiffuseColor = [float(c) for c in cfg["outline_color"]]
+        outline_disp.AmbientColor = [float(c) for c in cfg["outline_color"]]
+        outline_disp.LineWidth = float(cfg["outline_width"])
+
     display = Show(reader, render_view)
 
     # ColorBy before Representation="Volume": ColorBy can reset the representation,
@@ -453,7 +472,12 @@ def main() -> None:
     cam = GetActiveCamera()
     cam.Azimuth(float(azimuth_deg))
     cam.Elevation(float(elevation_deg))
-    render_view.ResetCameraClippingRange()
+    # ResetCameraClippingRange() was removed from the render-view proxy in
+    # ParaView 6.1; ResetCamera() recomputes the clipping range as a fallback.
+    try:
+        render_view.ResetCameraClippingRange()
+    except AttributeError:
+        render_view.ResetCamera()
 
     # Iterate through time steps by advancing AnimationScene.AnimationTime.
     animation_scene = GetAnimationScene()
