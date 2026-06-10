@@ -66,6 +66,19 @@ def test_bath_is_total_minus_wp():
     assert -2.0 < cmp.total.x < 2.0
 
 
+def test_cod_offset_vs_inqkit_recovers_dx_over_2():
+    """From-run cross-check: inqkit (half-cell) COD − python (node) COD averaged
+    over a series equals (dx,dy,dz)/2 (documents E04). Pure, no VTK/real run."""
+    from inqview.pipeline.cod import cod_offset_vs_inqkit
+
+    spacing = np.array([0.4, 0.5, 0.6])
+    rng = np.arange(5)
+    node = np.stack([rng * 0.1, rng * 0.2, -rng * 0.05], axis=1)   # arbitrary node COD series
+    inqkit = node + 0.5 * spacing[None, :]                         # half-cell shift
+    off = cod_offset_vs_inqkit(node, inqkit)
+    assert np.allclose(off, 0.5 * spacing, atol=1e-12)
+
+
 if __name__ == "__main__":
     import subprocess
     import sys
