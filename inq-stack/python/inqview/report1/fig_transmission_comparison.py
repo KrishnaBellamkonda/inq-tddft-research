@@ -16,7 +16,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-from inqview.screens import load_leed_pattern
+from inqview.io.leed import load_leed_pattern
 from inqview.report1._shared_style import (
     apply_style, column_widths_in, panel_label, TufteCritic,
 )

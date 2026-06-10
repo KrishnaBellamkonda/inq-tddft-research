@@ -39,6 +39,8 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 from scipy import integrate
 
+# TODO: As this script calculates the results analytically, would it be better organised
+# under a submodule named analytics (where jellium and lindhard can exist)
 
 # =============================================================================
 # Lindhard susceptibility

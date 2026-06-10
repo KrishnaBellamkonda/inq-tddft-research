@@ -11,8 +11,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
-    from .data import FieldSeries
-    from .paraview import AtomSpec, VolumeRenderSpec
+    from .io.data import FieldSeries
+    from .visualisation.paraview import AtomSpec, VolumeRenderSpec
 
 PathLike = Union[str, Path]
 
@@ -47,8 +47,8 @@ def default_density_movie(
     dict with keys 'gif', 'frames_dir', 'vti_dir'.
     """
     import os
-    from .vti import convert_real_series_to_vti
-    from .paraview import AnimationSpec, ParaViewPipeline, VolumeRenderSpec
+    from .visualisation.vti import convert_real_series_to_vti
+    from .visualisation.paraview import AnimationSpec, ParaViewPipeline, VolumeRenderSpec
 
     output_dir = Path(output_dir)
     vti_dir    = output_dir / "vti"

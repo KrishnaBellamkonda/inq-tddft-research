@@ -11,6 +11,8 @@ File format:
   ...
 """
 
+# TODO: What does the other screens.py in postprocessing do?
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -72,12 +74,12 @@ class LeedPattern:
                     hann: bool = True) -> np.ndarray:
         """Inverse-FFT this LEED screen back to a real-space density estimate.
 
-        Thin wrapper around inqview.postprocess._ifft.reconstruct_real_space.
+        Thin wrapper around inqview.pipeline._ifft.reconstruct_real_space.
         See that module's docstring for the available methods
         ('patterson' — Patterson autocorrelation, default; 'amp_only' —
         phase-less amplitude reconstruction).
         """
-        from .postprocess._ifft import reconstruct_real_space
+        from ..pipeline._ifft import reconstruct_real_space
         return reconstruct_real_space(self, method=method, hann=hann)
 
 

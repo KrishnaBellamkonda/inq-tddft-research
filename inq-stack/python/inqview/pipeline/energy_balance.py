@@ -28,6 +28,9 @@ The phase silently skips when any input is absent (e.g. free-space runs
 without per-state energies).
 """
 
+# TODO: The output of this, tells us how the jellium bath and wp orbital
+# exchange energy is to be a part of the minimum set of observables to be calculated. 
+
 from __future__ import annotations
 
 import re

@@ -1,3 +1,6 @@
+# This file contains the schmas to load the data outputted by the inqkit library
+
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

@@ -23,7 +23,7 @@ from matplotlib.colors import LogNorm
 from pathlib import Path
 from PIL import Image
 
-from inqview.screens import load_leed_pattern
+from inqview.io.leed import load_leed_pattern
 from inqview.report1._shared_style import (
     apply_style,
     column_widths_in,

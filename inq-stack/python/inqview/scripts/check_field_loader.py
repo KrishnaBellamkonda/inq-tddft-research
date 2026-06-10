@@ -6,7 +6,7 @@ from pathlib import Path
 
 import numpy as np
 
-from inqview.data import load_complex_field, load_real_field
+from inqview.io.data import load_complex_field, load_real_field
 
 
 def print_real_summary(field) -> None:

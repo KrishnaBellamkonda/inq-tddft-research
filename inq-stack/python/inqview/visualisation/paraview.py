@@ -9,7 +9,7 @@ import subprocess
 import tempfile
 from typing import Iterable
 
-from .data import FieldSeries
+from ..io.data import FieldSeries
 from .vti import convert_real_series_to_vti
 
 _ANG_TO_BOHR = 1.8897259886

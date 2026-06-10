@@ -1,28 +1,31 @@
-"""inqview.postprocess — generalisable post-processing pipeline.
+"""DEPRECATED alias — this package was renamed to ``inqview.pipeline`` (ADR-0003).
 
-Consumes a ``results/`` directory laid out per
-``docs/results_folder_structure_spec.md`` and produces every figure / GIF /
-summary artefact the spec requires. The pipeline is split into phases so a
-caller (e.g. the coronene-specific ``coronene_postprocess.py`` CLI) can
-choose to run all of them or a subset.
+Existing per-run ``analyse.py`` scripts import ``inqview.postprocess.*`` (e.g.
+``from inqview.postprocess import pipeline`` / ``density_fourier``). This shim
+forwards those imports to the new ``inqview.pipeline`` location so the run
+scripts keep working unchanged. Prefer ``inqview.pipeline`` in new code.
 
-Phases (in dependency order):
-    summary      — verify and (re)build ``results/run_summary.txt``
-    gs           — ground-state plots (orbital gallery, density)
-    layout       — xz layout diagram (cell, target, WP marker, screen lines)
-    observables  — time-domain + FFT plots from ``raw/observables/``
-    density      — 2D slice GIFs for total / system / wp densities (linear + log)
-    screens      — total / instantaneous / time-windowed LEED + coord checks
-    overlap      — WP-overlap-with-GS-orbitals bar-chart GIF (linear + log)
-    orbitals     — RT orbital gallery (only if RT orbital VTIs were emitted)
-    paraview     — 3D volume renders via pvbatch (slowest; opt-out)
-    paraview_3d  — overlay (system + WP) volume rendering, two cameras (opt-in)
-
-Public entry point: :func:`run`.
+Mechanism: ``__path__`` is pointed at the ``inqview/pipeline/`` source directory,
+so ``import inqview.postprocess.<submodule>`` loads the renamed module from its
+new home, and the package-level entry points are re-exported below.
 """
-
 from __future__ import annotations
 
-from .pipeline import PHASES, PipelineResult, run
+import warnings
+
+from inqview import pipeline as _pipeline
+
+# Submodule imports (inqview.postprocess.<name>) resolve to the pipeline/ dir.
+__path__ = list(_pipeline.__path__)
+
+# Package-level public entry points (inqview.postprocess.run, etc.).
+from inqview.pipeline import PHASES, PipelineResult, run  # noqa: E402,F401
 
 __all__ = ["PHASES", "PipelineResult", "run"]
+
+warnings.warn(
+    "inqview.postprocess was renamed to inqview.pipeline (ADR-0003); "
+    "update imports to inqview.pipeline.",
+    DeprecationWarning,
+    stacklevel=2,
+)

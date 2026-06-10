@@ -5,6 +5,11 @@ dispatcher logs a one-line ``[ok] phase`` / ``[skip] phase reason`` /
 ``[fail] phase msg`` per phase and aggregates results into a PipelineResult.
 """
 
+# TODO: While building a minimum set of observables for each run, this
+# would be the place to run it from. 
+
+# TODO: Is each phase independent? Are the independent phases run parallelly?
+
 from __future__ import annotations
 
 import logging
@@ -14,6 +19,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Iterable
 
+# TODO: Is this import a wise thing to do?
 from . import (
     bath_energy,
     density,
@@ -67,6 +73,7 @@ PHASES: tuple[str, ...] = (
 )
 
 # Phase -> module entry point
+# Below are function references, so each key is mapped to a callable function
 _PHASE_FUNCS: dict[str, Callable] = {
     "summary":            run_summary.run,
     "gs":                 ground_state.run,

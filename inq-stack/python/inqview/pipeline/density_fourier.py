@@ -1,9 +1,12 @@
 """density_fourier — Fourier components n_q(t) of the time-dependent density.
 
+n_q - density related to the momentum transfer q 
+
 For plasmon detection: read every VTI in `raw/vti/density_rt_total/`,
 compute delta_n(r, t) = n(r, t) - n(r, 0), 3D-FFT, and pick out the
 axial Fourier components n_q_m(t) with q_m = (0, 0, 2*pi*m/L_z). Then
 1D-FFT each n_q_m(t) over time to localise the plasmon resonance.
+
 
 Usage:
     from inqview.postprocess.density_fourier import run
@@ -21,6 +24,14 @@ import re
 from pathlib import Path
 
 import numpy as np
+
+# TODO: Shouldn't the loss function calculation be in 3D and not be restricted to the 
+# z axis where the propagation happens? Need to research this. I understand that we
+# can split the momentum transfer q into transverse and longitudinal oscillations. 
+# I need to check this thoroughly. 
+
+# TODO: Are these the axial modes that ar eploted in the loss function, or the 1D loss function
+# for a given q? what is the equation for this? 
 
 # Reuse the VTI loader from the density phase (avoids duplicating the
 # vtkXMLImageDataReader plumbing).

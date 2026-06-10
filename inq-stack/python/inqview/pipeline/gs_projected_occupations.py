@@ -52,6 +52,9 @@ import pandas as pd
 
 from . import _common
 
+# TODO: Are the overlay heatmaps produced? If so, I don't look at them. So, I need to
+# ensure that they are a part of the minimum set of outcomes for each run. 
+
 
 def _load_overlap_csv(path: Path) -> tuple[np.ndarray, dict]:
     """Read one overlap_NNNNNN.csv into an array and metadata dict.

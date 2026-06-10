@@ -4,8 +4,8 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from inqview.data import SimulationData
-from inqview.paraview import AnimationSpec, ParaViewPipeline, VolumeRenderSpec
+from inqview.io.data import SimulationData
+from inqview.visualisation.paraview import AnimationSpec, ParaViewPipeline, VolumeRenderSpec
 
 
 def main() -> None:

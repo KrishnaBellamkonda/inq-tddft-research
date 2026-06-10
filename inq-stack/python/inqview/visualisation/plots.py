@@ -15,12 +15,12 @@ from typing import TYPE_CHECKING, Union
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from .config import DEFAULT_THEME
+from ..config import DEFAULT_THEME
 
 if TYPE_CHECKING:
-    from .fourier import FourierResult
-    from .fields import RealField3D
-    from .screens import LeedPattern
+    from ..analysis.fourier import FourierResult
+    from ..io.fields import RealField3D
+    from ..io.leed import LeedPattern
 
 PathLike = Union[str, Path]
 

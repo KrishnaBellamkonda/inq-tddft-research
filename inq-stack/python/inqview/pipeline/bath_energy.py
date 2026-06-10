@@ -29,7 +29,14 @@ import re
 import matplotlib.pyplot as plt
 import pandas as pd
 
+# TODO: Is this importing convention right?
 from . import _common
+
+# TODO: Need to ensure that the 
+# TODO: Build jupyter notebooks for future analysis, so that the analysis
+# is together and easier to combine the answers. 
+
+# TODO: This should also be a part of the minimum set of outcomes. 
 
 
 HA_TO_EV = 27.21138625

@@ -1,3 +1,6 @@
+# Handles the parsing of the field data values from the outputed files
+# and stores them in the dataclasses defined in fields.py
+
 from __future__ import annotations
 
 from dataclasses import dataclass

@@ -1,16 +1,16 @@
-"""Known-case tests for inqview.postprocess.lindhard.
+"""Known-case tests for inqview.pipeline.lindhard.
 
 Run with:
     cd /local/data/public/skcb2/tddft
     source venv/bin/activate
-    pytest inq-stack/python/inqview/postprocess/test_lindhard.py -v
+    pytest inq-stack/python/inqview/pipeline/test_lindhard.py -v
 """
 from __future__ import annotations
 
 import numpy as np
 import pytest
 
-from inqview.postprocess import lindhard as L
+from inqview.pipeline import lindhard as L
 
 HA_TO_EV = 27.2114
 

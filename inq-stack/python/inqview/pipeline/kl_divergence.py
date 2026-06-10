@@ -37,11 +37,21 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+# TODO: Explain to me, what reallt is this import
 from . import _common
 
 
 EPS = 1e-300
 
+# TODO: Can the KL divergence be calculated as a time series? How expensive would
+# it be?
+
+# TODO: KL value could actually be a metric that can quantify how much of the wavepacket
+# is preserved. A good sanity check on the shape of the orbital. this is because
+# the idea is taken from information theory and might be interesting. 
+
+# TODO: Runfeng a while ago suggested, I make contour visualisations for the wavepacket. 
+# Need to brainstorm how this can be doe. 
 
 def _normalise(p: np.ndarray) -> np.ndarray:
     """Return p / sum(p) (safe; returns zeros if sum is zero)."""

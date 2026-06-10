@@ -71,6 +71,16 @@ from vtk.util.numpy_support import vtk_to_numpy
 
 HA2EV = 27.211386245988
 
+# TODO: postprocess/ submodule, I don't know if its making sense. I need to come up with
+# a simple and effective organisational structure for the python library. 
+
+# TODO: Eventually, when this behaviour of total - wp = system the same as teh system 
+# output, in the inqkit side of the library, then, we should can reduce the
+# complexity of this file. 
+
+# TODO: It would be a good idea to use the center of density calculated in the inqkit
+# library and visualise it. This way we can compare the wave packet centre of density,
+# the total electronic system, and the jellium bath system. 
 
 # ---------------------------------------------------------------- VTI loading
 def _read_vti(path):

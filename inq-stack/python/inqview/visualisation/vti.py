@@ -1,3 +1,9 @@
+# This file was used to turn the raw files into vti files. However, that is now
+# done in cpp. Hence, this file is mainly redundant. 
+
+# TODO: Check if this file is redundant. If it is, this can be removed at the user's
+# approval or can be repurposed. 
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -7,8 +13,8 @@ from xml.sax.saxutils import escape
 
 import numpy as np
 
-from .data import FieldSeries, load_meta, load_real_field
-from .fields import RealField3D
+from ..io.data import FieldSeries, load_meta, load_real_field
+from ..io.fields import RealField3D
 
 
 @dataclass

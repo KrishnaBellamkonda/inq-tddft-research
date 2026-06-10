@@ -5,6 +5,13 @@ Provides FourierTransform (class-based) with tunable windowing, detrending,
 and convenience methods for energy, current, and dipole columns.
 """
 
+# TODO: Need to investigate carefully if the FT windowing, detrending, and convenience
+# methods are skewing the findings somehow. Especially for the QuantumKickExtension 
+# run. 
+
+# TODO: Also, for what kind of tasks is fourier.py being used now?
+
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -62,6 +69,7 @@ class FourierResult:
     dt_au: float
     window: WindowSpec
     t_start_au: float = 0.0       # §13.6 transient cutoff applied (0 = none)
+    subtract: str = "detrend"     # baseline removed before windowing (IV-M12)
 
 
 class FourierTransform:
@@ -93,6 +101,8 @@ class FourierTransform:
         headers.
     """
 
+    _SUBTRACT = ("initial", "mean", "detrend", "none")
+
     def __init__(
         self,
         window: WindowSpec | None = None,
@@ -100,12 +110,38 @@ class FourierTransform:
         zero_pad: int = 4,
         smooth_sigma_bins: float = 0.0,
         t_start_au: float = 0.0,
+        subtract: str | None = None,
     ) -> None:
         self.window = window if window is not None else WindowSpec("hann")
-        self.detrend = detrend
+        # Baseline removal (IV-M12). `subtract` supersedes the legacy `detrend`
+        # bool; if unset, derive from it ('detrend' default per the dossier).
+        # Canonical per observable: 'initial' (s-s(0)) for dipole/current,
+        # 'detrend' for energy — the postprocess layer sets those.
+        self.subtract = subtract if subtract is not None else (
+            "detrend" if detrend else "none")
+        if self.subtract not in self._SUBTRACT:
+            raise ValueError(
+                f"unknown subtract={self.subtract!r}; valid: {self._SUBTRACT}")
+        self.detrend = self.subtract == "detrend"
         self.zero_pad = max(1, int(zero_pad))
         self.smooth_sigma_bins = float(smooth_sigma_bins)
         self.t_start_au = float(t_start_au)
+
+    def _apply_subtract(self, values: np.ndarray) -> np.ndarray:
+        """Remove the chosen baseline before windowing (IV-M12).
+
+        'initial' enforces the induced-response IC Δs(0)=0 (Yabana-Bertsch);
+        'mean' removes the DC level; 'detrend' removes a linear trend (best
+        when a genuine drift exists, e.g. energy); 'none' leaves the signal —
+        with which a constant offset hijacks the ω≈0 bin (todo.txt #2).
+        """
+        if self.subtract == "none":
+            return values.copy()
+        if self.subtract == "initial":
+            return values - values[0]
+        if self.subtract == "mean":
+            return values - float(np.mean(values))
+        return scipy_detrend(values, type="linear")        # 'detrend'
 
     # ------------------------------------------------------------------
     # Core
@@ -150,7 +186,7 @@ class FourierTransform:
         n = len(time_au)
         dt = float(time_au[1] - time_au[0])
 
-        sig = scipy_detrend(values, type="linear") if self.detrend else values.copy()
+        sig = self._apply_subtract(values)
         win = self.window.build(n)
         sig_win = sig * win
 
@@ -165,11 +201,13 @@ class FourierTransform:
         raw = np.fft.rfft(sig_padded)
         freq = np.fft.rfftfreq(n_pad, d=dt)
 
-        # One-sided normalisation: divide by N (original length, NOT padded
-        # length) so the magnitude has the right physical units; double the
-        # interior bins so the one-sided spectrum integrates to the full
-        # power.
-        amplitude = np.abs(raw) / n
+        # One-sided amplitude with WINDOW COHERENT-GAIN normalisation (IV-E03):
+        # divide by Σwin (the coherent gain), NOT by n, so a unit-amplitude
+        # tone returns ~1.0 for ANY window (Harris 1978). Backward-compatible:
+        # boxcar has Σwin = n. Interior bins ×2 for the one-sided spectrum.
+        # (Zero-padding only interpolates the axis; Σwin uses the length-n
+        # window, so the calibration is independent of zero_pad.)
+        amplitude = np.abs(raw) / win.sum()
         amplitude[1:-1] *= 2.0
 
         # Optional Gaussian smoothing in the frequency-bin domain.
@@ -186,6 +224,7 @@ class FourierTransform:
             dt_au=dt,
             window=self.window,
             t_start_au=self.t_start_au,
+            subtract=self.subtract,
         )
 
     # ------------------------------------------------------------------

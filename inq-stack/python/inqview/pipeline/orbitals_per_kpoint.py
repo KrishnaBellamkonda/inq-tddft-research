@@ -27,6 +27,8 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 
+# TODO: Can a band structure plot be made using this script?
+
 
 # ----- VTI reader (vendored to avoid a hard inqview-wide dependency) -------
 
