@@ -11,8 +11,9 @@ Two bugs from the old density_fourier are fixed here:
   part only — so ±ω are not folded together.
 - IV-E02: the returned quantity is |n_q(ω)|²/q² (power, q-weighted), not |n_q|.
 
-Pure numpy. Axial mode (q∥z) is implemented; 3d_binned (all |q| bins) and the
-VTI frame loader are the data-coupled follow-up.
+Pure numpy. Both **axial** (q∥z, ``F[0,0,m]``) and **3d_binned** (all reciprocal
+modes shell-averaged by |q|) modes are implemented. The VTI frame loader that
+feeds either lives in ``inqview.pipeline`` (VTK is not deps-clean for analysis).
 """
 from __future__ import annotations
 
@@ -86,3 +87,65 @@ def spectrum_from_nq(
     peak = np.array([abs(omega[int(np.argmax(power[:, j]))]) for j in range(q.size)])
     return PlasmonSpectrum(q=q, omega=omega, power=power, loss=loss,
                            peak_omega=peak, mode=mode)
+
+
+def spectrum_3d_binned(
+    dn_series: np.ndarray,
+    dt: float,
+    spacing: float,
+    *,
+    n_bins: int = 32,
+    q_max: float | None = None,
+    window: bool = True,
+    t_start_index: int = 0,
+) -> PlasmonSpectrum:
+    """Isotropic plasmon spectrum: shell-average |n_q(ω)|² over ALL reciprocal modes.
+
+    ``dn_series`` is (n_t, nx, ny, nz) of δn(r,t). Each frame is 3D-FFT'd, the
+    stack is time-FFT'd, the per-mode power |n_q(ω)|² is binned into ``n_bins``
+    spherical |q| shells (cubic-grid spacing assumed isotropic). The DC mode
+    (|q|=0) is excluded. Returns a :class:`PlasmonSpectrum` whose ``q`` are the
+    shell centres and whose ``power``/``loss`` are shell-averaged.
+
+    Memory note: holds the full (n_omega, nx, ny, nz) spectrum — use a coarse /
+    strided density series for large runs (e.g. ``density_delta_coarse``).
+    """
+    dn = np.asarray(dn_series, dtype=float)
+    if dn.ndim != 4:
+        raise ValueError(f"dn_series must be (n_t,nx,ny,nz); got {dn.shape}")
+    sig = dn[t_start_index:]
+    nt, nx, ny, nz = sig.shape
+    if nt < 2:
+        raise ValueError("need ≥2 time samples for the spectrum")
+
+    F = np.fft.fftn(sig, axes=(1, 2, 3))                      # spatial FFT/frame
+    win = np.hanning(nt)[:, None, None, None] if window else 1.0
+    S = np.fft.fft(F * win, axis=0)                           # time FFT (complex)
+    omega = 2.0 * np.pi * np.fft.fftfreq(nt, d=dt)
+    powmode = (np.abs(S) ** 2).reshape(nt, -1)               # (n_omega, n_modes)
+
+    qx = 2.0 * np.pi * np.fft.fftfreq(nx, d=spacing)
+    qy = 2.0 * np.pi * np.fft.fftfreq(ny, d=spacing)
+    qz = 2.0 * np.pi * np.fft.fftfreq(nz, d=spacing)
+    qmag = np.sqrt(qx[:, None, None] ** 2 + qy[None, :, None] ** 2
+                   + qz[None, None, :] ** 2).ravel()
+
+    pos = qmag > 0
+    if q_max is None:
+        q_max = float(qmag[pos].max())
+    edges = np.linspace(0.0, q_max, n_bins + 1)
+    q_centers = 0.5 * (edges[:-1] + edges[1:])
+    shell = np.digitize(qmag, edges) - 1                     # shell per mode
+
+    power_shell = np.zeros((nt, n_bins))
+    for b in range(n_bins):
+        mask = pos & (shell == b)
+        if mask.any():
+            power_shell[:, b] = powmode[:, mask].mean(axis=1)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        loss = np.where(q_centers[None, :] > 0,
+                        power_shell / q_centers[None, :] ** 2, 0.0)
+    peak = np.array([abs(omega[int(np.argmax(power_shell[:, b]))])
+                     for b in range(n_bins)])
+    return PlasmonSpectrum(q=q_centers, omega=omega, power=power_shell,
+                           loss=loss, peak_omega=peak, mode="3d_binned")

@@ -19,7 +19,12 @@ from .wp_integrity import (
     kl_series,
     momentum_kl,
 )
-from .plasmon_spectrum import PlasmonSpectrum, extract_axial_nq, spectrum_from_nq
+from .plasmon_spectrum import (
+    PlasmonSpectrum,
+    extract_axial_nq,
+    spectrum_3d_binned,
+    spectrum_from_nq,
+)
 from .fourier import FourierResult, FourierTransform, WindowSpec
 
 __all__ = [
@@ -35,6 +40,7 @@ __all__ = [
     "momentum_kl",
     "PlasmonSpectrum",
     "extract_axial_nq",
+    "spectrum_3d_binned",
     "spectrum_from_nq",
     "FourierResult",
     "FourierTransform",
