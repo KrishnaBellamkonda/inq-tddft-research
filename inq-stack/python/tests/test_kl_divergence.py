@@ -14,7 +14,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from inqview.pipeline.kl_divergence import _kl, _normalise
+from inqview.analysis.kl_divergence import _kl, _normalise
 
 pytestmark = pytest.mark.analysis
 

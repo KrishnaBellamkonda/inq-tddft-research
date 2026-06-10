@@ -53,23 +53,9 @@ EPS = 1e-300
 # TODO: Runfeng a while ago suggested, I make contour visualisations for the wavepacket. 
 # Need to brainstorm how this can be doe. 
 
-def _normalise(p: np.ndarray) -> np.ndarray:
-    """Return p / sum(p) (safe; returns zeros if sum is zero)."""
-    s = float(p.sum())
-    if s <= 0:
-        return np.zeros_like(p)
-    return p / s
-
-
-def _kl(p: np.ndarray, q: np.ndarray) -> float:
-    """sum_k p_k log(p_k / q_k), with q_k > 0 only."""
-    mask = q > 0
-    if not mask.any():
-        return float("nan")
-    pp = np.where(mask, p, 0.0) + EPS
-    qq = np.where(mask, q, 1.0)
-    contrib = np.where(mask, pp * np.log(pp / qq), 0.0)
-    return float(contrib.sum())
+# Pure KL helpers moved to the analysis layer (ADR 0003 split); re-exported here
+# for back-compat (run() below + the postprocess shim).
+from ..analysis.kl_divergence import EPS, _kl, _normalise  # noqa: E402,F401
 
 
 def run(results_dir: Path, *, run_name: str, rebuild: bool, **_) -> dict:
