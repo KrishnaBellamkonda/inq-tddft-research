@@ -24,6 +24,15 @@ Apply to: `inq-stack/`, `ResearchProject/`, `Tutorial/`, `QuantumKickExtension/`
 
 5. Never claim a calculation is correct without evidence from at least one completed validation test.
 
+6. **Every new feature ships with a test (non-negotiable).** Whenever a new
+   component, function, observable, kernel, or visualisation is ADDED to inqkit
+   or inqview, a corresponding test must be added in the SAME change and must
+   pass (or be a documented `xfail`/skip with a stated reason) before the
+   feature is considered done. The test asserts against a known/analytic value
+   defined up front (not captured from the new code's own output). A feature
+   with no test is incomplete. Record the new test's row in
+   `docs/validation/test-catalogue.md`.
+
 ## INQ-specific validation checklist
 
 When adding or modifying INQ calculations:
