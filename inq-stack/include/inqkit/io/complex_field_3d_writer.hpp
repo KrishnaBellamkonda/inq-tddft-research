@@ -1,3 +1,51 @@
+/*
+ * This writer that emits one or more output files from an inqkit
+ * ComplexField3D, splitting the field into its real and imaginary parts.
+ *
+ * Output modes (opt-in via ComplexField3DLayout)
+ * -----------------------------------------------
+ *   emit_raw   Writes two binary files:
+ *
+ *                <path>/<basename>_real.raw   double-precision real part
+ *                <path>/<basename>_imag.raw   double-precision imaginary part
+ *
+ *              Values are stored row-by-row in the original x-slowest,
+ *              z-fastest (C) index order of the source field:
+ *
+ *                flat = (ix * ny + iy) * nz + iz
+ *
+ *   include_meta  Writes a plain-text sidecar alongside the raw files:
+ *
+ *                <path>/<basename>.meta
+ *
+ *              The sidecar records grid dimensions, origin, spacing, dtype,
+ *              and the names of the associated raw files; see write_meta_file_
+ *              for the exact key=value schema.
+ *
+ *   emit_vti   Writes a single VTK ImageData file:
+ *
+ *                <path>/<basename>.vti
+ *
+ *              The file contains two DataArrays named <field_name>_real and
+ *              <field_name>_imag. The index layout is transposed to VTK's
+ *              x-fastest order by VTIImageDataWriter. See vti_image_data_writer.hpp
+ *              for format details (ASCII / base64-binary).
+ *
+ * Usage
+ * -----
+ *   ComplexField3DLayout layout;
+ *   layout.field_name = "psi";
+ *   layout.emit_raw   = true;
+ *   layout.emit_vti   = true;
+ *   layout.vti_format = VTIWriteOptions::Format::binary;
+ *
+ *   ComplexField3DWriter writer("/output/dir", layout);
+ *   writer.write(field, "psi_t0");   // or writer(field, "psi_t0");
+ *
+ * Note: single-rank only, consistent with the existing inqkit writers.
+ */
+
+
 #pragma once
 
 #include <inqkit/detail/grid_layout.hpp>

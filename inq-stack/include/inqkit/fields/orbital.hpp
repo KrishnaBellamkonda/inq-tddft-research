@@ -1,6 +1,6 @@
 /*
  * This file handles the storage of the complex wavefunction or the entire
- * electornic system or just an orbital (identified using k_point_index and
+ * electronic system or just an orbital (identified using k_point_index and
  * orbital_index - a sub index that identifies the correct orbital within
  * the set of wavefunctions at a given k point. The API of this module is
  * almost identical to the density.hpp (fields::density) class.
@@ -10,13 +10,27 @@
  * the storage of complex numbers in the INQ module.
  * */
 
+
+ /* 
+ 
+  TODO: 1.  I want to check if in making of the new observables such as momentum distribution
+  and others, if the total complex number of the wavefunction has been used. This is important
+  to ensure that sensible observables are being produced.  
+ 
+  2. We currently have it that this orbtial.hpp file imports
+  the density.hpp file only for the fft_shift function. 
+  Perhaps, we can move fft_shift to a better place? 
+ 
+  */
+
 #pragma once
 
 #include <inq/inq.hpp>
 
 #include <inqkit/detail/grid_layout.hpp>
 #include <inqkit/fields/complex_field_3d.hpp>
-#include <inqkit/fields/density.hpp>   // fft_shift_index
+// fft_shift_index now lives in detail/grid_layout.hpp (included above), so this
+// file no longer depends on fields/density.hpp (resolves the cross-include).
 
 #include <complex>
 #include <stdexcept>
@@ -111,11 +125,11 @@ inline ComplexField3D wavefunction(inq::systems::electrons const &electrons,
   // relative to the metadata origin (-L/2). Same convention as
   // density.hpp::total / density.hpp::orbital.
   for (int ix = 0; ix < nx; ++ix) {
-    int sx = inqkit::fields::density::fft_shift_index(ix, nx);
+    int sx = inqkit::detail::grid_layout::fft_shift_index(ix, nx);
     for (int iy = 0; iy < ny; ++iy) {
-      int sy = inqkit::fields::density::fft_shift_index(iy, ny);
+      int sy = inqkit::detail::grid_layout::fft_shift_index(iy, ny);
       for (int iz = 0; iz < nz; ++iz) {
-        int sz = inqkit::fields::density::fft_shift_index(iz, nz);
+        int sz = inqkit::detail::grid_layout::fft_shift_index(iz, nz);
         auto flat =
             inqkit::detail::grid_layout::flatten_index(ix, iy, iz, ny, nz);
         auto psi = hc[sx][sy][sz][local_orbital];

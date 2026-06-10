@@ -1,28 +1,65 @@
-// ============================================================================
-// inqkit::io::VTIImageDataWriter
-//
-// Header-only writer that emits a single VTK XML ImageData (`.vti`) file from
-// an inqkit RealField3D or ComplexField3D. Sits next to (or replaces) the
-// `.raw` / `.meta.txt` outputs produced by RealField3DWriter and
-// ComplexField3DWriter so that runs can publish ParaView-ready data without a
-// post-processing Python step.
-//
-// Format support:
-//   - ASCII (Float64, x-fastest point order, deterministic and diff-friendly)
-//   - Inline binary (base64-encoded VTK RawBinary block; ~3x smaller, still
-//     a single file). Uses a UInt64 little-endian byte-count header inside
-//     the base64 payload, matching the `header_type="UInt64"` declaration on
-//     <VTKFile>. See VTK XML format spec.
-//
-// Layout transform:
-//   inqkit fields store values as flat = ((ix*ny)+iy)*nz + iz (x slowest,
-//   z fastest). VTK ImageData expects PointData in x-fastest order, i.e.
-//   point index = ix + nx * (iy + ny * iz). The writer reorders during the
-//   ASCII stream / binary copy by walking iz outermost, iy middle, ix
-//   innermost. No transpose buffer is required.
-//
-// Single-rank only — same restriction as the existing inqkit writers.
-// ============================================================================
+/*
+ * Header-only writer that emits a VTK XML ImageData (.vti) file from an
+ * inqkit RealField3D or ComplexField3D, producing ParaView-ready output
+ * without a post-processing step.
+ *
+ * VTI format overview
+ * -------------------
+ *
+ *   <VTKFile type="ImageData" version="0.1" byte_order="LittleEndian">
+ *     <ImageData WholeExtent="ix_min ix_max  iy_min iy_max  iz_min iz_max"
+ *                Origin="x0 y0 z0"
+ *                Spacing="dx dy dz">
+ *       <Piece Extent="ix_min ix_max  iy_min iy_max  iz_min iz_max">
+ *         <PointData Scalars="Density">
+ *           <DataArray type="Float32" Name="Density"
+ *                      format="ascii" NumberOfComponents="1">
+ *             1.0  2.0  3.0  ...
+ *           </DataArray>
+ *         </PointData>
+ *       </Piece>
+ *     </ImageData>
+ *   </VTKFile>
+ *
+ *   WholeExtent  Six integers: min/max index along each axis.
+ *   Origin       World coordinates of grid point (0, 0, 0).
+ *   Spacing      Cell size (dx, dy, dz) along each axis.
+ *   Piece        In serial files matches WholeExtent; split per rank in parallel.
+ *   PointData    Declares which array is the active scalar/vector field.
+ *
+ * Output formats
+ * --------------
+ * ASCII            Float64 values in plain text; deterministic and diff-friendly.
+ * Binary (default) Base64-encoded raw block (~3× smaller, single file).
+ *                  A UInt64 little-endian byte-count header precedes the payload
+ *                  inside the base64 block, matching header_type="UInt64" on
+ *                  <VTKFile>. See the VTK XML format specification for details.
+ *
+ * Index layout transform
+ * ----------------------
+ * inqkit stores field values in x-slowest, z-fastest (C) order:
+ *
+ *   flat = (ix * ny + iy) * nz + iz
+ *
+ * VTK ImageData expects PointData in x-fastest order:
+ *
+ *   flat = ix + nx * (iy + ny * iz)
+ *
+ * The writer performs this reordering on-the-fly by iterating iz outermost,
+ * iy middle, ix innermost — no temporary transpose buffer is needed.
+ *
+ * Note: single-rank only, consistent with the existing inqkit writers.
+ */
+
+
+
+/*
+* TODO: Need to check the indexing convention for the arrays, and ensure that
+* the right coordines map to the right indices. In this case, I understand that
+* fft_indexing and the iz being the fastest go hand in hand. 
+*/
+
+
 #pragma once
 
 #include <inqkit/fields/complex_field_3d.hpp>

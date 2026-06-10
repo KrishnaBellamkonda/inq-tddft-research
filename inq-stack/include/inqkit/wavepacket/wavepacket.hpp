@@ -1,19 +1,75 @@
-/* This class is simplified the initialisation of a wave packet and its injection
- * into the last extra state. Limitations of the library as of now - 
- * 1. Multiple k points are not supported
- * 2. Only spherical gaussians are supported
- * 3. Occupation of more than 1 is not tested. This would require inserting more than
- * one orbital and then changing the occupation accordingly. 
+/*
+ * This file provides a builder-pattern class for constructing a Gaussian wave
+ * packet and injecting it into the last extra-state slot of an INQ electrons
+ * object. The injected orbital takes the form:
  *
- * However, using the class is simple. We start by initialising it
- * WavePacket wp{}.center(cx, cy, cz).sigma().k0(). 
+ *   ψ_wp(r) = (π σ²)^{-3/4} exp(−|r − b|² / (2σ²)) exp(i k₀·r)
  *
- * The injection happens by performing wp.inject_into_last_extra_state(electrons, occupation)
- * 
- * The core idea of this class is to make the run.cpp code much more readable and easily
- * understandable. 
+ * where b is the packet centre (Bohr), σ is the real-space spread (Bohr), and
+ * k₀ is the initial momentum (Bohr⁻¹). The prefactor (π σ²)^{-3/4} ensures
+ * ∫ |ψ_wp|² dV = 1. The resulting density is a Gaussian with standard
+ * deviation σ/√2 along each axis — see WPRealSpaceStats for the
+ * corresponding validation.
  *
- * */
+ * Injection sequence
+ * ------------------
+ * inject_into_last_extra_state() performs the following steps in order:
+ *
+ *   1. Norm before    Records ‖ψ_last‖ of the slot before overwriting, so
+ *                     the caller can verify the slot was previously empty.
+ *
+ *   2. Raw injection  Writes ψ_wp(r) into the last extra-state slot on the
+ *                     GPU, using basis.point_op().rvector_cartesian() for
+ *                     the physical coordinates. This is essential for
+ *                     orthorhombic cells: the symmetric-range convention
+ *                     maps grid index ig to (ig ≤ N/2 ? ig : ig − N)·dr,
+ *                     so naively computing ig·dr would silently corrupt the
+ *                     exp(i k·r) phase across half the cell.
+ *
+ *   3. Orthogonalisation (optional)
+ *                     If orthogonalise_against_occupied() was called,
+ *                     modified Gram-Schmidt is applied against all occupied
+ *                     KS orbitals. The outer loop over occupied states is
+ *                     serial on the CPU (each projection depends on the
+ *                     previous subtraction); the inner overlap integrals and
+ *                     subtraction steps run as GPU kernels. The packet is
+ *                     renormalised after all projections. The maximum overlap
+ *                     before subtraction is recorded in the report.
+ *
+ *   4. Norm after     Records ‖ψ_wp‖ of the injected (and optionally
+ *                     orthogonalised) state. Should be ≈ 1.0.
+ *
+ *   5. Occupation     Sets electrons.occupations()[0][ist_wp] to the
+ *                     requested value (default 1.0).
+ *
+ * Builder usage
+ * -------------
+ *   auto report = inqkit::WavePacket{}
+ *       .center(cx_bohr, cy_bohr, cz_bohr)
+ *       .sigma(sigma_bohr)
+ *       .k0(kx, ky, kz)
+ *       .orthogonalise_against_occupied(electrons)   // optional
+ *       .inject_into_last_extra_state(electrons, 1.0);
+ *
+ * The returned InjectionReport carries norm_before, norm_after,
+ * max_overlap (if orthogonalised), and passed_tolerance, and is
+ * suitable for logging or assertion in the calling run script.
+ *
+ * Current limitations
+ * -------------------
+ *   - Single k-point (gamma-only) runs only.
+ *   - Single MPI rank only; multi-rank basis/set partitioning will throw.
+ *   - Spherical Gaussians only (one σ shared across all three axes).
+ *   - Occupation values other than 1.0 are untested.
+ */
+
+
+// TODO: Make a momentum space version of Gram-Schmidt and see if there is any difference
+// in a given simulations observables. If there is, then consider it, and make a decision. 
+
+// TODO: Need to check the parallelisation code, and ensure that all is working as
+// expected. Need to write tests to prove the understanding of GPU::run gained, and 
+// reduce functions. The same must be done with MPI. 
 
 #pragma once
 // ============================================================================
@@ -36,6 +92,9 @@
 //
 // Single-rank only (multi-rank basis/set partitioning is not supported).
 // ============================================================================
+
+
+// TODO: Can have double orthogonalisation using GS algorithm. 
 
 #include <inq/inq.hpp>
 #include <inqkit/wavepacket/injection_report.hpp>
@@ -95,6 +154,8 @@ public:
   // inject_into_last_extra_state using GPU kernels (modified Gram-Schmidt).
   // Passing electrons here is required by the API for consistency with future
   // pre-computation of overlaps; currently unused.
+
+  // TODO: Test the orthogonalisation rigorously. 
   WavePacket &
   orthogonalise_against_occupied(inq::systems::electrons const & /*electrons*/,
                                  double tolerance = 1e-6) {
@@ -199,9 +260,22 @@ WavePacket::inject_into_last_extra_state(inq::systems::electrons &electrons,
   // ── 3. Orthogonalise against occupied states (modified Gram-Schmidt on GPU)
   // ─
   if (do_ortho_) {
-    double max_ov = 0.0;
+    double max_ov_initial = 0.0;   // pre-ortho overlap (first pass) — reported
+    double max_ov_residual = 0.0;  // residual overlap (final pass) — gates tol
     auto mat_ = begin(phi.matrix());
 
+    /* Iterated modified Gram-Schmidt (E03 fix). Each pass runs over all KS
+     * states below the WP slot, measures <psi_i|psi_wp> and subtracts the
+     * projection. KS orbitals are mutually orthonormal, so a single pass
+     * orthogonalises in EXACT arithmetic; a SECOND pass removes the
+     * finite-precision residual a single pass leaves. Crucially, measuring the
+     * overlap on the FINAL pass lets passed_tolerance reflect the TRUE
+     * post-orthogonalisation residual rather than the (large) pre-ortho overlap
+     * the first pass sees. The overlap reduction is GPU-accelerated; the loop
+     * over states is serial (each subtraction depends on the previous). */
+    const int n_ortho_passes = 2;
+    for (int pass = 0; pass < n_ortho_passes; ++pass) {
+    double pass_max = 0.0;
     for (int i = 0; i < ist_wp; ++i) {
       // Real part of <psi_i | psi_wp>
       auto res_re =
@@ -227,7 +301,7 @@ WavePacket::inject_into_last_extra_state(inq::systems::electrons &electrons,
       INQKIT_GPU_SYNC();
       double ov_im = res_im[0];
 
-      max_ov = std::max(max_ov, std::sqrt(ov_re * ov_re + ov_im * ov_im));
+      pass_max = std::max(pass_max, std::sqrt(ov_re * ov_re + ov_im * ov_im));
 
       // Subtract projection: psi_wp -= (ov_re + i*ov_im) * psi_i
       double re_ = ov_re, im_ = ov_im;
@@ -245,8 +319,11 @@ WavePacket::inject_into_last_extra_state(inq::systems::electrons &electrons,
                });
       INQKIT_GPU_SYNC();
     }
+    if (pass == 0) max_ov_initial = pass_max;
+    max_ov_residual = pass_max;
+    }  // end iterated-GS pass loop
 
-    report.max_overlap = max_ov;
+    report.max_overlap = max_ov_initial;
     report.orthogonalised = true;
 
     // Renormalise after projection
@@ -270,7 +347,7 @@ WavePacket::inject_into_last_extra_state(inq::systems::electrons &electrons,
       INQKIT_GPU_SYNC();
     }
 
-    report.passed_tolerance = (max_ov < ortho_tol_ * 10.0);
+    report.passed_tolerance = (max_ov_residual < ortho_tol_ * 10.0);
   } else {
     report.passed_tolerance = true;
   }

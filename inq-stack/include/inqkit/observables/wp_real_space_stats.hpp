@@ -1,37 +1,63 @@
-// ============================================================================
-// inqkit/observables/wp_real_space_stats.hpp
-//
-// Per-step real-space statistics of a single wave-packet orbital in a
-// real-time TDDFT run. Computes (in Bohr):
-//
-//     <x_d>(t)   = integral x_d |psi_wp(r,t)|^2 dV / N
-//     <x_d^2>(t) = integral x_d^2 |psi_wp(r,t)|^2 dV / N
-//     sigma_r_d^2(t) = <x_d^2> - <x_d>^2
-//
-// where N = integral |psi_wp(r,t)|^2 dV is the real-space norm (written to
-// CSV as `norm_check`; should remain ~1 throughout a unitary propagation).
-//
-// Design (mirrors inq/src/observables/dipole.hpp):
-//   - On-device 3D GPU reduction over the real-space grid points.
-//   - Host-side MPI all_reduce_in_place_n on the small fixed-size summary
-//     across basis().comm() (FFT-grid decomposition) and set_comm() (state
-//     decomposition).
-//
-// CSV layout (one row per recorded step):
-//   step,time_au,x_mean,y_mean,z_mean,
-//                x2_mean,y2_mean,z2_mean,
-//                sigma_x2,sigma_y2,sigma_z2,
-//                norm_check
-//
-// Known-case validation: Tutorial/wp-real-space-stats-test/. A Gaussian WP
-// injected with inqkit::WavePacket sigma = 5 Bohr and centre = (0, 0, 0)
-// must give <x_d> ~= 0 and sigma_r_d = 5 / sqrt(2) ~= 3.5355 Bohr (the
-// injector writes psi ~ exp(-r^2 / (2 sigma^2)), so the density is a
-// Gaussian with std-dev sigma / sqrt(2) — see
-// wp_momentum_stats.hpp header for the convention discussion).
-//
-// Single k-point only (matches inqkit::WavePacket).
-// ============================================================================
+/*
+ * This file tracks the real-space statistical moments of a single wave-packet
+ * orbital at each time step of a TDDFT run. Given the orbital ψ_wp(r, t), it
+ * computes the density-weighted integrals (in Bohr):
+ *
+ *   N(t)         = ∫ |ψ_wp(r, t)|² dV                 (norm; should stay ≈ 1)
+ *
+ *   <x_d>(t)     = (1/N) ∫ x_d |ψ_wp(r, t)|² dV       (centroid, d = x, y, z)
+ *
+ *   <x_d²>(t)    = (1/N) ∫ x_d² |ψ_wp(r, t)|² dV      (second moment)
+ *
+ *   σ²_d(t)      = <x_d²> − <x_d>²                    (spatial variance)
+ *
+ * where x_d denotes the d-th Cartesian coordinate of a real-space grid point.
+ * The centroid tracks the classical trajectory of the packet; the variance
+ * σ²_d measures its spread along each axis and grows with dispersion.
+ *
+ * CSV layout (one row per recorded step):
+ * ----------------------------------------
+ *   step, time_au,
+ *   x_mean, y_mean, z_mean,
+ *   x2_mean, y2_mean, z2_mean,
+ *   sigma_x2, sigma_y2, sigma_z2,
+ *   norm_check
+ *
+ * norm_check is N(t) and should remain close to 1.0 throughout a unitary
+ * propagation. Significant drift indicates a numerical problem upstream.
+ *
+ * Parallelism
+ * -----------
+ * The three reductions (N, <x_d>·N, <x_d²>·N) are performed on-device as
+ * 3D GPU reductions over the local real-space partition. The resulting 7
+ * partial sums are then reduced across MPI ranks via two all_reduce_in_place
+ * calls: one over basis().comm() (the FFT-grid decomposition) and one over
+ * set_comm() (the state decomposition). Only gamma-point (single k-point)
+ * runs are supported, matching the inqkit::WavePacket injector.
+ *
+ * Known-case validation
+ * ---------------------
+ * A Gaussian wave packet injected with inqkit::WavePacket at centre (0,0,0)
+ * and spread σ (Bohr) writes ψ ∝ exp(−r²/(2σ²)), so the density is a
+ * Gaussian with standard deviation σ/√2. The expected observables at t = 0
+ * are therefore:
+ *
+ *   <x_d>   = 0
+ *   σ²_d    = σ² / 2
+ *
+ * For σ = 5 Bohr this gives σ_d = 5/√2 ≈ 3.5355 Bohr. See
+ * Tutorial/wp-real-space-stats-test/ for the reference run.
+ *
+ * Usage
+ * -----
+ *   WPRealSpaceStatsConfig cfg;
+ *   cfg.write_every = 5;           // record every 5th propagation step
+ *
+ *   WPRealSpaceStats obs("output/wp_rs_stats.csv", wp_state_index, cfg);
+ *
+ *   // inside the real-time callback:
+ *   obs.maybe_accumulate(data);    // no-op on skipped steps
+ */
 #pragma once
 
 #include <inq/inq.hpp>
@@ -48,8 +74,20 @@
 
 namespace inqkit::observables {
 
+// TODO: Is the write_every from the real time session passed on here?
+// TODO: Again, we should avoid w, and other such variable names, only ix, iy, iz,
+// in some cases, x, y, z (and such like neames wx, wy, wz). However, is it worth
+// it to fix this convention throughout?
 struct WPRealSpaceStatsConfig {
     int write_every = 1;   // accumulate every Nth iteration; <=0 disables
+};
+
+// WP real-space moments — exactly the values accumulate() writes to one CSV row.
+struct WPRealSpaceMoments {
+    double x = 0, y = 0, z = 0;          // mean position ⟨r⟩ (Bohr, node convention)
+    double x2 = 0, y2 = 0, z2 = 0;       // second moments
+    double sx2 = 0, sy2 = 0, sz2 = 0;    // variances
+    double N = 0;                        // norm ∫|ψ|² dV (≈ 1 for a normalised WP)
 };
 
 class WPRealSpaceStats {
@@ -76,6 +114,7 @@ public:
                  "norm_check\n";
     }
 
+    // TODO: What does this syntax really do?
     ~WPRealSpaceStats() {
         if (file_.is_open()) file_.close();
     }
@@ -87,10 +126,11 @@ public:
         accumulate(data);
     }
 
-    template <typename Viewables>
-    void accumulate(Viewables const& data) {
+    // Compute the WP real-space moments from the current electrons state. Split
+    // from accumulate() so it is unit-testable directly (no CSV, no RT
+    // Viewables) and reusable. accumulate() = compute() + one CSV row.
+    WPRealSpaceMoments compute(inq::systems::electrons const& electrons) const {
         using namespace inq;
-        auto const& electrons = data.electrons();
 
         if (electrons.kpin_size() != 1)
             throw std::runtime_error(
@@ -104,6 +144,8 @@ public:
         // Is the requested WP state local to this rank's set partition?
         const long st_start = phi.set_part().start();
         const long st_size  = phi.set_part().local_size();
+        // TODO: Need to test that the paralellisation is working as expected. Come up
+        // with a test case to test this. 
         const bool wp_local = (wp_idx_ >= st_start &&
                                wp_idx_ <  st_start + st_size);
         const int  ist_l    = wp_local
@@ -123,6 +165,9 @@ public:
             auto point_op  = basis.point_op();
 
             // --- N = sum |psi(r)|^2 dV ---------------------------------------
+            
+            /* Each GPU run runs a highly parallelised loop over every single
+            grid space point. */
             sum_n = gpu::run(
                 gpu::reduce(sizes[2]),
                 gpu::reduce(sizes[1]),
@@ -169,7 +214,9 @@ public:
         double host_buf[7] = {sum_n,
                               sum_r[0],  sum_r[1],  sum_r[2],
                               sum_r2[0], sum_r2[1], sum_r2[2]};
-
+        
+        // TODO: MPI reduction here. Is this GPU communication? Need to check? 
+        // How are GPU and MPI compatible? Is GPU being paralellised here?
         if (basis.comm().size() > 1)
             basis.comm().all_reduce_in_place_n(host_buf, 7, std::plus<>{});
         if (phi.set_comm().size() > 1)
@@ -181,24 +228,32 @@ public:
                 "WPRealSpaceStats: non-positive norm for WP orbital "
                 "(state " + std::to_string(wp_idx_) + ").");
 
-        const double x  = host_buf[1] / N;
-        const double y  = host_buf[2] / N;
-        const double z  = host_buf[3] / N;
-        const double x2 = host_buf[4] / N;
-        const double y2 = host_buf[5] / N;
-        const double z2 = host_buf[6] / N;
-        const double sx2 = x2 - x*x;
-        const double sy2 = y2 - y*y;
-        const double sz2 = z2 - z*z;
+        WPRealSpaceMoments m;
+        m.N  = N;
+        m.x  = host_buf[1] / N;
+        m.y  = host_buf[2] / N;
+        m.z  = host_buf[3] / N;
+        m.x2 = host_buf[4] / N;
+        m.y2 = host_buf[5] / N;
+        m.z2 = host_buf[6] / N;
+        m.sx2 = m.x2 - m.x*m.x;
+        m.sy2 = m.y2 - m.y*m.y;
+        m.sz2 = m.z2 - m.z*m.z;
+        return m;
+    }
 
+    // accumulate() = compute() + one CSV row (format unchanged).
+    template <typename Viewables>
+    void accumulate(Viewables const& data) {
+        auto const m = compute(data.electrons());
         const int    step = data.iter();
         const double t_au = data.time();
         file_ << std::setprecision(12);
         file_ << step << ',' << t_au << ','
-              << x  << ',' << y  << ',' << z  << ','
-              << x2 << ',' << y2 << ',' << z2 << ','
-              << sx2 << ',' << sy2 << ',' << sz2 << ','
-              << N << '\n';
+              << m.x  << ',' << m.y  << ',' << m.z  << ','
+              << m.x2 << ',' << m.y2 << ',' << m.z2 << ','
+              << m.sx2 << ',' << m.sy2 << ',' << m.sz2 << ','
+              << m.N << '\n';
         file_.flush();
     }
 

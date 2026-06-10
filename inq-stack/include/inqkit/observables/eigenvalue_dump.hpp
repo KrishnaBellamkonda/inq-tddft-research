@@ -1,29 +1,35 @@
-// ============================================================================
-// inqkit/observables/eigenvalue_dump.hpp
-//
-// Writes ground-state Kohn-Sham eigenvalues + occupations + k-point
-// coordinates / weights for every k-point in the Brillouin zone, in
-// long-format CSV. Intended to be called once after `electrons.load(...)`
-// (or after SCF) at the start of a TDDFT run, so the time-zero band
-// structure is always recoverable.
-//
-// CSV schema (one row per (k, state)):
-//
-//   kpoint_index, kx, ky, kz, weight,
-//   state_index, eigenvalue_ha, eigenvalue_ev, occupation
-//
-// Where (kx, ky, kz) is in units of 2*pi / a_lattice, matching the
-// convention used by inq's brillouin printer (brillouin.hpp:139).
-//
-// Single-rank assumption: same as state_energy_writer.hpp — each MPI rank
-// writes its local kpin slice; for the Li 54-atom 2x2x2 single-GPU runs
-// there is only one rank, so kpin_part().start() == 0 and we get the
-// global eigenvalue table.
-//
-// Adapted from coronene::eigenvalues::dump
-// (ResearchProject/systems/coronene/shared/cpp/eigenvalues_writer.hpp),
-// extended to multi-kpoint.
-// ============================================================================
+/*
+ * Writes ground-state Kohn-Sham eigenvalues, occupations, and k-point
+ * coordinates / weights to a long-format CSV file. Intended to be called
+ * once after electrons.load() or SCF convergence at the start of a TDDFT
+ * run, so the time-zero band structure is always recoverable.
+ *
+ * CSV schema (one row per (k-point, state) pair)
+ * -----------------------------------------------
+ *   kpoint_index   Global k-point index.
+ *   kx, ky, kz     K-point coordinates in units of 2π/a, matching the
+ *                  convention in inq's brillouin.hpp.
+ *   weight         Brillouin zone integration weight for this k-point.
+ *   state_index    Band index (zero-based).
+ *   eigenvalue_ha  Kohn-Sham eigenvalue in Hartree.
+ *   eigenvalue_ev  Kohn-Sham eigenvalue in eV  (× 27.21138625).
+ *   occupation     State occupation number.
+ *
+ * Usage
+ * -----
+ *   inqkit::observables::dump_eigenvalues(electrons, "/output/eigenvalues.csv");
+ *
+ * Multi-k-point behaviour
+ * -----------------------
+ * Each MPI rank writes its local kpin slice (kpin_part().start() to
+ * kpin_part().start() + kpin_size()). For single-rank runs the local
+ * slice covers the full Brillouin zone, producing the complete eigenvalue
+ * table in one file. Parallel multi-rank output is not yet merged
+ * automatically.
+ *
+ * Note: single-rank only for production use, consistent with the existing
+ * inqkit writers.
+ */
 #pragma once
 
 #include <inq/inq.hpp>
@@ -39,12 +45,19 @@ namespace inqkit::observables {
 
 inline constexpr double HA_TO_EV = 27.21138625;
 
+
+/* 
+* All the states per k point have their eigen-energy dumped to  
+* a CSV file. 
+*/
+
 inline void dump_eigenvalues(inq::systems::electrons const& electrons,
                              std::string const& csv_path) {
     namespace fs = std::filesystem;
     if (auto parent = fs::path(csv_path).parent_path(); !parent.empty())
         fs::create_directories(parent);
 
+    // Path to offload the csv into 
     std::ofstream f(csv_path);
     if (!f) throw std::runtime_error("dump_eigenvalues: cannot open '" + csv_path + "'");
 
@@ -52,11 +65,15 @@ inline void dump_eigenvalues(inq::systems::electrons const& electrons,
          "eigenvalue_ha,eigenvalue_ev,occupation\n";
     f << std::setprecision(15);
 
-    auto const& bz       = electrons.brillouin_zone();
-    auto const& weights  = electrons.kpin_weights();
-    auto const& eigs_arr = electrons.eigenvalues();
-    auto const& occs_arr = electrons.occupations();
+        
+    // TODO: Understand the data structure type of these different
+    // properties of electrons
+    auto const& bz       = electrons.brillouin_zone(); // BZ k point mesh
+    auto const& weights  = electrons.kpin_weights(); // Integration weights of each point
+    auto const& eigs_arr = electrons.eigenvalues(); // Eigenvalues per k point
+    auto const& occs_arr = electrons.occupations(); // occupations (of each state) per k point
 
+    // 
     const long kp_offset = electrons.kpin_part().start();
     const long nk_local  = electrons.kpin_size();
 

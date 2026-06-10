@@ -1,9 +1,49 @@
 /*
+ * The file that controls the primary observables being measured in the 
+ * simulations. It streams scalar observables from an inqkit real-time
+ * simulation to a CSV file, one row per time step.
  *
+ * Columns are selected at construction time via ObservableSelection. Only
+ * enabled columns appear in the file; the header row reflects exactly the
+ * same selection so the output is self-describing.
  *
- * */
-
-
+ * Available observables
+ * ---------------------
+ *   step                 Integer step counter.
+ *   time_au              Simulation time in atomic units.
+ *   energy_total         Total energy.
+ *   energy_kinetic       Kinetic energy.
+ *   energy_hartree       Hartree (Coulomb) energy.
+ *   energy_xc            Exchange-correlation energy.
+ *   current_{x,y,z}      Current density vector components.
+ *   dipole_{x,y,z}       Dipole moment vector components.
+ *   cod_{x,y,z}_bohr     Wave-packet centre-of-density (Bohr).
+ *   density_l2           Integrated squared density norm.
+ *
+ * Typical usage
+ * -------------
+ *   ObservableSelection sel;
+ *   sel.energy_hartree = true;
+ *   sel.dipole_x = sel.dipole_y = sel.dipole_z = true;
+ *
+ *   ObservablesWriter writer("/output/observables.csv", sel);
+ *   writer.write_header();               // call once before the time loop
+ *
+ *   for (auto const& ctx : steps) {
+ *       // ... propagate ...
+ *       writer.append(ctx);              // one row per step
+ *   }
+ *   writer.finish();                     // explicit flush + close
+ *
+ * Flush strategy
+ * --------------
+ * append() flushes to disk after every row. Without this, an aborted or
+ * killed run leaves observables.csv at 0 bytes because the stream destructor
+ * never executes. write_header() also flushes immediately so that even a
+ * zero-step run produces a readable schema on disk.
+ * 
+ * Note: single-rank only, consistent with the existing inqkit writers.
+ */
 #pragma once
 
 #include <inqkit/real_time/step_context.hpp>

@@ -1,3 +1,12 @@
+/* 
+* This file contains the logic to find the total, orbital (specific) and system
+* densities from the INQ simulation. Importantly, this file has the fft_shift_index
+* function, which converts indices of a flattened array in the usual ordering 
+* (for definitions of usual and fft order, check below) to the fft ordering.
+* 
+*
+*/
+
 #pragma once
 
 #include <inq/inq.hpp>
@@ -7,10 +16,12 @@
 
 #include <stdexcept>
 
-// This is a simple if condition that checks 
-// if being compiled by CUDA (using the lines __CUDAC__)
-// If yes, imports the library and defines a function cudaDeviceSynchronize()
-// that blocks all CPU progress until all the GPU work is done. 
+/*
+* This is a simple if condition that checks 
+* if being compiled by CUDA (using the lines __CUDAC__)
+* If yes, imports the library and defines a function cudaDeviceSynchronize()
+* that blocks all CPU progress until all the GPU work is done.
+*/  
 #ifdef __CUDACC__
 #include <cuda_runtime.h>
 #define INQKIT_GPU_SYNC() cudaDeviceSynchronize()
@@ -20,20 +31,22 @@
 
 namespace inqkit::fields::density {
 
-// FFT-shift along one axis: convert a contiguous output index
-// (0 -> -L/2, ..., size-1 -> +L/2 - dx) into the FFT-natural array
-// index that INQ uses internally (0 -> cell centre, size/2 -> -L/2).
-// See inq/src/basis/grid.hpp:78-95 (to/from_symmetric_range) and the
-// run_06_centred_writer_check diagnostic. The formula
-// (idx + (size+1)/2) % size handles both even and odd sizes.
-inline int fft_shift_index(int output_idx, int size) {
-  return (output_idx + (size + 1) / 2) % size;
-}
+// fft_shift_index moved to the shared pure header
+// inqkit::detail::grid_layout (detail/grid_layout.hpp), so density.hpp and
+// orbital.hpp can share it without one including the other. Used below via
+// grid_layout::fft_shift_index. Tested by tests/cpp/test_fft_shift.cpp.
 
 /*
  * Build the total electronic density field:
  *   rho(r) = electrons.density()
  *
+ * TODO: IMPORTANT: This function utilises the density
+ * function that is shipped by INQ. However, a validation
+ * test must be performed here to check if it output the 
+ * total or electornic system's density. I define the system as
+ * target (which does not include the wavepacket). Need to make
+ * a validation check to confirm this.  
+
  * INQ stores the real-space grid in FFT-natural order (array index 0
  * corresponds to physical position 0, the cell centre). The metadata
  * we publish has Origin = -L/2, so when iterating output index ix from
@@ -87,11 +100,11 @@ inline RealField3D total(inq::systems::electrons const &electrons) {
   // Output index ix runs left-to-right (ix=0 at -L/2, ix=nx-1 near +L/2).
   // INQ's hc is FFT-natural, so we read host_hc[fft_shift_index(ix)].
   for (int ix = 0; ix < nx; ++ix) {
-    int sx = fft_shift_index(ix, nx);
+    int sx = inqkit::detail::grid_layout::fft_shift_index(ix, nx);
     for (int iy = 0; iy < ny; ++iy) {
-      int sy = fft_shift_index(iy, ny);
+      int sy = inqkit::detail::grid_layout::fft_shift_index(iy, ny);
       for (int iz = 0; iz < nz; ++iz) {
-        int sz = fft_shift_index(iz, nz);
+        int sz = inqkit::detail::grid_layout::fft_shift_index(iz, nz);
         auto flat =
             inqkit::detail::grid_layout::flatten_index(ix, iy, iz, ny, nz);
         field.values[flat] = host_hc[sx][sy][sz];
@@ -132,7 +145,7 @@ inline RealField3D orbital(inq::systems::electrons const &electrons,
   auto const &phi = electrons.kpin()[kpoint_index];
 
   // To obtain the number of orbitals at a given k point, 
-  // we write electrons.kpoin()[k_point_index].spinot_set_size()
+  // we write electrons.kpoint()[k_point_index].spinot_set_size()
 
   if (orbital_index < 0 || orbital_index >= phi.spinor_set_size()) {
     throw std::runtime_error(
@@ -196,17 +209,17 @@ inline RealField3D orbital(inq::systems::electrons const &electrons,
   field.values.resize(static_cast<std::size_t>(nx) * ny * nz);
 
   // NOTE: this is the ORIGINAL per-element loop (slow: each access is
-  // a synchronous GPU->host fetch, ~30 min per 4.7M-cell call). Kept
+  // a synchronous GPU to host fetch, ~30 min per 4.7M-cell call). Kept
   // for one-shot initialisation calls (e.g. writing density_wp_initial
   // before propagation starts). Per-step propagation callbacks should
   // AVOID calling this; instead use density::total which is bulk-copied.
   auto hc = phi.hypercubic();
   for (int ix = 0; ix < nx; ++ix) {
-    int sx = fft_shift_index(ix, nx);
+    int sx = inqkit::detail::grid_layout::fft_shift_index(ix, nx);
     for (int iy = 0; iy < ny; ++iy) {
-      int sy = fft_shift_index(iy, ny);
+      int sy = inqkit::detail::grid_layout::fft_shift_index(iy, ny);
       for (int iz = 0; iz < nz; ++iz) {
-        int sz = fft_shift_index(iz, nz);
+        int sz = inqkit::detail::grid_layout::fft_shift_index(iz, nz);
         auto flat =
             inqkit::detail::grid_layout::flatten_index(ix, iy, iz, ny, nz);
         auto psi = hc[sx][sy][sz][local_orbital];
@@ -221,14 +234,16 @@ inline RealField3D orbital(inq::systems::electrons const &electrons,
 }
 
 /*
- * Bath density: the full electronic density MINUS one orbital's contribution.
- *
- *   rho_bath(r) = rho_total(r) - occupation * |psi_exclude(r)|^2
+ * System density: the full electronic density MINUS one orbital's contribution.
+ *  
+ *   The system is referred to as bath in this code. 
+ * 
+ *   rho_system(r) = rho_total(r) - occupation * |psi_exclude(r)|^2
  *
  * Motivation: when a wave-packet (WP) projectile is injected into an extra
  * Kohn-Sham state at a fixed occupation (typically 1.0), electrons.density()
  * (and hence density::total) ALREADY INCLUDES that WP orbital. For studying the
- * *target system's* response (the jellium bath wake, induced density, etc.) the
+ * *target system's* response (the jellium system wake, induced density, etc.) the
  * WP orbital must be removed so the saved "system" density integrates to the
  * bath electron count (N_electrons), not N_electrons + 1.
  *
@@ -248,6 +263,9 @@ inline RealField3D total_excluding_orbital(
     double occupation = 1.0, int kpoint_index = 0) {
   RealField3D bath = total(electrons);
   RealField3D orb  = orbital(electrons, exclude_index, kpoint_index);
+
+  // Check if the number of grid points for the bath and the orbital
+  // density are the same 
   if (bath.values.size() != orb.values.size() ||
       bath.nx != orb.nx || bath.ny != orb.ny || bath.nz != orb.nz) {
     throw std::runtime_error(
@@ -266,6 +284,12 @@ inline RealField3D total_excluding_orbital(
  * write the WP density that frame, to avoid a second expensive orbital() call.
  *   rho_bath = total_field - occupation * orbital_field
  */
+
+// TODO: Find where this is used. This function essentially uses
+// orbital and total densities outside of this function
+// and performs the subtraction to get the system density. 
+// I feel like this function should not be used. Need to firstly document
+// exactly where such as function is being used.  
 inline RealField3D total_excluding_orbital(
     RealField3D const &total_field, RealField3D const &orbital_field,
     double occupation = 1.0) {

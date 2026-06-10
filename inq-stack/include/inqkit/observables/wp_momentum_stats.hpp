@@ -1,42 +1,75 @@
-// ============================================================================
-// inqkit/observables/wp_momentum_stats.hpp
-//
-// Per-step momentum statistics of a single wave-packet orbital in a real-time
-// TDDFT run. Computes (in atomic units):
-//
-//     <p_d>(t)   = integral k_d |phi-tilde_wp(k,t)|^2 dV_k / N
-//     <p_d^2>(t) = integral k_d^2 |phi-tilde_wp(k,t)|^2 dV_k / N
-//     sigma_p_d^2(t) = <p_d^2> - <p_d>^2
-//     E_kin(t)   = 0.5 (<p_x^2> + <p_y^2> + <p_z^2>)            (Hartree)
-//
-// where N = integral |phi-tilde_wp(k,t)|^2 dV_k is the Parseval normalisation
-// of the WP orbital in Fourier space (kept as a diagnostic, written to CSV as
-// `norm_check`). Dividing every moment by N makes the result independent of
-// INQ's FFT prefactor convention.
-//
-// Design (mirrors inq/src/observables/dipole.hpp):
-//   - On-device 3D GPU reduction over the Fourier-space grid points.
-//   - Host-side MPI all_reduce_in_place_n on the small fixed-size summary,
-//     across both the basis communicator (FFT-grid decomposition) and the
-//     set/state communicator (state decomposition — only the rank holding the
-//     WP contributes a non-zero local sum). This is the host-after-reduction
-//     pattern the campaign requires; the legacy MomentumDistribution observable
-//     does not all-reduce and is single-rank-safe only.
-//
-// CSV layout (one row per recorded step):
-//   step,time_au,px_mean,py_mean,pz_mean,
-//                px2_mean,py2_mean,pz2_mean,
-//                sigma_px2,sigma_py2,sigma_pz2,
-//                e_kin_ha,norm_check
-//
-// Known-case validation: Tutorial/wp-momentum-stats-test/. A Gaussian WP
-// injected with sigma_r = 5 Bohr, k0 = (0, 0, 2.711) Bohr^-1 must give
-// sigma_p_d = 1/(2 sigma_r) = 0.1 Bohr^-1 in every cartesian direction,
-// <p_z> = 2.711 Bohr^-1, and E_kin = 0.5 (k0^2 + 3 sigma_p^2) ~= 3.69 Ha
-// (~= 100.4 eV).
-//
-// Single k-point only (matches inqkit::WavePacket).
-// ============================================================================
+/*
+ * This file tracks the momentum-space statistical moments of a single
+ * wave-packet orbital at each time step of a TDDFT run. The orbital is
+ * Fourier-transformed on-the-fly at each recorded step, and the following
+ * density-weighted integrals are computed over the resulting k-space grid
+ * (all quantities in atomic units):
+ *
+ *   N(t)         = ∫ |ψ̃_wp(k, t)|² dV_k              (Parseval norm; ≈ 1)
+ *
+ *   <p_d>(t)     = (1/N) ∫ k_d |ψ̃_wp(k, t)|² dV_k    (mean momentum, d = x,y,z)
+ *
+ *   <p_d²>(t)    = (1/N) ∫ k_d² |ψ̃_wp(k, t)|² dV_k   (second moment)
+ *
+ *   σ²_pd(t)     = <p_d²> − <p_d>²                    (momentum variance)
+ *
+ *   E_kin(t)     = ½ (<p_x²> + <p_y²> + <p_z²>)       (kinetic energy, Hartree)
+ *
+ * where k_d is the d-th Cartesian component of the reciprocal-space grid
+ * point. Dividing every moment by N renders the result independent of INQ's
+ * FFT prefactor convention; N itself is written to CSV as norm_check and
+ * should remain close to 1.0 throughout a unitary propagation.
+ *
+ * Note: unlike the real-space companion (WPRealSpaceStats), no explicit
+ * volume element dV appears inside the GPU reductions — the FFT prefactor
+ * absorbed into ψ̃ already encodes it. N therefore plays the same
+ * normalisation role that the real-space norm plays in WPRealSpaceStats.
+ *
+ * CSV layout (one row per recorded step):
+ * ----------------------------------------
+ *   step, time_au,
+ *   px_mean, py_mean, pz_mean,
+ *   px2_mean, py2_mean, pz2_mean,
+ *   sigma_px2, sigma_py2, sigma_pz2,
+ *   e_kin_ha, norm_check
+ *
+ * Parallelism
+ * -----------
+ * The real-space orbital is transformed to Fourier space with
+ * operations::transform::to_fourier() at each recorded step. The three
+ * k-space reductions (N, <p_d>·N, <p_d²>·N) are then performed on-device
+ * as 3D GPU reductions over the local Fourier-space partition. The resulting
+ * 7 partial sums are reduced across MPI ranks via two all_reduce_in_place
+ * calls: one over fbasis.comm() (the FFT-grid decomposition) and one over
+ * set_comm() (the state decomposition). Ranks that do not hold the WP
+ * orbital contribute zero to all sums. Only gamma-point (single k-point)
+ * runs are supported, matching the inqkit::WavePacket injector.
+ *
+ * Known-case validation
+ * ---------------------
+ * For a Gaussian wave packet injected with inqkit::WavePacket at real-space
+ * spread σ_r (Bohr) and initial momentum k₀, the Fourier transform is also
+ * Gaussian with momentum spread σ_p = 1/(2σ_r), saturating the
+ * Heisenberg uncertainty bound. The expected observables at t = 0 are:
+ *
+ *   <p_d>   = k₀_d
+ *   σ²_pd   = 1 / (4 σ_r²)
+ *   E_kin   = ½ (|k₀|² + 3 σ_p²)
+ *
+ * For σ_r = 5 Bohr and k₀ = (0, 0, 2.711) Bohr⁻¹ this gives
+ * σ_p = 0.1 Bohr⁻¹, <p_z> = 2.711 Bohr⁻¹, and E_kin ≈ 3.69 Ha (≈ 100.4 eV).
+ * See Tutorial/wp-momentum-stats-test/ for the reference run.
+ *
+ * Usage
+ * -----
+ *   WPMomentumStatsConfig cfg;
+ *   cfg.write_every = 5;           // record every 5th propagation step
+ *
+ *   WPMomentumStats obs("output/wp_mom_stats.csv", wp_state_index, cfg);
+ *
+ *   // inside the real-time callback:
+ *   obs.maybe_accumulate(data);    // no-op on skipped steps
+ */
 #pragma once
 
 #include <inq/inq.hpp>
@@ -57,6 +90,15 @@ namespace inqkit::observables {
 
 struct WPMomentumStatsConfig {
     int write_every = 1;   // accumulate every Nth iteration; <=0 disables
+};
+
+// WP momentum moments — exactly the values accumulate() writes to one CSV row.
+struct WPMomentumMoments {
+    double px = 0, py = 0, pz = 0;       // mean momentum components (Bohr^-1)
+    double px2 = 0, py2 = 0, pz2 = 0;    // second moments
+    double sx2 = 0, sy2 = 0, sz2 = 0;    // variances
+    double ekin = 0;                     // kinetic energy (Ha)
+    double N = 0;                        // Parseval norm (norm_check)
 };
 
 class WPMomentumStats {
@@ -94,10 +136,11 @@ public:
         accumulate(data);
     }
 
-    template <typename Viewables>
-    void accumulate(Viewables const& data) {
+    // Compute the WP momentum moments from the current electrons state. Split
+    // from accumulate() so it is unit-testable directly (no CSV, no RT
+    // Viewables) and reusable. accumulate() = compute() + one CSV row.
+    WPMomentumMoments compute(inq::systems::electrons const& electrons) const {
         using namespace inq;
-        auto const& electrons = data.electrons();
 
         if (electrons.kpin_size() != 1)
             throw std::runtime_error(
@@ -186,25 +229,33 @@ public:
                 "WPMomentumStats: non-positive Parseval norm for WP orbital "
                 "(state " + std::to_string(wp_idx_) + ").");
 
-        const double px  = host_buf[1] / N;
-        const double py  = host_buf[2] / N;
-        const double pz  = host_buf[3] / N;
-        const double px2 = host_buf[4] / N;
-        const double py2 = host_buf[5] / N;
-        const double pz2 = host_buf[6] / N;
-        const double sx2 = px2 - px*px;
-        const double sy2 = py2 - py*py;
-        const double sz2 = pz2 - pz*pz;
-        const double ekin = 0.5 * (px2 + py2 + pz2);
+        WPMomentumMoments m;
+        m.N   = N;
+        m.px  = host_buf[1] / N;
+        m.py  = host_buf[2] / N;
+        m.pz  = host_buf[3] / N;
+        m.px2 = host_buf[4] / N;
+        m.py2 = host_buf[5] / N;
+        m.pz2 = host_buf[6] / N;
+        m.sx2 = m.px2 - m.px*m.px;
+        m.sy2 = m.py2 - m.py*m.py;
+        m.sz2 = m.pz2 - m.pz*m.pz;
+        m.ekin = 0.5 * (m.px2 + m.py2 + m.pz2);
+        return m;
+    }
 
+    // accumulate() = compute() + one CSV row (format unchanged).
+    template <typename Viewables>
+    void accumulate(Viewables const& data) {
+        auto const m = compute(data.electrons());
         const int    step = data.iter();
         const double t_au = data.time();
         file_ << std::setprecision(12);
         file_ << step << ',' << t_au << ','
-              << px  << ',' << py  << ',' << pz  << ','
-              << px2 << ',' << py2 << ',' << pz2 << ','
-              << sx2 << ',' << sy2 << ',' << sz2 << ','
-              << ekin << ',' << N << '\n';
+              << m.px  << ',' << m.py  << ',' << m.pz  << ','
+              << m.px2 << ',' << m.py2 << ',' << m.pz2 << ','
+              << m.sx2 << ',' << m.sy2 << ',' << m.sz2 << ','
+              << m.ekin << ',' << m.N << '\n';
         file_.flush();
     }
 

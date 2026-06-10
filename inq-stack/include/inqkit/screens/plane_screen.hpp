@@ -23,6 +23,7 @@
 #include <cassert>
 #include <cmath>
 #include <fstream>
+#include <functional>
 #include <inq/inq.hpp>
 #include <iomanip>
 #include <string>
@@ -101,9 +102,12 @@ public:
   // kpin()[0] is authoritative; reading occupations directly from
   // electrons.occupations()[0] is the correct approach here.
   //
-  // TODO (MPI): no Allreduce on slice after the loop. In a multi-rank run
-  // with state-dimension parallelism each process only accumulates its local
-  // states. Add an Allreduce before returning if multi-rank support is needed.
+  // MPI (E01 fix): the slice is accumulated from LOCAL states (set
+  // decomposition) into GLOBAL (x,y) cells (basis/domain decomposition), so in a
+  // multi-rank run each rank holds only a partial slice. It is reduced across
+  // BOTH the basis communicator and the state communicator before returning,
+  // exactly as wp_real_space_stats does for its moment sums. Cross-rank
+  // agreement is verified by tests/cpp/engine/test_plane_screen_parallel_engine.
   std::vector<std::vector<double>>
   extract(inq::systems::electrons const &electrons) const {
     INQKIT_GPU_SYNC(); // flush device-resident orbital data before CPU reads
@@ -140,6 +144,27 @@ public:
           }
         }
       }
+    }
+
+    // E01 fix: reduce the partial slices across the basis (domain) and state
+    // communicators so every rank returns the complete slice. Flatten to a
+    // contiguous buffer for the in-place all_reduce, then unflatten.
+    if (phi.basis().comm().size() > 1 || phi.set_comm().size() > 1) {
+      std::vector<double> buf(static_cast<std::size_t>(Ny_g) * Nx_g);
+      for (int iy = 0; iy < Ny_g; ++iy)
+        for (int ix = 0; ix < Nx_g; ++ix)
+          buf[static_cast<std::size_t>(iy) * Nx_g + ix] = slice[iy][ix];
+
+      if (phi.basis().comm().size() > 1)
+        phi.basis().comm().all_reduce_in_place_n(buf.data(), buf.size(),
+                                                 std::plus<>{});
+      if (phi.set_comm().size() > 1)
+        phi.set_comm().all_reduce_in_place_n(buf.data(), buf.size(),
+                                             std::plus<>{});
+
+      for (int iy = 0; iy < Ny_g; ++iy)
+        for (int ix = 0; ix < Nx_g; ++ix)
+          slice[iy][ix] = buf[static_cast<std::size_t>(iy) * Nx_g + ix];
     }
     return slice;
   }

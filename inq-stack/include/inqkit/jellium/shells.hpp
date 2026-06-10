@@ -1,68 +1,76 @@
-// ============================================================================
-// inqkit/jellium/shells.hpp
-//
-// Enumerate the degenerate orbital shells of a free-electron jellium ground
-// state on a cubic box and pick a fixed set of "proxy" orbitals per shell.
-//
-// For free electrons in an L^3 cubic box with periodic BC, the eigenstates
-// are plane waves indexed by integer triples (n_x, n_y, n_z) with eigenvalue
-//
-//     E(n)  =  (2 pi / L)^2  *  (n_x^2 + n_y^2 + n_z^2)  /  2
-//
-// Degenerate shells are levels of constant |G|^2 = n_x^2 + n_y^2 + n_z^2.
-// The cumulative shell structure for jellium magic numbers:
-//
-//     |G|^2  shell_size  cumulative spatial states  cumulative electrons
-//        0             1                          1                     2
-//        1             6                          7                    14
-//        2            12                         19                    38
-//        3             8                         27                    54
-//        4             6                         33                    66
-//        5            24                         57                   114
-//        6            24                         81                   162    <-- N=162 closed shell
-//        8             6                         87                   174
-//        9            30                        117                   234
-//
-// The "magic numbers" 2, 14, 38, 54, 66, 114, 162 are closed shells.
-// |G|^2 = 7 is impossible (no integer (n_x,n_y,n_z) satisfies it: Lagrange's
-// 4-square theorem). Same for |G|^2 = 15, 23, 28, 31, ... (excluded levels).
-//
-// SHELL ASSIGNMENT IN INQ ORBITAL ORDER. INQ stores Kohn-Sham orbitals
-// sorted by eigenvalue at the converged GS. For a uniform jellium GS this
-// matches the |G|^2 ordering exactly (lowest |G|^2 first). The mapping from
-// INQ orbital_index to shell_id is therefore deterministic given (L, N, n_states):
-//   indices [0, 1)        -> shell 0
-//   indices [1, 7)        -> shell 1   (size 6)
-//   indices [7, 19)       -> shell 2   (size 12)
-//   indices [19, 27)      -> shell 3   (size 8)
-//   indices [27, 33)      -> shell 4   (size 6)
-//   indices [33, 57)      -> shell 5   (size 24)
-//   indices [57, 81)      -> shell 6   (size 24)
-//   indices [81, 87)      -> shell 8   (size 6)   <-- shell 7 absent
-//   indices [87, 117)     -> shell 9   (size 30)
-//   ...
-//
-// Within a shell we pick the FIRST TWO orbitals as proxies. The user-supplied
-// rationale: in jellium the bath response perturbation is approximately
-// shell-symmetric, so any two members of a degenerate shell carry similar
-// information about how the shell as a whole responds. Picking 2 (vs 1)
-// gives a within-shell consistency check at modest cost.
-//
-// API:
-//
-//   auto shells = inqkit::jellium::shells::enumerate_for_n_states(101);
-//   // shells is a vector<ShellInfo> with .id, .gsq, .degeneracy,
-//   // .first_index, .members (full list of orbital indices in the shell).
-//   // Truncated at the last shell that fits within n_states.
-//
-//   auto proxies = inqkit::jellium::shells::pick_proxies(shells);
-//   // vector<int> of orbital indices, 2 per shell (or 1 for shell-of-1).
-//
-//   inqkit::jellium::shells::write_shells_csv(shells, proxies, dir);
-//   // dir/shells.csv with columns:
-//   //   shell_id, gsq, degeneracy, n_proxies, proxy_indices,
-//   //   member_indices_first, member_indices_last
-// ============================================================================
+/*
+ * This file enumerates the degenerate orbital shells of a free-electron
+ * jellium ground state in a cubic periodic box of side L, and selects a
+ * fixed subset of "proxy" orbitals per shell for use in overlap and response
+ * calculations.
+ *
+ * Shell structure
+ * ---------------
+ * Free electrons in an L³ box with periodic boundary conditions are
+ * eigenstates of the kinetic operator indexed by integer triples (nₓ, nᵧ, n_z)
+ * with eigenvalue:
+ *
+ *   E(n) = (2π/L)² (nₓ² + nᵧ² + n_z²) / 2
+ *
+ * Orbitals sharing the same |G|² = nₓ² + nᵧ² + n_z² are exactly degenerate
+ * and form a shell. INQ stores Kohn-Sham orbitals sorted by eigenvalue, so
+ * for a converged jellium ground state the INQ orbital index maps
+ * deterministically to a shell: indices [0, 1) form shell 0 (|G|²=0),
+ * indices [1, 7) form shell 1 (|G|²=1), and so on. The cumulative electron
+ * counts at shell closures give the jellium magic numbers:
+ *
+ *   |G|²   shell size   cumulative electrons
+ *      0            1              2
+ *      1            6             14
+ *      2           12             38
+ *      3            8             54
+ *      4            6             66
+ *      5           24            114
+ *      6           24            162   ← closed shell
+ *
+ * Not all integers appear as valid |G|² values. By Legendre's three-square
+ * theorem, values of the form 4^k(8m+7) — such as 7, 15, 23, 28, 31, ... —
+ * cannot be expressed as a sum of three integer squares and are absent from
+ * the shell table.
+ *
+ * Proxy selection
+ * ---------------
+ * Within each shell, the first two orbitals (by INQ index) are selected as
+ * proxies. The rationale is that in a jellium ground state the bath response
+ * perturbation is approximately shell-symmetric, so any two members of a
+ * degenerate shell carry similar information about the shell's collective
+ * response. Picking two rather than one provides a within-shell consistency
+ * check at modest computational cost. Proxies are always the lowest-index
+ * members of their shell, making the selection deterministic and reproducible
+ * across runs.
+ *
+ * Partial shells
+ * --------------
+ * When n_states does not coincide with a shell closure, the last shell is
+ * truncated: its degeneracy and member list are clipped to the available
+ * orbitals. This allows the same enumeration logic to work for any state
+ * count, not only jellium magic numbers.
+ *
+ * CSV output
+ * ----------
+ * write_shells_csv() writes shells.csv alongside the overlap_proxies/
+ * snapshots directory so that post-processing scripts can recover the
+ * mapping from proxy column index back to (shell_id, gsq, degeneracy):
+ *
+ *   shell_id, gsq, degeneracy, n_proxies, proxy_indices,
+ *   member_indices_first, member_indices_last
+ *
+ * API
+ * ---
+ *   // Enumerate all shells that fit within 101 orbitals:
+ *   auto shells = inqkit::jellium::shells::enumerate_for_n_states(101);
+ *
+ *   // Select proxy orbitals (2 per shell by default):
+ *   auto proxies = inqkit::jellium::shells::pick_proxies(shells);
+ *
+ *   // Write the shell/proxy mapping for post-processing:
+ *   inqkit::jellium::shells::write_shells_csv(shells, proxies, output_dir);
+ */
 #pragma once
 
 #include <fstream>

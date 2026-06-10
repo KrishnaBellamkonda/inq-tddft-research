@@ -1,11 +1,56 @@
 /*
- * This module deals with the writing of RealField3D as defined in the class
- * fields::RealField3D. It takes the schema for these files given in grid_layout.hpp
- * and writes the data files. The go to method is to write a 
- * - binary file (for 3D field data flattened as a 1D vector<>)
- * - meta data file (for recreating the grid coordinates and values easily)
+ * Header-only writer that emits one or more output files from an inqkit
+ * RealField3D. Supports two calling conventions: a ground-state overload
+ * that accepts a caller-supplied basename, and a real-time overload that
+ * auto-generates basename = <field_name>_t{step:06d} and records time_au
+ * in the sidecar so Python readers preserve time ordering.
  *
- * */
+ * Output modes (opt-in via RealField3DLayout)
+ * --------------------------------------------
+ *   emit_raw     Writes a single binary file:
+ *
+ *                  <path>/<basename>.raw   double-precision field values
+ *
+ *                Values are stored in the original x-slowest, z-fastest (C)
+ *                index order of the source field:
+ *
+ *                  flat = (ix * ny + iy) * nz + iz
+ *
+ *   include_meta  Writes a plain-text sidecar alongside the raw file:
+ *
+ *                  <path>/<basename>.meta
+ *
+ *                The sidecar records grid dimensions, origin, spacing, dtype,
+ *                the name of the associated raw file, and optionally time_au;
+ *                see write_meta_file_ for the exact key=value schema.
+ *
+ *   emit_vti     Writes a single VTK ImageData file:
+ *
+ *                  <path>/<basename>.vti
+ *
+ *                Contains one DataArray named <field_name>. The index layout
+ *                is transposed to VTK's x-fastest order by VTIImageDataWriter.
+ *                See vti_image_data_writer.hpp for format details
+ *                (ASCII / base64-binary).
+ *
+ * Defaults preserve historical behaviour: raw + meta, no vti. New callers
+ * opt in to vti by setting emit_vti = true and may set emit_raw = false to
+ * suppress the .raw output entirely.
+ *
+ * Usage
+ * -----
+ *   RealField3DLayout layout;
+ *   layout.field_name = "density";
+ *   layout.emit_raw   = true;
+ *   layout.emit_vti   = true;
+ *   layout.vti_format = VTIWriteOptions::Format::binary;
+ *
+ *   RealField3DWriter writer("/output/dir", layout);
+ *   writer.write(field, "density_gs");        // ground-state overload
+ *   writer.write(field, time_au, step);       // real-time overload
+ *
+ * Note: single-rank only, consistent with the existing inqkit writers.
+ */
 
 #pragma once
 

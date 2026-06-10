@@ -64,6 +64,8 @@ struct RealField3DRawSchema {
   std::string meta_suffix = ".meta.txt";
 };
 
+
+/* Schema initialising functions */
 inline ComplexField3DRawSchema complex_field_3d_raw_schema() { return {}; }
 
 inline RealField3DRawSchema real_field_3d_raw_schema() { return {}; }
@@ -77,6 +79,44 @@ inline RealField3DRawSchema real_field_3d_raw_schema() { return {}; }
  */
 inline std::size_t flatten_index(int ix, int iy, int iz, int ny, int nz) {
   return ((static_cast<std::size_t>(ix) * ny) + iy) * nz + iz;
+}
+
+/*
+ * Convert a contiguous ("human") output index into the FFT-natural array index
+ * used internally by INQ.
+ *
+ * For a 1D grid with size = 6 cells spanning [-L/2, +L/2):
+ *
+ *   position | usual idx | FFT idx
+ *   ---------+-----------+--------
+ *    -3*dx   |     0     |    3
+ *    -2*dx   |     1     |    4
+ *    -1*dx   |     2     |    5
+ *     0      |     3     |    0   <- origin sits at index 0 in FFT layout
+ *    +1*dx   |     4     |    1
+ *    +2*dx   |     5     |    2
+ *
+ * The usual layout sorts cells from most-negative to most-positive. The FFT
+ * layout wraps around: it starts at the origin, runs through the positive half,
+ * then continues with the negative half.
+ *
+ * To go from usual to FFT, shift by size/2 with wrap around:
+ *   fft_idx = (output_idx + size/2) % size
+ *
+ * (size+1)/2 instead of size/2 is used to handle odd sizes correctly: integer
+ * division would round down and shift the origin off by one cell, while
+ * (size+1)/2 rounds up and keeps the origin at FFT index 0. For even sizes both
+ * expressions are equal.
+ *
+ * This is the index-space equivalent of numpy.fft.ifftshift.
+ * See also: inq/src/basis/grid.hpp:78-95 (to/from_symmetric_range).
+ *
+ * Lives here (the pure index-convention header) so both fields/density.hpp and
+ * fields/orbital.hpp can share it without one including the other. Verified by
+ * the pure test inq-stack/tests/cpp/test_fft_shift.cpp.
+ */
+inline int fft_shift_index(int output_idx, int size) {
+  return (output_idx + (size + 1) / 2) % size;
 }
 
 // Returns a step-index suffix like "_t000100" for use in time-series filenames.
