@@ -64,18 +64,21 @@ Usage example: `Tutorial/n2-with-inqkit/run.cpp`
 ### inqview (Python, `inq-stack/python/inqview/`)
 
 Post-processing and visualisation. Install into the venv with `pip install -e inq-stack/`.
+Restructured into **four dependency-layered sub-packages** (ADR 0003); the
+top-level `inqview` re-exports the public names **lazily** (PEP 562) so importing
+the deps-clean layers pulls no matplotlib/VTK.
 
-| Module | Contents |
-|---|---|
-| `fields.py` | `RealField3D`, `ComplexField3D`, `FieldMeta` |
-| `data.py` | `SimulationData`, `FieldSeries`, loaders |
-| `vti.py` | VTI series conversion (`convert_real_series_to_vti`, `write_vti`) |
-| `paraview.py` | `ParaViewPipeline` — batch render via `pvbatch` |
-| `plots.py` | matplotlib helpers |
-| `fourier.py` | k-space analysis |
-| `config.py` | `Theme`, `PlotDefaults`, `RenderDefaults` |
+| Sub-package | Role | May import |
+|---|---|---|
+| `inqview.io` | loaders + field/format dataclasses (`fields`, `data`, `leed`) | numpy only |
+| `inqview.analysis` | numeric kernels → frozen dataclasses (`fourier`, `energy_components`, `wp_integrity`, `plasmon_spectrum`, `center_of_density`, `kl_divergence`) | numpy/scipy/pandas |
+| `inqview.visualisation` | all rendering (`plots`, `paraview`, `vti`, `style`, `carpets`, renderers) + the canonical theme (ADR 0004) | matplotlib/VTK |
+| `inqview.pipeline` | thin phase orchestration (34 phases + `runner`/`frames`/`cod`) | the above |
 
-Active development: `features/python-paraview` branch (VTI/ParaView pipeline).
+`inqview.postprocess` is a **deprecated back-compat shim** forwarding to
+`inqview.pipeline` (existing run `analyse.py` import the old path). Tests:
+`inq-stack/python/tests/` (portable, numpy-only). Deps-clean invariant enforced by
+`tests/test_deps_clean.py`. See `docs/handovers/inqview-restructure.md`.
 
 ---
 
