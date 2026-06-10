@@ -216,15 +216,6 @@ def wp_centroid_z(run, t, dt=None):
 
 
 # ------------------------------------------------------------ colorbar helpers
-def shared_clim(*arrays, symmetric=True, pct=100.0):
-    """One (vmin,vmax) over ALL arrays — for directly-compared panels.
-
-    symmetric=True -> (-m, m) about zero (signed Δn).  pct<100 clips to a
-    percentile to suppress lone spikes (e.g. WP self-spike near boundary).
-    """
-    m = 0.0
-    for a in arrays:
-        a = np.asarray(a)
-        v = np.percentile(np.abs(a), pct) if pct < 100 else np.abs(a).max()
-        m = max(m, float(v))
-    return (-m, m) if symmetric else (0.0, m)
+# shared_clim moved to the visualisation layer (ADR 0003 split); re-exported
+# here for back-compat (existing run analyse.py + the postprocess shim).
+from ..visualisation.wake import shared_clim  # noqa: E402,F401

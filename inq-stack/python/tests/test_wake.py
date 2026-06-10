@@ -15,7 +15,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from inqview.pipeline.wake import shared_clim
+from inqview.visualisation.wake import shared_clim
 
 pytestmark = pytest.mark.analysis
 
