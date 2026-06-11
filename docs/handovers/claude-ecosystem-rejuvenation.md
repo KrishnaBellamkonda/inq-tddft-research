@@ -6,13 +6,32 @@ Method: grill-with-docs. Only the **user** marks `LOCKED`.
 
 ## Current status (2026-06-11)
 
-- **Subtask 1 (eval set): COMPLETE — at review gate.** 14 eval specs under
-  `.claude/evals/` (skills/4, rules/3, clusters/2, programmatic/5). Anti-circular.
+- **Subtask 1 (eval set): COMPLETE & LOCKED.** 14 eval specs under
+  `.claude/evals/`. Anti-circular.
 - **Subtask 2 (modularisation plan): COMPLETE — all clusters locked.**
-- **Subtasks 3–4 (implement, finetune): ready to start**, gated on user lock of
-  the eval set. Implementation order in plan §7.
+- **Subtask 3 (implement): IN PROGRESS on branch `rejuvenation/claude-ecosystem`.**
+  Done so far (eval-first, each green + committed):
+  - **C1 commit-message hook** (`.claude/hooks/commit_message_check.py`) —
+    eval 20/20; caught + fixed a self-block on `.claude` path tokens; live.
+  - **C2 file-placement backstop hook** (`file_placement_check.py`) — eval
+    15/15; non-blocking PreToolUse(Write|Edit).
+  - **Settings reproducibility (idiomatic split, user-locked):**
+    `.claude/settings.json` now TRACKED (hooks + plugins + marketplaces);
+    personal prefs + permissions in gitignored `settings.local.json`.
+    gitignore negates `.claude/{evals,hooks,agents,settings.json}`.
+  - Commits: `5582384` (design), `6540e35` (C1), `aa1ccd2` (settings split),
+    `ef046df` (C2).
+- **Remaining C3–C11** (plan §7): subagents → Cluster-T merge + index rule →
+  slim rules → jellium delete → Cluster O → Cluster R → build-run env → CI job
+  for `.claude/evals/programmatic/` → usage guide.
 - **D5' revision:** all ecosystem evals live under `.claude/evals/` (NOT
   inq-stack) — inqkit ships as production code; keep the package clean.
+- **NOTE:** the user has uncommitted TODO edits in several rule/skill files
+  (development-feedback-loop, testing, physics-correctness, report-figures,
+  tddft-simulations, tufte-principles, docs/claude/skills/literature-review).
+  These are THEIRS — never sweep into ecosystem commits. A 5th TODO
+  (literature-review: primary source repo is now `literature/` folder + Drive,
+  then internet) should reconcile with the literature-review skill content.
 
 ## What changed (this session — design only, no ecosystem files modified yet)
 
