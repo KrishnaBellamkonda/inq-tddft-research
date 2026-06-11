@@ -70,5 +70,52 @@ step. END: user runs `/code-review` on the branch.
 ## Out of scope
 Minimum-observable-set manifest+validator (ADR 0006) — phase-3.
 
-## Morning report
-_(appended during execution.)_
+## Morning report (branch deferred-cleanup/inq-stack)
+
+### Group P — DONE (commits b4a5b2c, 7c363b7, c5824e6)
+- **B2** split energy_balance ledger → `analysis/energy_balance.py` + 3-case test.
+- **C1** dropped legacy config/defaults from the public API (kept internal).
+- **C3** marked legacy `vti.py` as deprecated (still used by paraview/defaults).
+- Gate green throughout (94 pass).
+
+### Group M — DONE + VALIDATED (commits 471b96f, 7260986, 96ff45c, e3ec45e)
+- **M1/C7** renamed dispatcher `pipeline.py`→`runner.py` + all internal refs.
+- **M2** swept 90 run files `inqview.postprocess.*`→`inqview.pipeline.*`.
+- **M4** removed the postprocess shim entirely (clean public surface).
+- **C4** relocated report1/scripts → `applications/` (excluded from the wheel);
+  rewrote 51 figure files + 8 ResearchProject importers (a wrong-path miss caught
+  by the import-check, fixed in e3ec45e).
+- **Validation (key concern):** import-resolution check over all run dirs (11
+  distinct inqview/applications targets, ALL resolve) + **ran 2 real analyse.py
+  end-to-end on existing data** — jellium WP (all phases incl. energy_balance =
+  B2) and coronene (incl. screens) — both wrote REPORT.md, exit 0.
+
+### Group F — in progress
+- **D1 (Vec3) DONE + engine-tested:** `Vec3::operator[]`; `StepContext.current/
+  dipole` → `inqkit::detail::Vec3`; convert at the 1 callback site
+  (real_time_session.hpp); observables_writer unchanged. Engine test
+  `test_observables_writer_engine` PASSED (9 assertions — CSV byte-identical).
+  Pure `test_vec3` operator[] case added.
+- **D2 (N-dim plane screen):** generalised `PlaneScreen` to axis 0/1/2 (default
+  z = byte-identical; axis loop outermost) + `TimeAveragedScreen`. Engine test
+  (x/y/z symmetry + time-average) building.
+- **D1 + D2 committed** (1a8d1d8, a125e86), both engine-tested (D1 9 assertions
+  CSV-byte-identical; D2 811 assertions). 
+- **Coronene production re-run BIT-IDENTICAL ✓** (wall 2884s): D1 observables.csv
+  max|Δ|=**0.00e+00**; D2 all 20 LEED screens worst|Δ|=**0.00e+00** (z default).
+  Validation bar fully met (engine tests + bit-identical production re-run).
+
+## FINAL SUMMARY — deferred-cleanup COMPLETE (13 commits)
+Everything deferred is DONE on `deferred-cleanup/inq-stack` (off post-overnight
+HEAD; `/code-review` scope = this branch's diff). Gated + committed per green step.
+- **Group P:** energy_balance split + test; config/defaults & vti out of the
+  public surface.
+- **Group M (clean release):** dispatcher renamed `runner`; 90 run analyse.py +
+  8 importers swept `postprocess`→`pipeline`; **shim removed**; report1/scripts →
+  `applications/` (excluded from wheel). Validated by import-resolution (all
+  resolve) + 2 real analyse.py runs (jellium + coronene, exit 0).
+- **Group F:** D1 current/dipole→Vec3 (CSV byte-identical), D2 N-dim plane screen
+  + TimeAveragedScreen. Engine tests pass; coronene production re-run Δ=0.
+- **Nothing deferred this round.** The minimum-observable-set manifest+validator
+  (ADR 0006) remains the only parked item, intentionally (phase-3).
+- **READY for the user's single `/code-review`.**

@@ -200,6 +200,36 @@ spectrum = `n_wp` per step); `wp_real_space_stats.csv` has `sigma_x2/y2/z2`;
   KL=½ln2 + σ_r=√1.5 known up front. Catalogue row added.
 - **Suite: 86 passed, 5 xfailed, 1 xpassed.** analysis still mpl/VTK-clean.
 
+### Milestone — OVERNIGHT autonomous run (2026-06-10/11)
+Plan: `docs/plans/inqview-phase2-overnight.md` (authoritative; has the live
+morning report). GPU works despite NVML mismatch (verified). All gated, commit-
+per-green-step on `unit-tests/inq-stack`, NO push.
+- **Step 0 ✓** baseline committed (6 scoped commits: inqkit refactor [bit-identical-
+  proven], inqkit tests, inqview features, inqview 4-pkg split, docs, internal rule).
+- **Group A ✓ (3/3):** plasmon 3d_binned + frames loader; COD from-run + dx/2
+  cross-check; gs_projected t=0 identity. Suite 91 pass.
+- **Group B:** B1 (wake.shared_clim→viz) ✓, B3 (KL helpers→analysis) ✓, B2
+  (energy_balance) DEFERRED (embedded untested compute; energy_components covers it).
+- **Group C:** C5 cruft purge ✓, C6 CLAUDE.md ✓, C8 README ✓, C2 ✓-by-state;
+  C1/C3/C4/C7 DEFERRED (back-compat/surprise; several conflict with keep-shim).
+- **Group D DEFERRED (both):** D1 — current/dipole ALREADY `inq::vector3` (intent
+  met); inqkit::Vec3 switch = INQ-coupling risk on pure header. D2 — needs slow
+  engine rebuild on coronene-critical header; GPU time → E instead.
+- **Group E COMPLETE — 5/5 PASS (bit-identical, FP noise ≤1e-11):** E1 coronene
+  `run_cc_bond` (obs 1e-12; .dat screens unverified — golden not backed up), E2
+  highdens E50 WP (1e-11) + classical (1e-13), E3 low-E L50 E20 WP (1e-13) +
+  classical (8e-13). With the 3 sanity runs = 8 production runs confirming the
+  migration is behaviour-preserving across every regime. OVERNIGHT RUN DONE; see
+  the plan's FINAL SUMMARY. Original details below:
+- **Group E (was in progress):** bit-identical complex validation. Runs (golden backed
+  up to /tmp/wp_sanity/golden + need re-backup if /tmp cleared):
+  E1 coronene `run_cc_bond`; E2 jellium E50-highdens `run_classical_n162_L30_E50_
+  highdens` + `run_wp_n162_L30_E50_highdens_sigma1` (fast ~15min); E3 low-E L50
+  `run_classical_n162_L50_E20` (~4.8h) + `run_wp_n162_L50_E20` (~2.3h). Method:
+  back up golden CSVs → `inq-run` (CUDA_VISIBLE_DEVICES to pick GPU) → np.allclose
+  vs golden. 3 sanity runs already proved migration bit-identical (vacuum Δ=0,
+  jellium E300 ~1e-13).
+
 ### REMAINING — Step 2 (incremental split) + glue + cleanup
 - **Split high-value phases** into `analysis.compute()` + `visualisation.render()`
   + thin `pipeline.run()`: wake (bath math→analysis, shared_clim/movies→viz),
