@@ -21,9 +21,28 @@ Method: grill-with-docs. Only the **user** marks `LOCKED`.
     gitignore negates `.claude/{evals,hooks,agents,settings.json}`.
   - Commits: `5582384` (design), `6540e35` (C1), `aa1ccd2` (settings split),
     `ef046df` (C2).
-- **Remaining C3–C11** (plan §7): subagents → Cluster-T merge + index rule →
-  slim rules → jellium delete → Cluster O → Cluster R → build-run env → CI job
-  for `.claude/evals/programmatic/` → usage guide.
+  - **C3 subagents** (`.claude/agents/formula-validation.md`,
+    `test-validation.md`) — designed in CONTEXT.md; validated 4/4 on sample
+    fixtures (correct→CONFIRM, planted→FLAG). Register next session start.
+  - **C5 slim rules** — handovers/journal-entries/scientific-grounding reduced
+    to trigger+invariant indexes; procedures retained in paired skills (checked).
+  - **C9 build-run env** — settings.json `env` block pins the two `*_SHARE_PATH`
+    vars; skill claim corrected (PATH via bashrc, not settings). Eval 3/3.
+  - **C10 CI job** — `ecosystem-evals` runs commit + file-placement evals on
+    `.claude/evals/**`/`.claude/hooks/**`. CWD-independent, verified.
+  - Commits: `923b61e` (C3), `d01bdde` (C5), `6c8f5c9` (C9), `8962a82` (C10).
+- **BLOCKED on a fork — C4, C6, C7, C8, C11.** Each must delete/rewrite a file
+  holding the user's uncommitted TODO edits:
+  - C4 Cluster-T merge → delete `testing.md` + `development-feedback-loop.md`,
+    migrate `physics-correctness/SKILL.md` (all user-edited).
+  - C6 jellium delete → `jellium-base-run-spec.md` (user's TODO says delete it).
+  - C7 Cluster O → edit `tddft-simulations` Phase 3 (user-edited).
+  - C8 Cluster R → rescope `report-figures`, trim `tufte-principles` (user-edited).
+  - C11 usage guide → after C4/C7/C8.
+  Several user TODOs are ALREADY resolved by this task (physics-correctness +
+  tddft Phase 7 → Cluster O; report-figures overweight → Cluster R). The
+  literature-review TODO (source repo = `literature/` folder + Drive) is NOT —
+  it's a content change to fold into the literature-review skill separately.
 - **D5' revision:** all ecosystem evals live under `.claude/evals/` (NOT
   inq-stack) — inqkit ships as production code; keep the package clean.
 - **NOTE:** the user has uncommitted TODO edits in several rule/skill files
