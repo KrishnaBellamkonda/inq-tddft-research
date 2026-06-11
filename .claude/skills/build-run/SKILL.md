@@ -18,9 +18,12 @@ PATH includes: /local/data/public/skcb2/tddft/shared/bin
                /usr/bin
 ```
 
-These are now hard-coded in `.claude/settings.json` `env` block, so the Bash tool
-inherits them on every call. If a command still fails with "not found",
-fall back to `bash -lc '<cmd>'` (login shell sources `~/.bashrc`).
+The two `*_SHARE_PATH` vars are pinned in the `env` block of `.claude/settings.json`
+(tracked), so the Bash tool sees them on every call. The **PATH** entries
+(`shared/bin`, `pyenv/shims`) come from `~/.bashrc`, which the Bash tool's shell
+sources — they are deliberately NOT set in settings (overriding PATH there would
+shadow system tools). If a command still fails with "not found", fall back to
+`bash -lc '<cmd>'` (login shell re-sources `~/.bashrc`).
 
 ## Standard INQ workflow
 

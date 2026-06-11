@@ -22,6 +22,10 @@
       }
     }
   },
+  "env": {
+    "INQ_SHARE_PATH": "/local/data/public/skcb2/tddft/inq/install/share",
+    "PSEUDOPOD_SHARE_PATH": "/local/data/public/skcb2/tddft/inq/install/share/pseudopod"
+  },
   "hooks": {
     "PreToolUse": [
       {
