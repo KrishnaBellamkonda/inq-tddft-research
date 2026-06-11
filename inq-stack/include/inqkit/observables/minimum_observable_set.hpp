@@ -11,6 +11,7 @@
  */
 #pragma once
 
+#include <cstdio>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -139,9 +140,24 @@ inline std::vector<ObservableSpec> minimum_set(RunType type) {
 namespace detail {
 inline void json_str(std::ostream &o, std::string const &s) {
   o << '"';
-  for (char c : s) {
-    if (c == '"' || c == '\\') o << '\\' << c;
-    else o << c;
+  for (unsigned char c : s) {
+    switch (c) {
+      case '"':  o << "\\\""; break;
+      case '\\': o << "\\\\"; break;
+      case '\n': o << "\\n"; break;
+      case '\t': o << "\\t"; break;
+      case '\r': o << "\\r"; break;
+      case '\b': o << "\\b"; break;
+      case '\f': o << "\\f"; break;
+      default:
+        if (c < 0x20) {                      // other control chars -> \uXXXX
+          char buf[8];
+          std::snprintf(buf, sizeof buf, "\\u%04x", c);
+          o << buf;
+        } else {
+          o << c;
+        }
+    }
   }
   o << '"';
 }

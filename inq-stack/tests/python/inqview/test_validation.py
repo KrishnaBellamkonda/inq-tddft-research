@@ -95,3 +95,13 @@ def test_no_manifest_is_noted_not_passed(tmp_path):
     r = validate_run(_write_run(tmp_path, manifest=False))
     assert "no observables_manifest" in r.note
     assert r.observables == []
+
+
+def test_corrupt_token_fails_cleanly_without_crashing(tmp_path):
+    # a stray non-numeric token leaves energy_total as object dtype; the validator
+    # must coerce it (-> NaN), FAIL a tier, and NOT raise (the unguarded invariant
+    # used to crash with ValueError).
+    r = validate_run(_write_run(tmp_path, energy=[-0.6156, "bad", -0.6156, -0.6156]))
+    assert not r.passed
+    et = next(o for o in r.observables if o.name == "energy_total")
+    assert any(not t.passed for t in et.tiers)   # flagged, no exception

@@ -130,6 +130,13 @@ def _check_csv(obs: dict, run_dir: Path) -> list[TierResult]:
     if col is not None and col not in df.columns:
         out.append(TierResult("existence", False, f"missing column {col}"))
         return out
+    # Coerce the manifest-relevant columns to numeric so a corrupt token (which
+    # pandas would otherwise leave as object dtype) becomes NaN and is caught by
+    # the finite tier — instead of silently escaping it / crashing the invariant.
+    inv_col = (obs.get("invariant") or {}).get("col")
+    for c in {col, inv_col}:
+        if c is not None and c in df.columns:
+            df[c] = pd.to_numeric(df[c], errors="coerce")
     out.append(TierResult("existence", True))
     # tier 2: schema (declared columns present) + non-empty
     schema = obs.get("schema")
@@ -159,7 +166,10 @@ def _check_csv(obs: dict, run_dir: Path) -> list[TierResult]:
         elif icol is None or icol not in df.columns:
             out.append(TierResult("invariant", False, f"invariant col {icol!r} absent"))
         else:
-            ok, detail = fn(df, icol, inv)
+            try:
+                ok, detail = fn(df, icol, inv)
+            except Exception as exc:   # malformed data -> clean FAIL, never crash
+                ok, detail = False, f"invariant raised {type(exc).__name__}: {exc}"
             out.append(TierResult("invariant", ok, detail))
     return out
 
