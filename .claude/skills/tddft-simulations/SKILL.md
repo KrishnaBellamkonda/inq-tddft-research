@@ -332,6 +332,24 @@ Use the system's existing run.cpp template as the base. Change ONLY:
 
 **Do NOT modify callback logic, observable writers, or output structure.**
 
+**Observable manifest (ADR 0006 / Cluster O) — REQUIRED.** Every run.cpp must
+write the manifest at startup (right after the stub `run_summary.txt`) so the
+post-run `inqview.validation.validate_run()` can check the produced observables:
+
+```cpp
+#include <inqkit/observables/minimum_observable_set.hpp>
+// ... after the stub run_summary block, before propagation:
+inqkit::observables::write_manifest(
+    "results/observables_manifest.json",
+    inqkit::observables::RunType::jellium_wp,   // jellium_classical / coronene / free_wp
+    Cfg::WRITE_EVERY, Cfg::N_STEPS);
+```
+
+Pick the `RunType` matching the run (WP → `jellium_wp`, classical projectile →
+`jellium_classical`, coronene LEED → `coronene`, free-space WP → `free_wp`). The
+shared `shared/cpp/run_template.hpp` already does this for WP runs. The canonical
+required set per run-type is `minimum_observable_set.hpp` — do not restate it.
+
 ### 4d. Create analyse.py
 
 Copy from the system's canonical analyse.py template:
