@@ -4,6 +4,26 @@ Task: `docs/prompts/codebase_rejuvination/task_calude_ecosystem.md`
 Authoritative design: `docs/plans/claude-ecosystem-rejuvenation.md` (read it first).
 Method: grill-with-docs. Only the **user** marks `LOCKED`.
 
+## MILESTONE: test session + Cluster-O rollout (2026-06-11)
+
+Exercised the streamlined ecosystem end-to-end — **all 4 tiers PASS**:
+- T0: 5 portable evals green; commit hook blocked 3 bad messages; theme 9/9.
+- T1: `validate_run` on real data — old `run_wp_n162_L50_E100` FAILS (predates
+  WP-stats writers); recent `run_wp_n162_L50_E50_v2` PASSES 16/16 → contract is
+  correct.
+- T2: `formula-validation` subagent on the REAL jellium magic-number code →
+  CONFIRM 162 / FLAG 160; `tddft-run-catalogue` scanned 87 runs.
+- T3: **full end-to-end GPU run** — built a throwaway run.cpp with
+  `write_manifest`, ran 20 steps on an A30, `validate_run` on its OWN fresh
+  output → **PASS** (manifest written by the run → 16/16 required).
+**Cluster-O rollout DONE:** `write_manifest(jellium_wp)` wired into
+`shared/cpp/run_template.hpp` (`508d25a`); `tddft-simulations` Phase 4c now
+requires it in every new run.cpp (`c3a8355`).
+**(b) density_wp_rt path "fix" → NOT NEEDED:** real runs that emit WP density use
+`density_wp` (majority), matching the `.hpp`; only one outlier uses
+`density_rt_wp`. The contract is correct; the test's warn was absence, not drift.
+Throwaway test run + demo catalogue refresh cleaned up.
+
 ## Current status (2026-06-11)
 
 - **Subtask 1 (eval set): COMPLETE & LOCKED.** 14 eval specs under
