@@ -306,7 +306,7 @@ int main() {
         const auto cod  = inqkit::observables::center_of_density(wp_f);
 
         inqkit::StepContext ctx_out = ctx;
-        ctx_out.wp_center  = {cod.x_bohr, cod.y_bohr, cod.z_bohr};
+        ctx_out.wp_center  = {cod.center_bohr.x, cod.center_bohr.y, cod.center_bohr.z};
         ctx_out.density_l2 = l2;
         obs_writer.append(ctx_out);
 
