@@ -82,7 +82,7 @@ def k0_of(ev: float) -> float:
 
 def _ifw_t_au(run_dir: Path) -> Optional[tuple[float, float]]:
     """Return (t_IFW, t_total) from run_summary.txt via the helper."""
-    from inqview.postprocess._common import post_ifw_window_from_summary
+    from inqview.pipeline._common import post_ifw_window_from_summary
     try:
         return post_ifw_window_from_summary(run_dir / "results")
     except Exception:

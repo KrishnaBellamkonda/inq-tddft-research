@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from pathlib import Path
 sys.path.insert(0, "/local/data/public/skcb2/tddft/inq-stack/python")
-from inqview.postprocess import wake as _wake   # exact n_total-n_wp subtraction
+from inqview.pipeline import wake as _wake   # exact n_total-n_wp subtraction
 
 JB = "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium"
 THIS = Path(JB) / "_compare_sigma_sweep"

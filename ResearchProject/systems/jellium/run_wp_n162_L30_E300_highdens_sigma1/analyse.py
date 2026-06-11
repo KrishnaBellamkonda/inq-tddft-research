@@ -241,10 +241,10 @@ def main() -> int:
         return 2
 
     try:
-        from inqview.postprocess import pipeline  # noqa: F401
+        from inqview.pipeline import runner as pipeline  # noqa: F401
     except ImportError:
         sys.path.insert(0, "/local/data/public/skcb2/tddft/inq-stack/python")
-        from inqview.postprocess import pipeline  # noqa: F401
+        from inqview.pipeline import runner as pipeline  # noqa: F401
 
     print(f"=== analyse.py: {RUN_DIR.name} ===")
     print(f"  results = {RESULTS_DIR}")
@@ -274,7 +274,7 @@ def main() -> int:
     # For the WP run this extracts the axial n_q(t) modes which detect
     # plasmon-like collective bath response (used by the plasmon runs).
     try:
-        from inqview.postprocess import density_fourier as _df
+        from inqview.pipeline import density_fourier as _df
         print("\n=== density_fourier (axial n_q(t), m=1..6) ===")
         _df.run(RESULTS_DIR, run_name=RUN_DIR.name, m_max=6, dt_au=0.02)
         pipe_log["density_fourier"] = "[ok]"

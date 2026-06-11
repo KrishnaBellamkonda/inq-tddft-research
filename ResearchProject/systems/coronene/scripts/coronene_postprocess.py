@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""coronene_postprocess.py — thin CLI wrapper around inqview.postprocess.
+"""coronene_postprocess.py — thin CLI wrapper around inqview.pipeline.
 
 Two subcommands:
 
@@ -11,7 +11,7 @@ Two subcommands:
 
 Coronene-specific defaults (cmap, overlap-axis range, fixed dt for the
 density GIF time-axis labels) are baked in; everything else is delegated to
-``inqview.postprocess``.
+``inqview.pipeline``.
 
 Usage examples
 --------------
@@ -86,7 +86,7 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def cmd_run(args: argparse.Namespace) -> int:
-    from inqview.postprocess import run as pipeline_run
+    from inqview.pipeline import run as pipeline_run
     log = logging.getLogger("coronene_postprocess")
     if not log.handlers:
         log.setLevel(logging.INFO)
@@ -119,7 +119,7 @@ def cmd_run(args: argparse.Namespace) -> int:
 
 
 def cmd_hypothesis(args: argparse.Namespace) -> int:
-    from inqview.postprocess.compare import run_hypothesis
+    from inqview.pipeline.compare import run_hypothesis
     runs: list[tuple[str, Path]] = []
     for spec in args.runs:
         if "=" not in spec:

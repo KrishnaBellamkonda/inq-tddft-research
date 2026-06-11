@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""inqview.postprocess.wake — canonical bath-density wake extraction + movies.
+"""inqview.pipeline.wake — canonical bath-density wake extraction + movies.
 
 CANONICAL BATH DENSITY (use this everywhere; do not improvise)
 --------------------------------------------------------------

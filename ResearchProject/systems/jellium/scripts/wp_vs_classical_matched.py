@@ -19,7 +19,7 @@ the SAME 32 physical times (the wp-frame times) so that:
 Bath density: n_system = n_total - n_wp (classical: = n_total).
 Induced wake:  Dn(r,t) = n_system(r,t) - n_system(r,t0).
 Shared colorbar on the WP & classical panels; OWN colorbar on the difference.
-Linear AND symlog.  See inqview.postprocess.wake for the canonical definition.
+Linear AND symlog.  See inqview.pipeline.wake for the canonical definition.
 
 Outputs -> docs/presentations/storyline/tasks/wp_vs_classical_matched/
   wake_2d.gif / wake_2d_log.gif   3-panel xz Dn [WP | classical | WP-classical]
@@ -46,7 +46,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _gifutil import save_gif_fixed_palette
 
 sys.path.insert(0, "/local/data/public/skcb2/tddft/inq-stack/python")
-from inqview.postprocess import wake
+from inqview.pipeline import wake
 from inqview.report1 import apply_style, panel_label, palette_regime3, references
 from inqview.report1._shared_style import ONE_COL_IN, STYLE_CONFIG
 

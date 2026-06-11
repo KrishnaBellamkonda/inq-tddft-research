@@ -1,4 +1,4 @@
-"""inqview.postprocess — generalisable post-processing pipeline.
+"""inqview.pipeline — generalisable post-processing pipeline.
 
 Consumes a ``results/`` directory laid out per
 ``docs/results_folder_structure_spec.md`` and produces every figure / GIF /

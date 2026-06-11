@@ -150,7 +150,7 @@ def run(
     paraview_runner : callable plugged in when ``skip_paraview=False``;
         signature ``(results_dir, run_name, rebuild) -> dict``.
     logger : optional logger; defaults to a stderr logger named
-        ``inqview.postprocess``.
+        ``inqview.pipeline``.
     **opts : forwarded verbatim to every phase function (so phases can pick
         up things like ``cmap``, ``percentile`` overrides).
     """
@@ -216,7 +216,7 @@ def skip(reason: str):
 
 
 def _default_logger() -> logging.Logger:
-    log = logging.getLogger("inqview.postprocess")
+    log = logging.getLogger("inqview.pipeline")
     if not log.handlers:
         log.setLevel(logging.INFO)
         h = logging.StreamHandler()

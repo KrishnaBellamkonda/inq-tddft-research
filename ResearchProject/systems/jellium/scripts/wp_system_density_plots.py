@@ -32,7 +32,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _gifutil import save_gif_fixed_palette
 
 sys.path.insert(0, "/local/data/public/skcb2/tddft/inq-stack/python")
-from inqview.postprocess import wake
+from inqview.pipeline import wake
 from inqview.report1 import apply_style, panel_label
 from inqview.report1._shared_style import ONE_COL_IN, STYLE_CONFIG
 

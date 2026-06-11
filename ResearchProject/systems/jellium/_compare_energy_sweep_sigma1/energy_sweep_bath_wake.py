@@ -20,7 +20,7 @@ Known-case (printed): induced bath at t0 == 0 for every energy.
 import glob, re, sys, numpy as np, vtk
 from vtk.util.numpy_support import vtk_to_numpy
 sys.path.insert(0, "/local/data/public/skcb2/tddft/inq-stack/python")
-from inqview.postprocess import wake as _wake   # exact n_total-n_wp subtraction
+from inqview.pipeline import wake as _wake   # exact n_total-n_wp subtraction
 import matplotlib; matplotlib.use("Agg")
 matplotlib.rcParams["savefig.bbox"] = "standard"
 import matplotlib.pyplot as plt

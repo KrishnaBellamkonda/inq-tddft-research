@@ -20,7 +20,7 @@ from pathlib import Path
 import matplotlib; matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
-from inqview.postprocess import lindhard
+from inqview.pipeline import lindhard
 from inqview.report1 import apply_style, panel_label, palette_sweep3, palette_regime3, references
 from inqview.report1._shared_style import ONE_COL_IN, STYLE_CONFIG, fix_one_col_axes
 

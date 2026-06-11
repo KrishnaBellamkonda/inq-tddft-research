@@ -13,7 +13,7 @@ Per case (a WP run + the matched classical run) at a representative time t*:
   fig_wake_<tag>_2d_diff.png      Δn_WP − Δn_classical, own clim
   fig_wake_<tag>_1d.png           z-profile: WP, classical, difference + centroid
 
-Three steps (see inqview.postprocess.wake): n_system=n_total−n_wp (exact step) →
+Three steps (see inqview.pipeline.wake): n_system=n_total−n_wp (exact step) →
 Δn=n_system(t)−n_system(t0) → cross-system Δn_WP−Δn_classical at matched t.
 
 Output dir: docs/presentations/storyline/tasks/batch2_figures/report_standard/
@@ -27,7 +27,7 @@ from pathlib import Path
 import matplotlib; matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm, SymLogNorm
-from inqview.postprocess import wake
+from inqview.pipeline import wake
 from inqview.report1 import apply_style, panel_label, palette_regime3, references
 from inqview.report1._shared_style import ONE_COL_IN, STYLE_CONFIG
 

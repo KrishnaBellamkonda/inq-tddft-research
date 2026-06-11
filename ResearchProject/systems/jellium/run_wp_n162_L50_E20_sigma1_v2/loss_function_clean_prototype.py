@@ -27,7 +27,7 @@ matplotlib.rcParams["savefig.bbox"] = "standard"
 import matplotlib.pyplot as plt
 sys.path.insert(0, "/local/data/public/skcb2/tddft/inq-stack/python")
 from pathlib import Path
-from inqview.postprocess import spectral_weight as sw
+from inqview.pipeline import spectral_weight as sw
 
 HA_TO_EV = 27.211386245988
 RUN = Path("/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E20_sigma1_v2")

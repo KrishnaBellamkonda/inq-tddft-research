@@ -7,7 +7,7 @@ the SAME L(q_z,ω) on a LINEAR scale (and a percentile-clipped linear scale), pl
 1D cuts L(ω) at fixed q, so the user can judge whether channels are genuinely
 uniformly excited or whether structure was hidden by the log scale.
 
-Reuses inqview.postprocess.spectral_weight internals (no recomputation drift).
+Reuses inqview.pipeline.spectral_weight internals (no recomputation drift).
 Output (in this run's results/analysis/observables/):
   loss_function_linear.png        L(q_z,ω) linear + clipped-linear (2 panels)
   loss_function_1d_cuts.png       L(ω) at several fixed q_z
@@ -19,7 +19,7 @@ matplotlib.rcParams["savefig.bbox"] = "standard"
 import matplotlib.pyplot as plt
 sys.path.insert(0, "/local/data/public/skcb2/tddft/inq-stack/python")
 from pathlib import Path
-from inqview.postprocess import spectral_weight as sw
+from inqview.pipeline import spectral_weight as sw
 
 HA_TO_EV = 27.211386245988
 RUN = Path("/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E20_sigma1_v2")

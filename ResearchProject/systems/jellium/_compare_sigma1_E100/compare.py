@@ -30,7 +30,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from inqview.postprocess._common import ifw_highlight
+from inqview.pipeline._common import ifw_highlight
 
 HA = 27.21138625
 THIS = Path(__file__).parent

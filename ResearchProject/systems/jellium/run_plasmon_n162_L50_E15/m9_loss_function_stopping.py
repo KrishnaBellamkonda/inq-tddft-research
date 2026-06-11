@@ -29,7 +29,7 @@ import matplotlib; matplotlib.use("Agg")
 matplotlib.rcParams["savefig.bbox"] = "standard"
 import matplotlib.pyplot as plt
 from pathlib import Path
-from inqview.postprocess import lindhard
+from inqview.pipeline import lindhard
 
 HA = 27.211386245988
 ROOT = Path("/local/data/public/skcb2/tddft")

@@ -264,7 +264,7 @@ def main():
 
     # Run the postprocess pipeline.
     print(f"=== Running postprocess pipeline on {run_dir.name} ===")
-    from inqview.postprocess import pipeline
+    from inqview.pipeline import runner as pipeline
     pipeline_phases = ["summary", "observables", "state_energies",
                        "bath_energy", "stopping",
                        "gs_projected_occupations", "occupations"]

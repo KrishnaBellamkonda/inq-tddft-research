@@ -31,7 +31,7 @@ from pathlib import Path
 import matplotlib; matplotlib.use("Agg")
 matplotlib.rcParams["savefig.bbox"] = "standard"
 import matplotlib.pyplot as plt
-from inqview.postprocess import lindhard
+from inqview.pipeline import lindhard
 from inqview.report1 import stopping_power_data as spd
 
 HA = 27.211386245988

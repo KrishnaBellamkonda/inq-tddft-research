@@ -109,10 +109,10 @@ def main() -> int:
         return 2
 
     try:
-        from inqview.postprocess import pipeline  # noqa: F401
+        from inqview.pipeline import runner as pipeline  # noqa: F401
     except ImportError:
         sys.path.insert(0, "/local/data/public/skcb2/tddft/inq-stack/python")
-        from inqview.postprocess import pipeline  # noqa: F401
+        from inqview.pipeline import runner as pipeline  # noqa: F401
 
     print(f"=== analyse.py: {RUN_DIR.name} (FREE archetype) ===")
     print(f"  results = {RESULTS_DIR}")

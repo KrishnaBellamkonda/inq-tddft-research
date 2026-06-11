@@ -1,5 +1,5 @@
 """
-inqview.postprocess.orbitals_per_kpoint
+inqview.pipeline.orbitals_per_kpoint
 ========================================
 
 Reads the band-major per-(band, k) VTI dump produced by
@@ -12,7 +12,7 @@ Reads the band-major per-(band, k) VTI dump produced by
   bands_summary.png              — evalue vs k-point index for each chosen band
   paraview_recipe.md             — short note on driving the headline 3D view
 
-Wired into inqview.postprocess.pipeline as phase `orbitals_per_kpoint`,
+Wired into inqview.pipeline.pipeline as phase `orbitals_per_kpoint`,
 gated on the existence of an `orbitals_per_kpoint/orbital_index.csv` file
 under `<run_dir>/results/analysis/ground_state/`.
 

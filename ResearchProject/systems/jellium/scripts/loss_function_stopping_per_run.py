@@ -23,7 +23,7 @@ from pathlib import Path
 import matplotlib; matplotlib.use("Agg")
 matplotlib.rcParams["savefig.bbox"] = "standard"
 import matplotlib.pyplot as plt
-from inqview.postprocess import lindhard
+from inqview.pipeline import lindhard
 
 HA = 27.211386245988
 JB = Path("/local/data/public/skcb2/tddft/ResearchProject/systems/jellium")

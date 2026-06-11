@@ -9,7 +9,7 @@ axial Fourier components n_q_m(t) with q_m = (0, 0, 2*pi*m/L_z). Then
 
 
 Usage:
-    from inqview.postprocess.density_fourier import run
+    from inqview.pipeline.density_fourier import run
     run(results_dir, run_name="...", m_max=6, dt_au=0.02)
 
 Outputs:

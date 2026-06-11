@@ -12,7 +12,7 @@ run's FULL duration:
   <tag>_wake_static.png    multi-time static z-profile overlay (WP vs classical).
 
 Bath density n_system = n_total - n_wp (classical: = n_total). Induced
-Δn = n_system(t) - n_system(t0). See inqview.postprocess.wake for the
+Δn = n_system(t) - n_system(t0). See inqview.pipeline.wake for the
 canonical definition + the shared-colorbar rule.
 
 Known-case (printed): Δn at t0 == 0; WP centroid monotonic.
@@ -27,7 +27,7 @@ matplotlib.rcParams["savefig.bbox"] = "standard"
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.colors import SymLogNorm
-from inqview.postprocess import wake
+from inqview.pipeline import wake
 
 JB = "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium"
 OUT = Path("/local/data/public/skcb2/tddft/docs/presentations/storyline/tasks/batch2_figures")

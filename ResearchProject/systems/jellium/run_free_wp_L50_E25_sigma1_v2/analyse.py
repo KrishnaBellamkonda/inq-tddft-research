@@ -206,10 +206,10 @@ def main() -> int:
         return 2
 
     try:
-        from inqview.postprocess import pipeline
+        from inqview.pipeline import runner as pipeline
     except ImportError:
         sys.path.insert(0, "/local/data/public/skcb2/tddft/inq-stack/python")
-        from inqview.postprocess import pipeline
+        from inqview.pipeline import runner as pipeline
 
     print(f"=== analyse.py: {RUN_DIR.name} (FREE counterpart) ===")
     print(f"  results = {RESULTS_DIR}")
@@ -236,7 +236,7 @@ def main() -> int:
         else:                   pipe_log[ph] = "[not run]"
 
     try:
-        from inqview.postprocess import density_fourier as _df
+        from inqview.pipeline import density_fourier as _df
         print("\n=== density_fourier (axial n_q(t), m=1..6) ===")
         _df.run(RESULTS_DIR, run_name=RUN_DIR.name, m_max=6, dt_au=cfg_dt_au())
         pipe_log["density_fourier"] = "[ok]"
