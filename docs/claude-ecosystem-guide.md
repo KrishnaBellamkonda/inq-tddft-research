@@ -39,6 +39,88 @@ the right trigger.
 
 ---
 
+## Worked examples (what fires, end to end)
+
+**1 — Finishing a piece of code**
+> *"I added `Vec3::operator[]` to inqkit — is it done?"*
+- `validation-gates` (rule) routes the *finishing-code* trigger → **`code-test`**
+  skill fires.
+- It refuses "compiles ⇒ works", asks for a known-case test with the expected
+  value fixed **up front** (e.g. `v[0]==v.x`), and — because `operator[]` is not
+  formula-bearing — does not need a subagent.
+- When you then `git commit`, the **commit-message hook** checks the message
+  format; the **file-placement hook** is silent (inqkit is a designated dir).
+
+**2 — Running a simulation and checking what it produced**
+> *"set up and run a jellium WP run at E=50 on L=50"*
+- **`tddft-simulations`** fires: validates the GS, plans observables from the
+  **minimum observable set** (below), writes `results/observables_manifest.json`
+  at startup, runs on GPU, post-processes, and upserts the run catalogue.
+- Afterwards, `inqview`'s `validate_run(run_dir)` checks the produced
+  observables against the manifest (4 tiers). See the contract below.
+
+**3 — Making a figure**
+> *"plot the stopping-power comparison"*
+- **`report-figures`** fires and uses `inqview.visualisation.style` — canonical
+  units via `style.axis_label("stopping_power")` → `"stopping power (eV/Bohr)"`,
+  the semantic cmap role, the fixed-dimension factory. No ad-hoc styling.
+
+**4 — Checking a formula is right**
+> *"independently verify the `center_of_density` formula"*
+- The **`formula-validation`** subagent re-derives `∫r·n/∫n` from its source,
+  blind to the code, and returns CONFIRM/FLAG.
+
+---
+
+## What a run produces — the observable contract (Cluster O)
+
+A run commits, at startup, to a **minimum observable set** for its run-type and
+writes it to `results/observables_manifest.json`. The canonical definition is
+`inq-stack/include/inqkit/observables/minimum_observable_set.hpp` — every other
+view (the `tddft-simulations` Phase-3 tables, the spec doc, the validator) cites
+it.
+
+| Run-type | Required (beyond the universal core) |
+|---|---|
+| **universal core** (every run) | `energy_total/kinetic/hartree/xc`, `density_l2`, `gs_eigenvalues`, `gs_occupations`, `gs_system_density` (VTI), `run_summary` |
+| **jellium-wp** | `wp_momentum_stats`, `wp_real_space_stats`, `momentum_distribution`, `state_energies`, `occupations_vs_time`, `density_system_rt`, `density_total_rt` (+ optional `density_wp_rt`) |
+| **jellium-classical** | `electron_track`, `state_energies`, `density_system_rt` |
+| **coronene** | `wp_momentum_stats`, `wp_real_space_stats`, `leed_screen_config`, `density_total_rt` |
+| **free-wp** | `wp_momentum_stats`, `wp_real_space_stats` |
+
+**Validating a run** (post-run, in the venv):
+```python
+from inqview.validation import validate_run
+r = validate_run("ResearchProject/systems/jellium/run_wp_n162_L50_E100")
+print(r.summary())          # 4 tiers: existence · schema · finite · invariant
+assert r.passed
+```
+Tier 4 invariants (opt-in per observable): `energy_total` drift < 1 mHa,
+`density_l2(0)=0`, `wp_real_space_stats` norm ∈ [0.97, 1.03].
+
+---
+
+## Verifying the ecosystem works
+
+```bash
+# 1. the deterministic tier (no GPU/INQ/LLM) — the same checks CI runs:
+for r in commit_hook file_placement cluster_o_drift cluster_r build_run_env; do
+  python3 .claude/evals/programmatic/run_${r}_eval.py
+done
+
+# 2. trip the commit hook (should be BLOCKED):
+echo '{"tool_name":"Bash","tool_input":{"command":"git commit -m \"bad message\""}}' \
+  | python3 .claude/hooks/commit_message_check.py ; echo "exit=$?  (2 = blocked)"
+
+# 3. the inqview theme contract (needs matplotlib):
+venv/bin/python3 -m pytest inq-stack/tests/python/inqview/visualisation/test_theme.py -q
+```
+- **Skills**: phrase a task from the table above and confirm the named skill
+  engages (it announces itself).
+- **Subagents**: register at the next session start; ask one to check a formula.
+
+---
+
 ## What happens automatically (hooks)
 
 - **Commit-message validation** — a `git commit` whose message has a forbidden
