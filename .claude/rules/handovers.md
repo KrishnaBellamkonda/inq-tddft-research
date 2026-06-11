@@ -2,42 +2,26 @@
 
 Apply to: `docs/handovers/`, `docs/plans/`
 
-## Rules
+PROCEDURE (the 10-section template, prepend mechanics, quality checklist) lives
+in the `handover-update` skill — invoke it to write/update a handover. This rule
+is the always-on trigger + invariants.
 
-1. Maintain one rolling handover file per substantive task in `docs/handovers/`.
+## When
 
-2. Update the handover at:
-   - every meaningful milestone
-   - before stopping or going idle
-   - before clearing context or compacting
-   - before declaring the task complete
+Write or update the rolling handover at `docs/handovers/<task>.md`:
+- every meaningful milestone
+- before stopping, going idle, clearing context, or compacting
+- before declaring a task complete
 
-3. A handover must be sufficient for another session (or a different Claude account) to continue without guessing.
+After compaction or session resume, read the latest handover before continuing
+substantive work.
 
-4. After compaction or session resume, read the latest handover before continuing substantive work.
+## Invariants (hold even without invoking the skill)
 
-## Required handover sections
-
-```md
-# Handover: <task name>
-
-## Current status
-## What changed
-## Files touched
-## Commands run
-## Tests and validation
-## Trusted sources used
-## Attribution notes
-## Known issues / blockers
-## Assumptions still in play
-## Exact next steps
-```
-
-## Handover quality rules
-
-- State what is done, what is partially done, and what is not done.
-- Record failed attempts if they matter for future sessions.
-- Record what was verified and what remains unverified.
-- Record any scientific or implementation rationale that must survive compaction.
-- Keep handovers concise and human-scannable — avoid long narrative padding.
-- Use absolute file paths, not relative paths.
+- One rolling file per substantive task.
+- Resumable: sufficient for another session (or a different account) to continue
+  without guessing.
+- State what is done / partial / not done; record what was verified vs
+  unverified, failed attempts that matter, and any rationale that must survive
+  compaction.
+- Absolute file paths, not relative. Concise and human-scannable.

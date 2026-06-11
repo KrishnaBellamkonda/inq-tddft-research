@@ -2,30 +2,22 @@
 
 Apply to: `inq-stack/`, `ResearchProject/`, `Tutorial/`, `QuantumKickExtension/`, `docs/reports/`, `docs/plans/`, `docs/handovers/`, `docs/sources/`
 
-## Rules
+PROCEDURE (writing a `docs/sources/<author-year>.md` note + its template + the
+search strategy) lives in the `literature-review` skill. This rule is the
+always-on policy.
 
-1. All scientific explanations, implementation choices, and modelling recommendations must be grounded in trustworthy sources.
+## Invariants
 
-   Acceptable sources:
-   - Peer-reviewed journal papers
-   - Authoritative textbooks (e.g. Parr & Yang, Engel & Dreizler, Marx & Hutter)
-   - Official INQ documentation (`docs/inq-docs/` mirror or alphataubio.com/inq)
-   - Official documentation for libxc, pseudopod, spglib
-   - Lecture notes from clearly-authored, reputable university courses
-
-   Low-trust sources (verify independently):
-   - Stack Overflow, forums, unreviewed snippets
-   - Blog posts, vendor marketing
-
-2. Distinguish direct source statements from your own inferences. Label inferences explicitly: "Inference: ..." or "This suggests...".
-
+1. Ground scientific, numerical, and algorithmic claims in trustworthy sources:
+   peer-reviewed papers > authoritative textbooks (Parr & Yang; Engel &
+   Dreizler; Marx & Hutter) > official INQ/libxc/pseudopod/spglib docs >
+   reputable, clearly-authored lecture notes. Treat forums, blogs, unreviewed
+   snippets, and vendor marketing as low-trust — verify independently.
+2. Distinguish direct source statements from your own inferences; label
+   inferences explicitly ("Inference: ..." / "This suggests...").
 3. When uncertain about a physical claim, say so and propose how to verify.
-
-4. Record important sources in `docs/sources/` and cross-reference them from plans, handovers, reports, and code comments.
-
-5. If code structure, formulas, or algorithms are adapted from a paper, package, or prior note, credit the source near the adapted logic (code comment) and in the plan/handover.
-
-6. For DFT/TDDFT claims specifically:
-   - Functional choices should be justified by literature (e.g. PBE for metals, LDA for jellium)
-   - Pseudopotential choices (norm-conserving vs PAW, pseudopod database) should be documented
-   - Time-step and energy cutoff choices should reference convergence tests or literature values
+4. Credit adapted formulas/algorithms near the code (comment) and in the
+   plan/handover.
+5. DFT/TDDFT: justify functional (e.g. PBE for metals, LDA for jellium),
+   pseudopotential (norm-conserving vs PAW; pseudopod database), and
+   time-step/energy-cutoff choices by literature or convergence tests.
