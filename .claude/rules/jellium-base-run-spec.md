@@ -2,6 +2,9 @@
 
 Apply to: `ResearchProject/systems/jellium/`
 
+# TODO: Jellium base run is wrong. Need to revise this. There is nothing now called as
+# base jellium. However, we are now working with systems with 162 electrons in the box. 
+
 ## Standard simulation duration
 
 The **N=138 closed-shell base run at L=30 Bohr cubic, WP_EKIN = 5 eV,

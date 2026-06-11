@@ -14,6 +14,7 @@ for use in a larger program.
 
 ## Required loop for every new function or non-trivial change
 
+
 1. **Write**: implement the function or change.
 2. **Test with known cases**: run it on at least one input with a known correct answer.
    - For arithmetic/physics: compare against analytic result, unit conversion, or published value.
@@ -23,7 +24,7 @@ for use in a larger program.
 3. **Fix any discrepancies**: diagnose the cause, change the code, re-run.
 4. **Confirm inclusion**: only after the known-case test passes, integrate the function into the
    calling code. State explicitly (in comments or handover) which test was run and what it showed.
-
+5. Repeat this loop, after user's permission, until the goal is reached.  
 ---
 
 ## What counts as a known-case test

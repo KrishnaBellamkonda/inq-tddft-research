@@ -23,6 +23,7 @@ Preferred source types (in order):
 4. libxc documentation for functional choices
 5. Reputable university lecture notes (clearly authored)
 
+# TODO: There are no primary references now. However, there is a library of related documents being gathered in literature/ folder. Also, new documents uploaded to the drive folder can be downloaded to this folder. This becomes the primary repository of search. If not found, then the internet. Sometimes references from these texts can be helpful. 
 For this project, the primary reference is:
 - Santervás-Arranz, Stengel, Artacho, *Phys. Rev. Research* 7, 033292 (2025) — quantum kick / TDDFT energy absorption
 

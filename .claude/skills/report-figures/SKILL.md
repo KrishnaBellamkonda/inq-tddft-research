@@ -11,6 +11,8 @@ description: |
   Invoke tufte-viz skill for critique at each plot.
 ---
 
+# TODO: Last I remember of these report figures usage, I remember it working very well. However, I wonder if this skill, tufte, and others are just overweight skills. Does each serve a specific and unique purpose. Or are there redundant instructions?  
+
 # Report Figures — Production Workflow
 
 ## Overview

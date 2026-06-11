@@ -448,6 +448,8 @@ Never use system Python — it lacks VTK/pyvista dependencies.
 
 ---
 
+
+# TODO: This is to be linked with the minimum observable set, and the required analysis can be directly implemented using deterministic hooks
 ## Phase 7: Post-processing and analysis
 
 ### 7.0 Canonical bath density + plot-comparison rules (MANDATORY)

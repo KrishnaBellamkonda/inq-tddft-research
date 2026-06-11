@@ -6,7 +6,7 @@ Apply to: `inq-stack/`, `ResearchProject/`, `Tutorial/`, `QuantumKickExtension/`
 
 1. Every substantive code change must include a validation update before it is considered complete.
 
-0. Use GPU execution whenever a GPU is available. For INQ, this means running `inq-run` (not `inq-run --cpu`). For Python scripts, prefer CUDA-enabled backends where relevant. Only fall back to CPU if GPU is unavailable or explicitly requested by the user.
+0. Use GPU execution whenever a GPU is available. For INQ, this means running `inq-run` (not `inq-run --cpu`). For Python scripts, prefer CUDA-enabled backends where relevant. Only fall back to CPU if explicitly requested by the user. Report if GPUs is currently occupied by different a user. 
 
 2. Before implementing, define:
    - **Component tests**: one or more unit tests per core function (inputs, edge cases, expected outputs, units).

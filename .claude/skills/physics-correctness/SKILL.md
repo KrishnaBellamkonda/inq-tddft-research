@@ -3,6 +3,8 @@ name: physics-correctness
 description: Use before claiming any physics-producing code or calculation is "correct", "working", "complete", or "ready" — and before committing changes that touch wavefunctions, densities, energies, forces, observables, propagators, or any GPU kernel under `inq-stack/include/inqkit/`, `ResearchProject/`, or `Tutorial/`. Enforces the write→known-case-test→fix→confirm loop and blocks "compiles ⇒ works" reasoning.
 ---
 
+# TODO: I see that a lot of skills depend on this minimum observable set. So, we need to nail this down, and run a few runs to validate that what I wanted is happening. I believe, I have given information about this set in the previous tasks. But, I want to check that this is being standarding across the claude ecosystem too. 
+
 # Physics Correctness Gate
 
 Wrong code → wrong physics. This is the gate that fires whenever the work
