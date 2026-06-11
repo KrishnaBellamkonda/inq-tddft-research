@@ -15,6 +15,19 @@ TEST_CASE("Vec3: default is the zero vector", "[vec3][pure]") {
   CHECK(v.z == 0.0);
 }
 
+TEST_CASE("Vec3: operator[] reads and writes x/y/z (D1)", "[vec3][pure]") {
+  Vec3 v{1.0, 2.0, 3.0};
+  CHECK(v[0] == 1.0);
+  CHECK(v[1] == 2.0);
+  CHECK(v[2] == 3.0);
+  v[0] = 10.0; v[1] = 20.0; v[2] = 30.0;   // non-const write
+  CHECK(v.x == 10.0);
+  CHECK(v.y == 20.0);
+  CHECK(v.z == 30.0);
+  Vec3 const c{4.0, 5.0, 6.0};             // const read
+  CHECK(c[2] == 6.0);
+}
+
 TEST_CASE("Vec3: dot, norm2, norm", "[vec3][pure]") {
   Vec3 a{1.0, 2.0, 2.0};
   CHECK(a.norm2() == Approx(9.0));   // 1 + 4 + 4

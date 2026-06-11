@@ -52,7 +52,7 @@ TEST_CASE("ObservablesWriter: header + row reflect the selection", "[io][observa
     ctx.step = 7;
     ctx.time_au = 1.25;
     ctx.energy_total = -3.5;
-    ctx.current = inq::vector3<double>{0.1, 0.2, 0.3};
+    ctx.current = inqkit::detail::Vec3{0.1, 0.2, 0.3};   // Vec3 unit (D1)
     ctx.wp_center = inq::vector3<double>{1.0, -2.0, 3.0};
     writer.append(ctx);
     writer.finish();

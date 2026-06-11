@@ -60,12 +60,16 @@ public:
     ctx.energy_xc = data.energy().xc();
     // current/dipole computed on demand; guard in case observables aren't
     // active
+    // Convert INQ's vector3 -> inqkit::detail::Vec3 (StepContext's type) here,
+    // the single callback site, so the pure Vec3 header stays INQ-free.
     try {
-      ctx.current = data.current();
+      auto c = data.current();
+      ctx.current = {c[0], c[1], c[2]};
     } catch (...) {
     }
     try {
-      ctx.dipole = data.dipole();
+      auto d = data.dipole();
+      ctx.dipole = {d[0], d[1], d[2]};
     } catch (...) {
     }
     // All of the tasks are executed at the correct timestep

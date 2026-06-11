@@ -17,6 +17,8 @@
 #include <systems/ions.hpp>
 #include <systems/electrons.hpp>
 
+#include <inqkit/detail/vec3.hpp>
+
 namespace inqkit {
 
 struct StepContext {
@@ -29,8 +31,13 @@ struct StepContext {
     double energy_kinetic = 0.0;
     double energy_hartree = 0.0;
     double energy_xc      = 0.0;
-    inq::vector3<double> current = {0.0, 0.0, 0.0};
-    inq::vector3<double> dipole  = {0.0, 0.0, 0.0};
+    // current/dipole as a Vec3 unit (consistency with center_of_density which
+    // already returns inqkit::detail::Vec3). CSV columns current_{x,y,z} /
+    // dipole_{x,y,z} are unchanged — observables_writer reads ctx.current[0..2]
+    // via Vec3::operator[]. Conversion from INQ's vector3 happens at the one
+    // callback site (real_time_session.hpp).
+    inqkit::detail::Vec3 current = {0.0, 0.0, 0.0};
+    inqkit::detail::Vec3 dipole  = {0.0, 0.0, 0.0};
 
     // Slots populated by jellium-side per-step callbacks (centre of WP
     // density, integrated dn^2). Left zero when not computed.
