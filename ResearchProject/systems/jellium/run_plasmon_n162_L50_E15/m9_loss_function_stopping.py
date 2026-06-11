@@ -114,7 +114,7 @@ S_LF_norm = S_LF * scale
 # ---- Stage 3: classical S(v) points (absolute eV/Bohr) ----
 cls_v, cls_S = [], []
 try:
-    from inqview.report1 import stopping_power_data as spd
+    from applications.report1 import stopping_power_data as spd
     for spec in spd.get_L50_classical_runs():
         try:
             p = ROOT / spec.run_dir; params = spd.parse_run_summary(p)

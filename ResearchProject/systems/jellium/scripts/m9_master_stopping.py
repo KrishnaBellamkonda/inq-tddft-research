@@ -32,7 +32,7 @@ import matplotlib; matplotlib.use("Agg")
 matplotlib.rcParams["savefig.bbox"] = "standard"
 import matplotlib.pyplot as plt
 from inqview.pipeline import lindhard
-from inqview.report1 import stopping_power_data as spd
+from applications.report1 import stopping_power_data as spd
 
 HA = 27.211386245988
 ROOT = Path("/local/data/public/skcb2/tddft")

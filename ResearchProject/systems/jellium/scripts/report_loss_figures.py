@@ -21,8 +21,8 @@ import matplotlib; matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 from inqview.pipeline import lindhard
-from inqview.report1 import apply_style, panel_label, palette_sweep3, palette_regime3, references
-from inqview.report1._shared_style import ONE_COL_IN, STYLE_CONFIG, fix_one_col_axes
+from applications.report1 import apply_style, panel_label, palette_sweep3, palette_regime3, references
+from applications.report1._shared_style import ONE_COL_IN, STYLE_CONFIG, fix_one_col_axes
 
 apply_style()
 HA = 27.211386245988
@@ -105,11 +105,11 @@ for mi in range(min(4, nq)):
     print(f"wrote fig_loss_cut_m{mi+1}.png")
 
 # ---- stopping S(v) + ratio (reuse m9 logic) ----
-from inqview.report1 import apply_style as _a  # noqa
+from applications.report1 import apply_style as _a  # noqa
 try:
-    from inqview.report1 import stopping_power_data as spd
+    from applications.report1 import stopping_power_data as spd
 except Exception:
-    import importlib; spd = importlib.import_module("inqview.report1.stopping_power_data")
+    import importlib; spd = importlib.import_module("applications.report1.stopping_power_data")
 
 qE, omE, LE = loss["E15"][1], loss["E15"][2], loss["E15"][3]
 v_grid = np.linspace(0.2, 6.8, 80)

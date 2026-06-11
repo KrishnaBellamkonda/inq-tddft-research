@@ -12,8 +12,8 @@ import matplotlib; matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 from scipy.interpolate import RegularGridInterpolator
-from inqview.report1 import apply_style, panel_label, palette_sweep3, references
-from inqview.report1._shared_style import ONE_COL_IN, STYLE_CONFIG, fix_one_col_axes
+from applications.report1 import apply_style, panel_label, palette_sweep3, references
+from applications.report1._shared_style import ONE_COL_IN, STYLE_CONFIG, fix_one_col_axes
 
 apply_style()
 HA = 27.211386245988

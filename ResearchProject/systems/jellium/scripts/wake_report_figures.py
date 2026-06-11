@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Report-standard STATIC wake-difference panels (inqview.report1 style).
+"""Report-standard STATIC wake-difference panels (applications.report1 style).
 
 Remakes the induced-wake WP-vs-classical comparison as publication figures per
 the report-figures skill: apply_style() (usetex/Computer Modern, 600 DPI), NO
@@ -28,8 +28,8 @@ import matplotlib; matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm, SymLogNorm
 from inqview.pipeline import wake
-from inqview.report1 import apply_style, panel_label, palette_regime3, references
-from inqview.report1._shared_style import ONE_COL_IN, STYLE_CONFIG
+from applications.report1 import apply_style, panel_label, palette_regime3, references
+from applications.report1._shared_style import ONE_COL_IN, STYLE_CONFIG
 
 apply_style()
 JB = "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium"
