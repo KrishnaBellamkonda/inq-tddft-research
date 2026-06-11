@@ -1,0 +1,54 @@
+name: inq-stack CI
+
+# Runs the PORTABLE test tiers on every push / PR that touches inq-stack:
+#   - Python suite  (tests/python, numpy/scipy/pandas/matplotlib only — no GPU/VTK/INQ)
+#   - pure C++ tier (tests/include, Catch2 only — no INQ)
+# The ENGINE C++ tier and the GPU production runs need the INQ build + a CUDA GPU
+# and CANNOT run on stock GitHub runners; gate them on a self-hosted runner or as
+# a documented local check (ADR 0001/0002).
+
+on:
+  push:
+    paths: ["inq-stack/**", ".github/workflows/ci.yml"]
+  pull_request:
+    paths: ["inq-stack/**", ".github/workflows/ci.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: Python suite (portable)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install (deps-clean portable set; no VTK)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "./inq-stack[analysis,test]" matplotlib pillow imageio
+      - name: pytest (tests/python)
+        working-directory: inq-stack
+        run: pytest -q
+      - name: deps-clean invariant (analysis/io import no matplotlib/VTK)
+        working-directory: inq-stack
+        run: python -m pytest tests/python/test_deps_clean.py -q
+
+  cpp-pure:
+    name: C++ pure tier (Catch2)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install toolchain
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends cmake g++ ninja-build
+      - name: Configure (Catch2 fetched via FetchContent)
+        run: cmake -S inq-stack/tests/include -B build -G Ninja
+      - name: Build
+        run: cmake --build build -j
+      - name: ctest (pure tier)
+        run: ctest --test-dir build -L pure --output-on-failure

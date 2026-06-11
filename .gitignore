@@ -73,6 +73,9 @@ profile.dat
 # nvim and other
 nvim
 .*
+# but keep the CI workflow tracked (negation must follow the .* rule)
+!.github
+!.github/**
 
 # Remove executales
 run

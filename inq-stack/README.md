@@ -33,14 +33,25 @@ print(ec.redistribution_ev())          # where did the energy go? (eV)
 
 ## Build & test
 
-```bash
-# C++ tests (Catch2; pure tier needs no INQ, engine tier links INQ + GPU)
-cmake -S tests/cpp -B tests/cpp/build -DENABLE_CUDA=ON && ctest --test-dir tests/cpp/build
+Tests mirror the source tree under `tests/` (ADR 0001): `tests/include/inqkit/`
+(C++) and `tests/python/inqview/` (Python), each test beside the file it covers.
 
-# Python suite (portable, numpy-only)
-pip install -e ".[analysis,viz,test]"
-pytest python/tests
+```bash
+# Python suite (portable: numpy/scipy/pandas/matplotlib — no GPU/VTK/INQ)
+pip install -e ".[analysis,test]" matplotlib pillow imageio
+pytest                                   # testpaths = tests/python
+
+# C++ pure tier (Catch2 only, no INQ; Catch2 auto-fetched if absent)
+cmake -S tests/include -B tests/include/build && ctest --test-dir tests/include/build -L pure
+
+# C++ engine tier (links INQ + GPU; local / self-hosted only)
+cmake -S tests/include/engine -B tests/include/engine/build -DENABLE_CUDA=ON \
+  -DCMAKE_CUDA_ARCHITECTURES=80 && ctest --test-dir tests/include/engine/build -L engine
 ```
+
+**CI** (`.github/workflows/ci.yml`) runs the two portable tiers (Python + pure
+C++) on every push/PR touching `inq-stack/`. The engine tier and GPU production
+runs need INQ + a CUDA GPU and are gated locally / on a self-hosted runner.
 
 Runs use the `inq-run` wrapper (see `../docs/compilation.md`). Architecture,
 decisions, and the observable contract: `../docs/adr/`, `../CONTEXT.md`,

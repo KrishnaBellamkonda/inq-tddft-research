@@ -35,9 +35,15 @@ if(NOT Catch2_FOUND)
     message(STATUS "inqkit-tests: using Catch2 source at ${CATCH2_SOURCE_DIR}")
     add_subdirectory("${CATCH2_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/catch2-build")
   else()
-    message(FATAL_ERROR
-      "inqkit-tests: Catch2 not found. Install Catch2 v3, or pass "
-      "-DCATCH2_SOURCE_DIR=<path-to-catch2-src>.")
+    # Final fallback: fetch Catch2 v3 (used by CI, where neither an installed
+    # package nor INQ's build tree is present). Needs network at configure time.
+    message(STATUS "inqkit-tests: fetching Catch2 v3 via FetchContent")
+    include(FetchContent)
+    FetchContent_Declare(Catch2
+      GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+      GIT_TAG        v3.5.4
+      GIT_SHALLOW    TRUE)
+    FetchContent_MakeAvailable(Catch2)
   endif()
 endif()
 
