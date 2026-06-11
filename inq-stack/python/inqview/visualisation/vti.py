@@ -1,9 +1,12 @@
-# This file was used to turn the raw files into vti files. However, that is now
-# done in cpp. Hence, this file is mainly redundant. 
+"""LEGACY — Python VTI writer (deprecated; ADR 0003 cleanup).
 
-# TODO: Check if this file is redundant. If it is, this can be removed at the user's
-# approval or can be repurposed. 
-
+VTI emission is now done in C++ (`inqkit::io::VTIImageDataWriter`), so this
+module is redundant for new runs. It is **retained, not cut**, because
+`visualisation.paraview` (`convert_real_series_to_vti`) and the `defaults` movie
+wrappers still call it to convert any raw+meta field series for ParaView
+rendering. Do not build new features on it; prefer the C++ VTI output. Slated for
+removal once the ParaView path is confirmed unused.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass
