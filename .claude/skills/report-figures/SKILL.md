@@ -1,17 +1,52 @@
 ---
 name: report-figures
 description: |
-  End-to-end workflow for producing publication-quality figures for the report.
-  Use when the user has a plot specification (what figures to make) and wants to
-  go from spec → individual plots → LaTeX panels → compiled PDF. Covers:
+  Owns the PROJECT-WIDE figure standard (ADR 0004 / Cluster R) AND the
+  interactive report-figure production workflow. Use (a) whenever producing ANY
+  figure in this project — the standard below (canonical theme + annotation
+  rules) applies to analysis plots and report panels alike; and (b) for the full
+  spec → individual plots → LaTeX panels → compiled PDF workflow when the user
+  has a plot specification. Covers:
   (1) Grilling the user to resolve all ambiguities in the spec
   (2) Making plots one at a time with iterative feedback
   (3) Composing panels in LaTeX with minipage layouts
   (4) Integrating into the report .tex file
-  Invoke tufte-viz skill for critique at each plot.
+  Invoke tufte-viz for general critique; uses inqview.visualisation.style.
 ---
 
-# TODO: Last I remember of these report figures usage, I remember it working very well. However, I wonder if this skill, tufte, and others are just overweight skills. Does each serve a specific and unique purpose. Or are there redundant instructions?  
+# Report Figures — the global figure standard + production workflow
+
+## The project figure standard (applies to EVERY figure)
+
+Every figure in the project — auto-generated `analyse.py` plots, comparison
+`scripts/`, and interactive report panels — uses the canonical theme
+`inqview.visualisation.style` (ADR 0004). No ad-hoc `plt.rcParams` /
+`plt.style.use` / hardcoded `figsize` anywhere; go through the theme:
+
+```python
+from inqview.visualisation import style
+style.apply_theme()                       # canonical rcParams
+fig, ax = style.figure_one_col()          # fixed-dimension factory
+cmap = style.cmap_for("diverging")        # semantic role, never a literal
+ax.set_xlabel(style.axis_label("time"))   # canonical units ("time (fs)")
+```
+
+**Production rules (apply to every project figure; moved here from tufte):**
+1. **No analytical/interpretive text on the figure canvas.** Explanatory
+   paragraphs, physical arguments, derivation results belong in the LaTeX
+   caption, never on the canvas.
+2. **Short quantitative annotations** (e.g. `ω_p = 3.53 eV`) are permitted only
+   in whitespace that obstructs no data ink; else they go in the caption.
+3. **No long leader lines** from an annotation to a data feature — if it can't
+   sit adjacent, move it to the caption.
+4. **Curve labels must contrast their background** (offset into clear space or a
+   minimal borderless white bbox).
+5. **Standard units on every axis** — use `style.axis_label(...)`: energy eV,
+   length Bohr, time **fs** (not a.u.), momentum Bohr⁻¹, stopping power eV/Bohr.
+   No mixed-unit axes.
+
+Auto-generated analysis plots must obey rules 1–5 + the theme, but do NOT need
+the interactive Phase 0–5 workflow below (that is for report panels).
 
 # Report Figures — Production Workflow
 
@@ -41,7 +76,10 @@ Never modify the user's original spec file.
 
 ## Phase 1: Style Setup
 
-Before any plots, configure `_shared_style.py`:
+Before any plots, apply the canonical theme `inqview.visualisation.style`
+(`style.apply_theme()`, `STYLE_CONFIG` lives there) — **not** the retired
+report1-local `_shared_style.py`. For report panels, scale the theme's font/line
+sizes for downscaling on top of the canonical base:
 
 - **Font sizes must account for panel downscaling.** If plots will be placed
   2-per-row in LaTeX, they render at ~50% of their generated width. Font sizes

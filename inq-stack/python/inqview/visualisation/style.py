@@ -40,6 +40,31 @@ def cmap_for(role: str) -> str:
         ) from None
 
 
+# --- canonical axis units (the single units standard; ADR 0004, Cluster R) --
+# Promoted from the tufte skill's "project annotation rule 5". Every inqview
+# axis uses these — NEVER atomic units on a public time axis.
+UNITS: dict[str, str] = {
+    "energy": "eV",
+    "length": "Bohr",
+    "time": "fs",                 # femtoseconds, not atomic units
+    "momentum": r"Bohr$^{-1}$",
+    "stopping_power": "eV/Bohr",
+}
+
+
+def axis_label(quantity: str, symbol: str | None = None) -> str:
+    """Canonical axis label ``"<symbol or quantity> (<unit>)"`` for a known
+    quantity (e.g. ``axis_label("time")`` -> ``"time (fs)"``)."""
+    try:
+        unit = UNITS[quantity]
+    except KeyError:
+        raise ValueError(
+            f"unknown quantity {quantity!r}; valid: {sorted(UNITS)}"
+        ) from None
+    name = symbol if symbol is not None else quantity.replace("_", " ")
+    return f"{name} ({unit})"
+
+
 # --- fixed-dimension scheme (report1 STANDARD FIXED-COLUMN, 2026-05-29) -----
 ONE_COL_IN: tuple[float, float] = (3.5, 3.0)   # (width, height) one-column plot
 TWO_COL_W_IN: float = 7.0                      # width of a two-column plot

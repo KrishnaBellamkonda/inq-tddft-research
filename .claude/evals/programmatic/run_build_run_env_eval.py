@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 import os
 
-REPO = "/local/data/public/skcb2/tddft"
+REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 SETTINGS = os.path.join(REPO, ".claude/settings.json")
 SKILL = os.path.join(REPO, ".claude/skills/build-run/SKILL.md")
 

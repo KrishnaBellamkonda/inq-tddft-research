@@ -21,7 +21,7 @@ from __future__ import annotations
 import os
 import re
 
-REPO = "/local/data/public/skcb2/tddft"
+REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 HPP = os.path.join(REPO, "inq-stack/include/inqkit/observables/minimum_observable_set.hpp")
 SPEC = os.path.join(REPO, "docs/observables/minimum-set-spec.md")
 SKILL = os.path.join(REPO, ".claude/skills/tddft-simulations/SKILL.md")

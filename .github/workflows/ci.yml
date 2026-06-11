@@ -55,6 +55,12 @@ jobs:
         run: python3 .claude/evals/programmatic/run_commit_hook_eval.py
       - name: file-placement hook eval
         run: python3 .claude/evals/programmatic/run_file_placement_eval.py
+      - name: Cluster-O observable-set drift eval
+        run: python3 .claude/evals/programmatic/run_cluster_o_drift_eval.py
+      - name: Cluster-R figure-standard eval
+        run: python3 .claude/evals/programmatic/run_cluster_r_eval.py
+      - name: build-run env wiring eval
+        run: python3 .claude/evals/programmatic/run_build_run_env_eval.py
 
   cpp-pure:
     name: C++ pure tier (Catch2)

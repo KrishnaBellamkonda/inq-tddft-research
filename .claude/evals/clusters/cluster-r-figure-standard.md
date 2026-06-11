@@ -29,6 +29,18 @@ figure-producing code path imports it; `report-figures` skill owns the standard
 - Distinct-core check: a pure critique request ("is this chart honest?") →
   `tufte`; a prose request ("draft the methods section") → `report-writing`.
 
+## Status 2026-06-11 — IMPLEMENTED, green
+
+- `run_cluster_r_eval.py` (pure text, CI-safe): theme defines the unit map +
+  `axis_label`; `report-figures` references the theme + owns the 5 annotation
+  rules; `tufte` shed the widths table + units enumeration; the inqview library
+  (visualisation + pipeline) has no rogue `rcParams`/`style.use` outside
+  `style.py`. **PASS.**
+- `test_theme.py` (pytest, matplotlib job): UNITS values + `axis_label` behaviour
+  — 9/9 pass (incl. the 3 new units tests).
+- The inqview library was already theme-clean (no migration of run `analyse.py`
+  needed for the library; per-run scripts adopt the theme as they are touched).
+
 ## What must NOT break
 
 - The 3 skills stay separate (distinct cores). This eval does not merge them.

@@ -52,6 +52,26 @@ def test_figure_two_col_is_seven_inches_wide():
         plt.close(fig)
 
 
+def test_canonical_units_are_the_designed_values():
+    # the single units standard (ADR 0004, Cluster R) — never atomic units on time
+    assert style.UNITS["energy"] == "eV"
+    assert style.UNITS["length"] == "Bohr"
+    assert style.UNITS["time"] == "fs"
+    assert style.UNITS["momentum"] == r"Bohr$^{-1}$"
+    assert style.UNITS["stopping_power"] == "eV/Bohr"
+
+
+def test_axis_label_formats_quantity_and_unit():
+    assert style.axis_label("time") == "time (fs)"
+    assert style.axis_label("stopping_power") == "stopping power (eV/Bohr)"
+    assert style.axis_label("energy", "E") == "E (eV)"
+
+
+def test_axis_label_unknown_quantity_raises():
+    with pytest.raises(ValueError):
+        style.axis_label("temperature")
+
+
 def test_apply_theme_installs_designed_rcparams():
     style.apply_theme()
     rc = matplotlib.rcParams

@@ -61,31 +61,18 @@ Apply Edward Tufte's principles to design clear, honest, high-density data visua
 - `references/tufte-principles.md` — core principles from *Visual Display of Quantitative Information*: lie factor, data-ink, chartjunk, small multiples, integrity.
 - `references/analytical-design.md` — extensions from *Envisioning Information*, *Visual Explanations*, and *Beautiful Evidence*: the 6 principles of analytical design, sparklines, layering & separation, micro/macro, range-frames, causality, confections. Load when designing dashboards, dense displays, sparklines, or explanatory graphics.
 
-## Layout change (2026-05-25)
+## Project standards live elsewhere (Cluster R)
 
-The report template was switched from **two-column** (`elsarticle 3p,twocolumn`)
-to **one-column** (`elsarticle 3p`) on 2026-05-25. Figure widths changed:
+This skill holds **timeless, project-agnostic Tufte principles** only. The
+project's figure *standards* — canonical axis units, column widths, semantic
+cmap roles, the figure factories — are the executable theme
+`inqview.visualisation.style` (ADR 0004); the project *production rules*
+(no interpretive text on the canvas, annotations in whitespace, no leader lines,
+contrasting curve labels, standard units on every axis) live in the
+`report-figures` skill, which owns the global figure standard. Apply those when
+producing project figures; use the principles below to reason about any chart.
 
-| Width class | Old (two-col) | New (one-col) |
-|---|---|---|
-| `single` | 3.50 in (88 mm) | 5.00 in (127 mm) |
-| `1.5col` | 4.69 in (119 mm) | 5.50 in (140 mm) |
-| `full`   | 7.09 in (180 mm) | 6.30 in (160 mm) |
-
-All figures must be re-rendered after any width change. The executable
-source of truth is `_shared_style.py:column_widths_in`.
-
-## Project annotation rules (codified 2026-05-25)
-
-These rules apply to every figure produced for this project. They override defaults when in conflict.
-
-1. **No analytical or interpretive text on figures.** Explanatory paragraphs, physical arguments, and derivation results (e.g. "For electron projectiles: m_e/M_nucleus ≪ 1 ⇒ nuclear stopping negligible") belong in the LaTeX caption, never on the figure canvas.
-2. **Short quantitative annotations are permitted** (e.g. E_cross ≈ 5 keV/u, ω_p = 3.53 eV) but must be placed in whitespace that does not obstruct any data ink. If no such whitespace exists, the annotation goes in the caption instead.
-3. **No long leader lines.** Arrows or lines pointing from an annotation to a data feature are forbidden. If the annotation cannot sit adjacent to its feature, move it to the caption.
-4. **Curve labels must contrast their background.** A label placed atop a filled region or a dark curve must be offset into a clear area, or given a minimal white bbox with no visible border.
-5. **Standard units on all axes.** Stopping power: eV/Bohr. Energy: eV. Length: Bohr. Time: **fs** (femtoseconds, not a.u.). Momentum: Bohr⁻¹. No mixed-unit axes. Unit labels must appear on every axis.
-
-**Quick checklist:**
+**Quick checklist (general):**
 - [ ] Lie Factor ≈ 1.0 (no visual distortion)
 - [ ] Maximum data-ink ratio
 - [ ] Zero chartjunk
@@ -97,8 +84,3 @@ These rules apply to every figure produced for this project. They override defau
 - [ ] Reveals multiple levels of detail (micro + macro)
 - [ ] Layering: primary data dominates, secondary recedes
 - [ ] Appropriate data density
-- [ ] No analytical/interpretive text on the figure (rule 1)
-- [ ] Quantitative annotations in whitespace only (rule 2)
-- [ ] No long leader lines (rule 3)
-- [ ] Curve labels contrast their background (rule 4)
-- [ ] Standard units on all axes (rule 5)
