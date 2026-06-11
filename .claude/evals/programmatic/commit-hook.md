@@ -27,6 +27,12 @@ feed each message, assert verdict. Runner lives in `.claude/evals/programmatic/`
 | `fix(jellium): correct boundary stop in raid run` | "raid"/"main" substrings are NOT the forbidden standalone words |
 | `cut(inqview): remove deprecated shim` | valid action `cut` |
 | `sim(jellium): add E50 run defs` | valid action `sim` |
+| `feature(repo): add .claude/hooks/commit_message_check.py` | `.claude/` path token is exempt (rule targets attribution, not the dir name) |
+
+**Dot-path exemption:** a dot-prefixed `.claude` (or any `.word`) path token is
+NOT a forbidden word — the rule forbids attribution ("Claude Code",
+"Co-Authored-By: Claude"), not the literal directory we reference constantly.
+Regression-locked after the hook blocked its own first commit.
 
 ## Closed action-word list (the 9, in precedence order)
 
