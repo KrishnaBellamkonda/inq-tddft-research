@@ -84,44 +84,9 @@ def run(results_dir: Path, *, run_name: str, rebuild: bool, **_) -> dict:
     if {"state_index", "occupation"}.difference(occ.columns):
         return {"skipped": f"occupations.csv missing required columns: {set(occ.columns)}"}
 
-    occ_map = dict(zip(occ["state_index"].astype(int),
-                        occ["occupation"].astype(float)))
-    # Initial energies E_i(0) per state from the first recorded time-step.
-    se = se.sort_values(["state_index", "time_au"])
-    first_per_state = se.groupby("state_index")[e_col].first()
-
-    # Compute per-step Δ-energies.
-    times = sorted(se["time_au"].unique())
-    rows = []
-    for t in times:
-        snap = se[se["time_au"] == t][["state_index", e_col]]
-        d_state = snap[e_col].to_numpy() - first_per_state.loc[snap["state_index"]].to_numpy()
-        # WP slot contribution
-        wp_mask = snap["state_index"].to_numpy() == wp_idx
-        # NB: WP slot occupation is 1.0 by construction (the WP injection wrote it).
-        dE_wp = float((d_state[wp_mask] * 1.0).sum())
-        # Bath: sum f_i Δε_i over i ≠ WP
-        bath_mask = ~wp_mask
-        bath_states = snap["state_index"].to_numpy()[bath_mask]
-        f_bath = np.array([occ_map.get(int(s), 0.0) for s in bath_states])
-        dE_bath = float((d_state[bath_mask] * f_bath).sum())
-        rows.append((t, dE_wp, dE_bath))
-
-    df = pd.DataFrame(rows, columns=["time_au", "dE_wp_ha", "dE_bath_ha"])
-    # Merge total-energy drift from observables.csv (closest sample per time).
-    obs_t = obs["time_au"].to_numpy()
-    obs_e = obs["energy_total"].to_numpy() if "energy_total" in obs.columns else None
-    if obs_e is None:
-        df["dE_total_ha"] = np.nan
-    else:
-        e0 = float(obs_e[0])
-        df["dE_total_ha"] = np.interp(df["time_au"], obs_t, obs_e) - e0
-
-    df["unaccounted_ha"] = df["dE_total_ha"] - (df["dE_wp_ha"] + df["dE_bath_ha"])
-    df["dE_wp_ev"]       = df["dE_wp_ha"]      * HA_TO_EV
-    df["dE_bath_ev"]     = df["dE_bath_ha"]    * HA_TO_EV
-    df["dE_total_ev"]    = df["dE_total_ha"]   * HA_TO_EV
-    df["unaccounted_ev"] = df["unaccounted_ha"] * HA_TO_EV
+    # Pure ledger compute moved to the analysis layer (ADR 0003 split).
+    from ..analysis.energy_balance import compute_ledger
+    df = compute_ledger(se, occ, obs, wp_idx, e_col=e_col)
 
     out_dir = _common.ensure_dir(results_dir / "analysis" / "observables")
     csv_out = out_dir / "energy_balance.csv"
