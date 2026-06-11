@@ -22,11 +22,11 @@ from typing import TYPE_CHECKING
 # Public name -> dotted submodule (relative to this package) that defines it.
 # Grouped by layer so the eventual io/visualisation re-homing is a one-line edit.
 _LAZY_EXPORTS = {
-    # config / theme (legacy; superseded by visualisation.style)
-    "DEFAULT_THEME": "config",
-    "PlotDefaults": "config",
-    "RenderDefaults": "config",
-    "Theme": "config",
+    # NOTE: legacy `config` (Theme/DEFAULT_THEME/PlotDefaults/RenderDefaults) and
+    # `defaults` (one-call movie wrappers) are NO LONGER part of the public API
+    # (ADR 0004 — the canonical theme is `inqview.visualisation.style`). They
+    # remain as internal modules (`plots` uses `config` internally) but are not
+    # re-exported from the top level.
     # io: fields
     "FieldMeta": "io.fields",
     "RealField3D": "io.fields",
@@ -67,9 +67,6 @@ _LAZY_EXPORTS = {
     "plot_spectrum_summary": "visualisation.plots",
     "plot_density_slice": "visualisation.plots",
     "plot_leed_pattern": "visualisation.plots",
-    # pipeline: default render specs
-    "default_density_movie": "defaults",
-    "default_wavepacket_movie": "defaults",
 }
 
 __all__ = sorted(_LAZY_EXPORTS)
@@ -90,7 +87,6 @@ def __dir__():
 
 
 if TYPE_CHECKING:  # let type-checkers/IDEs still see the names eagerly
-    from .config import DEFAULT_THEME, PlotDefaults, RenderDefaults, Theme
     from .io.fields import ComplexField3D, FieldMeta, RealField3D
     from .io.data import (
         DataError,
@@ -123,4 +119,3 @@ if TYPE_CHECKING:  # let type-checkers/IDEs still see the names eagerly
         plot_spectrum_summary,
         plot_total_energy_vs_time,
     )
-    from .defaults import default_density_movie, default_wavepacket_movie
