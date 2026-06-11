@@ -157,6 +157,16 @@ Report estimated frames: `N_STEPS / WRITE_EVERY`.
 
 ## Phase 3: Observable selection
 
+<!-- min-obs-set: canonical = inq-stack/include/inqkit/observables/minimum_observable_set.hpp -->
+> **Canonical required set (Cluster O, ADR 0006).** The *required* observables
+> per run-type are defined ONCE in
+> `inq-stack/include/inqkit/observables/minimum_observable_set.hpp`, which the
+> run writes as `results/observables_manifest.json` at startup and `validate_run`
+> checks post-run. The Tier 1/2 tables below are the **operational view** of that
+> set — cadence, writer, and failure-modes — NOT a second source of truth; they
+> must stay consistent with the `.hpp` (the Cluster-O drift eval enforces it).
+> Tier 3 is run-specific **optional** extras beyond the required set.
+
 ### 3a. Auto-enable Tier 1 (always-on, all types)
 
 | Observable | Output | Writer |

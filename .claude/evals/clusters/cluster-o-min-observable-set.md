@@ -5,21 +5,32 @@ Canonical = `inq-stack/include/inqkit/observables/minimum_observable_set.hpp`
 other enumeration of "required observables per run-type" must agree with the
 manifest it emits.
 
-## Programmatic drift eval (.claude/evals/programmatic/)
+## Programmatic drift eval (.claude/evals/programmatic/run_cluster_o_drift_eval.py)
 
-For each `RunType` (coronene / jellium_wp / jellium_classical / free_wp):
-1. Emit the manifest from the `.hpp` (build a tiny harness or call
-   `manifest_json(type, …)`); parse the required observable names.
-2. Assert the **spec doc** `docs/observables/minimum-set-spec.md` lists the same
-   required set for that run-type (parse its table).
-3. Assert the **catalogue** `scan_runs.py` `FILE_OBS`/`DIR_OBS` flag set is a
-   superset of the required names (every required observable is detectable).
-4. Structural: assert `tddft-simulations` SKILL Phase 3 does **not** re-enumerate
-   the required Tier-1/Tier-2 lists as literal hardcoded names — it must
-   reference the min-obs-set (grep for a sentinel marker the de-dup leaves).
+Implemented (regex over the `.hpp` + spec + skill — no compile needed):
+1. Extract the canonical observable names from the `.hpp` (`csv/vti/text("…")`).
+2. Assert every canonical name is **covered in the spec doc**
+   `docs/observables/minimum-set-spec.md` — verbatim, else via the documented
+   key→prose **bridge** in the runner (the spec currently names some observables
+   in prose, e.g. `gs_eigenvalues` ↔ "GS eigenvalues"). A canonical observable
+   with neither a verbatim hit nor a bridge entry is real drift (code added an
+   observable the spec never documented).
+3. Structural: `tddft-simulations` Phase 3 carries the canonical-reference
+   **sentinel** (`min-obs-set: canonical = …`) — it defers to the `.hpp`, not a
+   second source of truth.
 
-PASS = all four agree for all four run-types. Any drift = FAIL (names the
-diverging artifact + run-type).
+Status 2026-06-11: **PASS** (19 canonical observables all covered; sentinel
+present). The drift check first ran red — it correctly caught that the spec
+names 6 observables in prose rather than by canonical key; bridged + documented.
+
+### Remaining Cluster-O cleanup (precise)
+
+- **Align the spec doc keys to the `.hpp` canonical names** (`gs_eigenvalues`,
+  `density_total_rt`, `density_wp_rt`, `leed_screen_config`, `gs_system_density`)
+  so the bridge can be deleted and the check becomes pure key-equality.
+- Optional: a manifest-emitting harness for per-run-type required-set equality
+  (currently the check is name-coverage, not per-run-type set equality) and a
+  catalogue (`scan_runs.py`) coverage check.
 
 ## Functional eval (already exercised last phase — re-confirm)
 
