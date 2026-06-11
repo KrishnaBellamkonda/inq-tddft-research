@@ -50,59 +50,59 @@ endfunction()
 
 inqkit_add_engine_test(test_density_total_engine
   test_engine_main.cpp
-  test_density_total_engine.cpp)
+  ../inqkit/fields/test_density_total_engine.cpp)
 
 inqkit_add_engine_test(test_coord_mapping_engine
   test_engine_main.cpp
-  test_coord_mapping_engine.cpp)
+  ../inqkit/fields/test_coord_mapping_engine.cpp)
 
 inqkit_add_engine_test(test_density_semantics_engine
   test_engine_main.cpp
-  test_density_semantics_engine.cpp)
+  ../inqkit/fields/test_density_semantics_engine.cpp)
 
 inqkit_add_engine_test(test_orbital_engine
   test_engine_main.cpp
-  test_orbital_engine.cpp)
+  ../inqkit/fields/test_orbital_engine.cpp)
 
 inqkit_add_engine_test(test_observables_writer_engine
   test_engine_main.cpp
-  test_observables_writer_engine.cpp)
+  ../inqkit/io/test_observables_writer_engine.cpp)
 
 inqkit_add_engine_test(test_plane_screen_engine
   test_engine_main.cpp
-  test_plane_screen_engine.cpp)
+  ../inqkit/screens/test_plane_screen_engine.cpp)
 
 inqkit_add_engine_test(test_eigenvalue_dump_engine
   test_engine_main.cpp
-  test_eigenvalue_dump_engine.cpp)
+  ../inqkit/observables/test_eigenvalue_dump_engine.cpp)
 
 inqkit_add_engine_test(test_wp_momentum_two_route_engine
   test_engine_main.cpp
-  test_wp_momentum_two_route_engine.cpp)
+  ../inqkit/observables/test_wp_momentum_two_route_engine.cpp)
 
 inqkit_add_engine_test(test_wp_real_space_replica_engine
   test_engine_main.cpp
-  test_wp_real_space_replica_engine.cpp)
+  ../inqkit/observables/test_wp_real_space_replica_engine.cpp)
 
 inqkit_add_engine_test(test_occupations_writer_engine
   test_engine_main.cpp
-  test_occupations_writer_engine.cpp)
+  ../inqkit/observables/test_occupations_writer_engine.cpp)
 
 inqkit_add_engine_test(test_orbital_overlap_engine
   test_engine_main.cpp
-  test_orbital_overlap_engine.cpp)
+  ../inqkit/observables/test_orbital_overlap_engine.cpp)
 
 inqkit_add_engine_test(test_leed_engine
   test_engine_main.cpp
-  test_leed_engine.cpp)
+  ../inqkit/screens/test_leed_engine.cpp)
 
 # Multi-rank test (E01): built like an engine test but launched under mpirun -np 2.
 add_executable(test_plane_screen_parallel_engine
-  test_engine_main.cpp test_plane_screen_parallel_engine.cpp)
+  test_engine_main.cpp ../inqkit/screens/test_plane_screen_parallel_engine.cpp)
 target_link_libraries(test_plane_screen_parallel_engine PRIVATE inq Catch2::Catch2)
 target_include_directories(test_plane_screen_parallel_engine PRIVATE ${INQKIT_INCLUDE})
 if(ENABLE_GPU)
-  set_source_files_properties(test_engine_main.cpp test_plane_screen_parallel_engine.cpp
+  set_source_files_properties(test_engine_main.cpp ../inqkit/screens/test_plane_screen_parallel_engine.cpp
     PROPERTIES LANGUAGE ${GPU_LANGUAGE})
 endif()
 add_test(NAME test_plane_screen_parallel_engine
@@ -114,26 +114,26 @@ set_tests_properties(test_plane_screen_parallel_engine PROPERTIES
 
 inqkit_add_engine_test(test_wp_momentum_compute_engine
   test_engine_main.cpp
-  test_wp_momentum_compute_engine.cpp)
+  ../inqkit/observables/test_wp_momentum_compute_engine.cpp)
 
 inqkit_add_engine_test(test_wp_real_space_compute_engine
   test_engine_main.cpp
-  test_wp_real_space_compute_engine.cpp)
+  ../inqkit/observables/test_wp_real_space_compute_engine.cpp)
 
 inqkit_add_engine_test(test_momentum_distribution_engine
   test_engine_main.cpp
-  test_momentum_distribution_engine.cpp)
+  ../inqkit/observables/test_momentum_distribution_engine.cpp)
 
 inqkit_add_engine_test(test_state_energy_engine
   test_engine_main.cpp
-  test_state_energy_engine.cpp)
+  ../inqkit/observables/test_state_energy_engine.cpp)
 
 # Integration test (IV-M11): free Gaussian WP vs analytic free-particle evolution.
 inqkit_add_engine_test(test_free_wp_engine
   test_engine_main.cpp
-  test_free_wp_engine.cpp)
+  ../inqkit/wavepacket/test_free_wp_engine.cpp)
 
 # Feature: per-orbital norm diagnostic (every KS orbital ∫|ψ|²≈1).
 inqkit_add_engine_test(test_state_norm_engine
   test_engine_main.cpp
-  test_state_norm_engine.cpp)
+  ../inqkit/observables/test_state_norm_engine.cpp)

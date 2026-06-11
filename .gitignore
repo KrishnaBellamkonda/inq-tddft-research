@@ -136,3 +136,5 @@ docs/inq-docs/
 !.claude/rules/
 !.claude/skills/
 
+build_pure/
+**/build_pure/
