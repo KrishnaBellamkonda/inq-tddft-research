@@ -133,11 +133,14 @@ docs/inq-docs/
 # Everything else in .claude/ (credentials, runtime state, history, plugins,
 # project memory, tasks, sessions, caches) stays local-only.
 # Re-include the dir first (it is excluded by the .* rule above), then
-# re-exclude all its contents except the two authored subfolders.
+# re-exclude all its contents except the authored subfolders.
 !.claude/
 .claude/*
 !.claude/rules/
 !.claude/skills/
+!.claude/evals/
+!.claude/hooks/
+!.claude/agents/
 
 build_pure/
 **/build_pure/
