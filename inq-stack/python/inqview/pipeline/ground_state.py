@@ -18,7 +18,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from . import _common
-from . import pipeline as _pipeline
+from . import runner as _pipeline
 
 
 def _load_vti_cube(path: Path):

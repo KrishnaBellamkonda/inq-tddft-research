@@ -21,7 +21,7 @@ from pathlib import Path
 import numpy as np
 
 from . import _common
-from . import pipeline as _pipeline
+from . import runner as _pipeline
 
 _PLANES = {
     "xy": (2, "x (bohr)", "y (bohr)"),

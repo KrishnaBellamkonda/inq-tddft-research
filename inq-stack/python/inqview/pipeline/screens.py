@@ -18,7 +18,7 @@ from pathlib import Path
 import numpy as np
 
 from . import _common
-from . import pipeline as _pipeline
+from . import runner as _pipeline
 
 _INSTANT_RE = re.compile(r"^screen_(\d{2})_t(\d{6})\.dat$")
 _WINDOWED_RE = re.compile(

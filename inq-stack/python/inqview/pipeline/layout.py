@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Iterable
 
 from . import _common
-from . import pipeline as _pipeline
+from . import runner as _pipeline
 
 
 # Approximate in-plane radius of coronene from

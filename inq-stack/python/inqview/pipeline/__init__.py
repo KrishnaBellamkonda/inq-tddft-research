@@ -23,6 +23,6 @@ Public entry point: :func:`run`.
 
 from __future__ import annotations
 
-from .pipeline import PHASES, PipelineResult, run
+from .runner import PHASES, PipelineResult, run
 
 __all__ = ["PHASES", "PipelineResult", "run"]

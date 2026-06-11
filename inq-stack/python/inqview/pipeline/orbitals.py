@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from . import pipeline as _pipeline
+from . import runner as _pipeline
 
 
 def run(results_dir: Path, *, run_name: str, rebuild: bool, **_) -> dict:

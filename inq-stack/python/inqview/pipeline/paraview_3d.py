@@ -30,7 +30,7 @@ import tempfile
 from pathlib import Path
 
 from . import _common
-from . import pipeline as _pipeline
+from . import runner as _pipeline
 
 
 _PVBATCH_CANDIDATES = [
