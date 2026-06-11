@@ -1,5 +1,29 @@
 # Handover: inqkit / inqview unit-testing rejuvenation
 
+## MILESTONE: CI/CD pipeline shipped — phase deliverable complete (2026-06-11)
+GitHub Actions CI added (`.github/workflows/ci.yml`, commit `9f3280c` on
+`test-reorg/inq-stack`). Runs the **two portable tiers** on every push/PR
+touching `inq-stack/**` (+ workflow_dispatch, concurrency cancel-in-progress):
+- **Python suite** — `pip install -e ./inq-stack[analysis,test] matplotlib
+  pillow imageio`, `pytest -q` over `tests/python`, plus the deps-clean import
+  check (`tests/python/test_deps_clean.py`). No VTK, no GPU, no INQ.
+- **C++ pure tier** — apt cmake/g++/ninja, `cmake -S inq-stack/tests/include`,
+  `ctest -L pure`. Catch2 v3.5.4 fetched via FetchContent (added to
+  `tests/include/CMakeLists.txt`) since stock runners have no INQ build tree;
+  local builds still reuse INQ's Catch2 source.
+- `.gitignore`: negated the broad `.*` rule for `.github` so the workflow is
+  tracked. README test paths refreshed.
+**Engine/GPU tiers deliberately NOT in CI** — they need INQ + a CUDA GPU; doc'd
+as local / self-hosted-runner (ADR 0001/0002). Validated locally pre-commit:
+YAML parses (10 steps), pure tier builds + 10/10 ctest pass, portable pytest
+needs no VTK (vtk-block test → 111 pass).
+**Status of "this phase" (unit-testing/restructure):** test reorg (mirrored
+`tests/include` + `tests/python`), minimum-observable-set (ADR 0006, C++
+manifest + Python validator, real jellium-wp run PASSES), and CI/CD all DONE.
+Remaining is user-gated (push 4 stacked branches to origin; merge) + minor
+rollout (wire `write_manifest` into run templates; test-catalogue rows).
+NEXT PHASE = claude-ecosystem (`task_calude_ecosystem.md`), interview-driven.
+
 ## NEXT PHASE: inqview Python tests (2026-06-10)
 inqkit round done → pivot to inqview. **29 TODO comments aggregated** into
 `docs/code-revitalisation/inqview-todo-catalogue.md` (themes: Φ-imports,
