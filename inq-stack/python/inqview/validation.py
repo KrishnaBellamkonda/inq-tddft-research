@@ -67,8 +67,10 @@ class ValidationReport:
         for o in self.observables:
             bad = [t for t in o.tiers if not t.passed]
             if bad:
+                tag = "FAIL" if o.required else "warn"   # optional misses don't fail the run
+                opt = "" if o.required else " (optional)"
                 for t in bad:
-                    lines.append(f"  FAIL [{t.tier:9s}] {o.name}: {t.detail}")
+                    lines.append(f"  {tag} [{t.tier:9s}] {o.name}{opt}: {t.detail}")
             else:
                 lines.append(f"  ok        {o.name}")
         if self.note:

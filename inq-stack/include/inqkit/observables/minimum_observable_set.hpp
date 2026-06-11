@@ -102,7 +102,10 @@ inline std::vector<ObservableSpec> minimum_set(RunType type) {
   if (type == RunType::jellium_wp || type == RunType::coronene ||
       type == RunType::free_wp) {
     add({
-      csv("wp_momentum_stats", "raw/observables/wp_momentum_stats.csv", "", "write_every", norm_band),
+      // wp_momentum_stats.norm_check is a k-space integral (NOT normalised to 1),
+      // so no norm-band invariant; existence/schema/finite suffice.
+      csv("wp_momentum_stats", "raw/observables/wp_momentum_stats.csv", "", "write_every"),
+      // wp_real_space_stats.norm_check is the real-space ∫|ψ|²dV ≈ 1.
       csv("wp_real_space_stats", "raw/observables/wp_real_space_stats.csv", "", "write_every", norm_band),
       vti("density_wp_rt", "raw/vti/density_wp/*.vti", /*required=*/false),
     });
