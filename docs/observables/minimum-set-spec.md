@@ -141,6 +141,30 @@ declared tier-4 invariant breach. Re-runnable on any existing run (audits the
 §4 gaps retroactively — a run with no manifest is validated against the
 inferred run-type set with a warning).
 
+## Implementation status (BUILT 2026-06-11, branch observable-set/inq-stack)
+
+- **C++ mechanism** — `inqkit/observables/minimum_observable_set.hpp` (pure,
+  std-only): `RunType`, `minimum_set(type)` (the single source of truth, core ∪
+  per-type), `manifest_json()` / `write_manifest()`. Pure test (45 assertions).
+- **Python validator** — `inqview.validation.validate_run(run_dir)` (deps-clean):
+  4 tiers + invariant registry (drift_max, norm_band, zero_at_t0, value_band,
+  monotone). Test (6 cases). CLI `python -m inqview.validation <run_dir>`.
+- **Verified end-to-end:** the C++ manifest is parsed + validated by the Python
+  validator; a real completed jellium-WP run **PASSES** the set (the audit caught
+  + fixed a wrong invariant on `wp_momentum_stats.norm_check`).
+
+**Run adoption (rollout — one line per run template, additive ⇒ bit-identical):**
+```cpp
+#include <inqkit/observables/minimum_observable_set.hpp>
+using namespace inqkit::observables;
+// at startup, after results/ is created:
+write_manifest("results/observables_manifest.json",
+               RunType::jellium_wp, Cfg::WRITE_EVERY, Cfg::N_STEPS);
+```
+Post-run: `python -m inqview.validation <run_dir>` (or call `validate_run` in
+analyse.py) gates the run. Writing a JSON file does not touch observables, so a
+run that adopts this stays byte-identical.
+
 ## Tests (phase-3, rule #6)
 
 - inqkit: `MinimumObservableSet` table unit test (each run-type → expected
