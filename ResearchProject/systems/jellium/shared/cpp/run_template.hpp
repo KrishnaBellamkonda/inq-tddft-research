@@ -54,6 +54,7 @@
 #include <inqkit/screens/leed_pattern_accumulator.hpp>
 #include <inqkit/wavepacket/injection_report.hpp>
 #include <inqkit/wavepacket/wavepacket.hpp>
+#include <inqkit/observables/minimum_observable_set.hpp>
 
 #include "eigenvalues_writer.hpp"
 #include "leed_screen_layout.hpp"
@@ -180,6 +181,15 @@ int run_propagation(std::string const &run_name,
           << "write_every     = " << Cfg::WRITE_EVERY << "\n"
           << "run_completed   = false\n";
     }
+
+    // ----- Observable manifest (ADR 0006 / Cluster O) ---------------------
+    // Declare the minimum observable set this run commits to produce so the
+    // post-run inqview validate_run() can check it. This template is WP-only
+    // (RunType::jellium_wp); classical run.cpp files pass jellium_classical.
+    inqkit::observables::write_manifest(
+        jellium::results::root() + "/observables_manifest.json",
+        inqkit::observables::RunType::jellium_wp,
+        Cfg::WRITE_EVERY, Cfg::N_STEPS);
 
     // ----- Ground-state artefacts (before WP injection) -------------------
     inqkit::io::RealField3DLayout vti_layout{
