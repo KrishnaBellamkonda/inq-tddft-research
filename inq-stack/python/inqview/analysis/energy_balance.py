@@ -55,9 +55,12 @@ def compute_ledger(se: pd.DataFrame, occ: pd.DataFrame, obs: pd.DataFrame,
 
     df = pd.DataFrame(rows, columns=["time_au", "dE_wp_ha", "dE_bath_ha"])
     if "energy_total" in obs.columns:
-        e0 = float(obs["energy_total"].to_numpy()[0])
-        df["dE_total_ha"] = np.interp(df["time_au"], obs["time_au"].to_numpy(),
-                                      obs["energy_total"].to_numpy()) - e0
+        # np.interp requires monotonically increasing xp — sort obs by time so a
+        # restart / concatenated observables.csv can't yield silently-wrong dE_total.
+        obs_s = obs.sort_values("time_au")
+        ot = obs_s["time_au"].to_numpy()
+        oe = obs_s["energy_total"].to_numpy()
+        df["dE_total_ha"] = np.interp(df["time_au"], ot, oe) - float(oe[0])
     else:
         df["dE_total_ha"] = np.nan
     df["unaccounted_ha"] = df["dE_total_ha"] - (df["dE_wp_ha"] + df["dE_bath_ha"])

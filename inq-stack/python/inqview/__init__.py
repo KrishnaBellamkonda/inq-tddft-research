@@ -67,6 +67,10 @@ _LAZY_EXPORTS = {
     "plot_spectrum_summary": "visualisation.plots",
     "plot_density_slice": "visualisation.plots",
     "plot_leed_pattern": "visualisation.plots",
+    # pipeline: default render-spec wrappers (used by run analysis.py scripts —
+    # kept public; only the legacy config/theme names were dropped)
+    "default_density_movie": "defaults",
+    "default_wavepacket_movie": "defaults",
 }
 
 __all__ = sorted(_LAZY_EXPORTS)
@@ -119,3 +123,4 @@ if TYPE_CHECKING:  # let type-checkers/IDEs still see the names eagerly
         plot_spectrum_summary,
         plot_total_energy_vs_time,
     )
+    from .defaults import default_density_movie, default_wavepacket_movie
