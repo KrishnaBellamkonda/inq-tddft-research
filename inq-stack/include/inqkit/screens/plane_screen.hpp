@@ -72,18 +72,34 @@ public:
   int axis() const { return axis_; }
   std::string const &label() const { return label_; }
 
-  // ── Grid dimensions for this cell ──────────────────────────────────────
+  // The two in-plane axes (ascending) for a given normal axis: {0,1,2}\{axis}.
+  // axis 0 -> (y,z); axis 1 -> (x,z); axis 2 -> (x,y). Explicit lookup so the
+  // ascending-order invariant (extract() returns [size(a1)][size(a0)]) is obvious.
+  static void inplane_axes(int axis, int &a0, int &a1) {
+    static constexpr int IP[3][2] = {{1, 2}, {0, 2}, {0, 1}};
+    a0 = IP[axis][0];
+    a1 = IP[axis][1];
+  }
+
+  // ── In-plane grid dimensions/spacings (axis-aware) ──────────────────────
+  // nx()/ny()/dx()/dy() are the in-plane sizes/spacings of THIS screen's plane:
+  // (a0, a1) for the normal axis_. For axis_=2 (z) this is (x, y) — unchanged
+  // back-compat — and matches extract()'s [ny][nx] = [size(a1)][size(a0)] output.
   int nx(inq::systems::electrons const &electrons) const {
-    return electrons.states_basis().sizes()[0];
+    int a0, a1; inplane_axes(axis_, a0, a1);
+    return electrons.states_basis().sizes()[a0];
   }
   int ny(inq::systems::electrons const &electrons) const {
-    return electrons.states_basis().sizes()[1];
+    int a0, a1; inplane_axes(axis_, a0, a1);
+    return electrons.states_basis().sizes()[a1];
   }
   double dx(inq::systems::electrons const &electrons) const {
-    return electrons.states_basis().rspacing()[0];
+    int a0, a1; inplane_axes(axis_, a0, a1);
+    return electrons.states_basis().rspacing()[a0];
   }
   double dy(inq::systems::electrons const &electrons) const {
-    return electrons.states_basis().rspacing()[1];
+    int a0, a1; inplane_axes(axis_, a0, a1);
+    return electrons.states_basis().rspacing()[a1];
   }
 
   // ── Extract 2D density slice ────────────────────────────────────────────
@@ -111,9 +127,8 @@ public:
     INQKIT_GPU_SYNC(); // flush device-resident orbital data before CPU reads
 
     auto const &basis = electrons.states_basis();
-    // In-plane axes a0 < a1 (the two not equal to the normal axis_).
-    int a0 = (axis_ == 0) ? 1 : 0;
-    int a1 = (axis_ == 2) ? 1 : 2;
+    int a0, a1;                               // in-plane axes (ascending)
+    inplane_axes(axis_, a0, a1);
     int S0 = basis.sizes()[a0];               // output plane: [S1][S0]
     int S1 = basis.sizes()[a1];
     int it_tgt = index_nearest(electrons, z_bohr_, axis_);
@@ -127,20 +142,31 @@ public:
     auto const &occ = electrons.occupations()[0];
     auto hc = phi.hypercubic();
 
-    for (int ist = 0; ist < phi.set_part().local_size(); ist++) {
-      double f = occ[ist];
-      if (f == 0.0) continue;  // skip unused extra states
-      for (int la = 0; la < La; la++) {       // normal-axis index (outer; skip fast)
-        auto ga = phi.basis().cubic_part(axis_).local_to_global({la}).value();
-        if (static_cast<int>(ga) != it_tgt) continue;
+    // The target plane's local index is STATE-independent: find it once. If this
+    // rank does not own the plane, la_match stays -1 and the slice is all-zero
+    // here (the cross-rank reduce below fills it). Also precompute the in-plane
+    // global indices once instead of per state.
+    int la_match = -1;
+    for (int la = 0; la < La; ++la)
+      if (static_cast<int>(phi.basis().cubic_part(axis_).local_to_global({la}).value())
+          == it_tgt) { la_match = la; break; }
+
+    if (la_match >= 0) {
+      std::vector<int> g0v(Lb0), g1v(Lb1);
+      for (int l0 = 0; l0 < Lb0; ++l0)
+        g0v[l0] = phi.basis().cubic_part(a0).local_to_global({l0}).value();
+      for (int l1 = 0; l1 < Lb1; ++l1)
+        g1v[l1] = phi.basis().cubic_part(a1).local_to_global({l1}).value();
+
+      for (int ist = 0; ist < phi.set_part().local_size(); ist++) {
+        double f = occ[ist];
+        if (f == 0.0) continue;  // skip unused extra states
         for (int l0 = 0; l0 < Lb0; l0++) {
-          auto g0 = phi.basis().cubic_part(a0).local_to_global({l0}).value();
           for (int l1 = 0; l1 < Lb1; l1++) {
-            auto g1 = phi.basis().cubic_part(a1).local_to_global({l1}).value();
             int loc[3];
-            loc[axis_] = la; loc[a0] = l0; loc[a1] = l1;   // (ix,iy,iz) local
+            loc[axis_] = la_match; loc[a0] = l0; loc[a1] = l1;  // (ix,iy,iz) local
             auto w = hc[loc[0]][loc[1]][loc[2]][ist];
-            slice[g1][g0] += f * (w.real() * w.real() + w.imag() * w.imag());
+            slice[g1v[l1]][g0v[l0]] += f * (w.real() * w.real() + w.imag() * w.imag());
           }
         }
       }

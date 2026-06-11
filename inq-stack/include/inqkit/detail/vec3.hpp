@@ -12,6 +12,7 @@
  */
 #pragma once
 
+#include <cassert>
 #include <cmath>
 
 namespace inqkit::detail {
@@ -23,8 +24,14 @@ struct Vec3 {
 
   // Index access (0=x, 1=y, 2=z) so call sites that used loose x/y/z arrays
   // (observables_writer's ctx.current[0..2]) work unchanged after the switch.
-  double &operator[](int i) { return i == 0 ? x : (i == 1 ? y : z); }
-  double operator[](int i) const { return i == 0 ? x : (i == 1 ? y : z); }
+  double &operator[](int i) {
+    assert(i >= 0 && i < 3 && "Vec3 index out of range");
+    return i == 0 ? x : (i == 1 ? y : z);
+  }
+  double operator[](int i) const {
+    assert(i >= 0 && i < 3 && "Vec3 index out of range");
+    return i == 0 ? x : (i == 1 ? y : z);
+  }
 
   double dot(Vec3 const &o) const { return x * o.x + y * o.y + z * o.z; }
   double norm2() const { return dot(*this); }
