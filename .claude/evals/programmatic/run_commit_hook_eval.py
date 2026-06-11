@@ -37,6 +37,8 @@ ACCEPT = [
     ("feature(coronene+inqview): add leed overlay", "multi-scope ok"),
     ("feature(repo): add .claude/hooks/commit_message_check.py", "dot-claude path ok"),
     ("docs(repo): describe the .claude/evals layout", "dot-claude path ok 2"),
+    ("docs(repo): add docs/claude-ecosystem-guide.md", "claude in slash+hyphen path"),
+    ("docs(repo): polish docs/claude/skills notes", "claude mid-path (slashes)"),
 ]
 
 # message-extraction sanity (hook plumbing)

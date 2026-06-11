@@ -22,11 +22,27 @@ import sys
 ACTIONS = ["rename", "cut", "sim", "docs", "fix",
            "feature", "refactor", "add", "chore"]
 
-# Forbidden as STANDALONE words (so "raid", "main", "detail" are fine). The
-# negative lookbehind for "." exempts dot-prefixed path tokens like ".claude/"
-# (a directory we reference constantly) — the rule targets attribution
-# ("Claude Code", "Co-Authored-By: Claude"), not the literal directory name.
-_FORBIDDEN = re.compile(r"(?<!\.)\b(claude|anthropic|ai)\b", re.IGNORECASE)
+# Forbidden as STANDALONE PROSE words (so "raid", "main", "detail" are fine).
+# The rule targets ATTRIBUTION ("Claude Code", "Co-Authored-By: Claude", "AI
+# agent"), not the word as part of a path or identifier token — we reference
+# `.claude/`, `docs/claude/`, `docs/claude-ecosystem-guide.md` constantly. A
+# match is EXEMPT when it sits in path/identifier context: preceded by "/" or
+# "." or followed by "-", "/", or "_".
+_FORBIDDEN = re.compile(r"\b(claude|anthropic|ai)\b", re.IGNORECASE)
+_PATH_BEFORE = "/."
+_PATH_AFTER = "-/_"
+
+
+def _first_forbidden(message: str):
+    """Return the first forbidden PROSE-word match, or None (path/identifier
+    occurrences are exempt)."""
+    for m in _FORBIDDEN.finditer(message):
+        before = message[m.start() - 1] if m.start() > 0 else ""
+        after = message[m.end()] if m.end() < len(message) else ""
+        if before in _PATH_BEFORE or after in _PATH_AFTER:
+            continue            # part of a path/identifier — allowed
+        return m
+    return None
 _SUBJECT = re.compile(r"^(?:" + "|".join(ACTIONS) + r")\([^()]+\): .+")
 _MAX_SUBJECT = 72
 
@@ -47,8 +63,8 @@ def check(message: str) -> Result:
     msg = message.strip("\n")
     subject = msg.split("\n", 1)[0] if msg else ""
 
-    # 1. forbidden words anywhere in the message (subject + body + trailers)
-    m = _FORBIDDEN.search(msg)
+    # 1. forbidden PROSE words anywhere in the message (path/identifier exempt)
+    m = _first_forbidden(msg)
     if m:
         return Result(False, f"forbidden word {m.group(0)!r} (commit-messages rule §1)")
 

@@ -29,10 +29,12 @@ feed each message, assert verdict. Runner lives in `.claude/evals/programmatic/`
 | `sim(jellium): add E50 run defs` | valid action `sim` |
 | `feature(repo): add .claude/hooks/commit_message_check.py` | `.claude/` path token is exempt (rule targets attribution, not the dir name) |
 
-**Dot-path exemption:** a dot-prefixed `.claude` (or any `.word`) path token is
-NOT a forbidden word — the rule forbids attribution ("Claude Code",
-"Co-Authored-By: Claude"), not the literal directory we reference constantly.
-Regression-locked after the hook blocked its own first commit.
+**Path/identifier exemption:** the forbidden word is allowed when it sits in a
+path or identifier token — preceded by `/` or `.`, or followed by `-`/`/`/`_`
+(`.claude/`, `docs/claude/skills`, `docs/claude-ecosystem-guide.md`). It is still
+blocked as a prose word ("Claude Code", "Co-Authored-By: Claude", "AI agent").
+Regression-locked after the hook blocked two of its own commits (the `.claude`
+path, then the `docs/claude-…` guide path).
 
 ## Closed action-word list (the 9, in precedence order)
 
