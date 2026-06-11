@@ -40,3 +40,20 @@ Two facts constrain the choice:
 - Rejected: embedding `TEST_CASE` in each header (edits all 38, fights the
   never-edit rule); a single monolithic test binary (forces the INQ link into
   pure tests, coarse granularity).
+
+## Amendment (2026-06-11): unified, mirrored `tests/` layout
+
+All tests now live under `inq-stack/tests/`, mirroring the source tree so each
+test sits beside the file it covers:
+- `tests/include/inqkit/<module>/test_*.cpp` — C++ tests mirroring
+  `inq-stack/include/inqkit/` (pure + engine in the same module folder; the tier
+  is set by which CMakeLists registers it). Pure CMakeLists at `tests/include/`;
+  engine CMakeLists + `test_engine_main.cpp` at `tests/include/engine/` (sources
+  referenced via `../inqkit/<module>/`).
+- `tests/python/inqview/<layer>/test_*.py` — Python tests mirroring
+  `inq-stack/python/inqview/`; cross-cutting tests (`test_deps_clean`,
+  `test_density_fft_shift_logic`) sit at the `tests/python/` root with
+  `conftest.py`/`_signals.py`. `pyproject testpaths = ["tests/python"]`.
+
+Supersedes the original `tests/cpp/` (C++) + `python/tests/` (Python) split,
+which scattered tests by language convention rather than by file-under-test.
