@@ -24,3 +24,10 @@ Evaluator: **planted-bug fixtures**, expected verdict fixed up front.
 
 ≥ 6/7 match. A CONFIRM on T2 (circular) or T7 (no assertion) is a **hard fail** —
 these are exactly the test-smells the agent exists to catch.
+
+## Validation log
+
+- 2026-06-11: agent prompt validated on a 2-fixture sample (T1, T2) via primed
+  general-purpose agents. T1 (sound, analytic expected) → CONFIRM; T2 (circular,
+  expected captured from the code under test) → FLAG. 2/2 expected. Full
+  7-fixture suite: run once the agent is registered.

@@ -27,6 +27,13 @@ not FLAG a correct formula or CONFIRM a planted one). A CONFIRM on any planted-
 bug fixture (F2/F4/F6/F8) is a **hard fail** — that's the failure mode the agent
 exists to prevent.
 
+## Validation log
+
+- 2026-06-11: agent prompt validated on a 2-fixture sample (F1, F2) via primed
+  general-purpose agents (the named agent enters the registry next session
+  start). F1 (correct COD) → CONFIRM; F2 (missing `/Σn`) → FLAG with the units
+  argument. 2/2 expected. Full 8-fixture suite: run once the agent is registered.
+
 ## Independence guard
 
 The agent must be given the formula + source ONLY — never the test, never the
