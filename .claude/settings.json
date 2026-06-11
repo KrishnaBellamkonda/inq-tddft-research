@@ -1,0 +1,38 @@
+{
+  "enabledPlugins": {
+    "explanatory-output-style@claude-plugins-official": true,
+    "context7@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
+    "claude-scientific-writer@claude-scientific-writer": true,
+    "understand-anything@understand-anything": true
+  },
+  "extraKnownMarketplaces": {
+    "claude-scientific-writer": {
+      "source": {
+        "source": "git",
+        "url": "https://github.com/K-Dense-AI/claude-scientific-writer.git"
+      },
+      "autoUpdate": true
+    },
+    "understand-anything": {
+      "source": {
+        "source": "github",
+        "repo": "Lum1104/Understand-Anything"
+      }
+    }
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /local/data/public/skcb2/tddft/.claude/hooks/commit_message_check.py"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -141,6 +141,9 @@ docs/inq-docs/
 !.claude/evals/
 !.claude/hooks/
 !.claude/agents/
+# shared ecosystem config (hooks + plugins) is tracked; personal prefs +
+# machine permissions stay in the gitignored settings.local.json
+!.claude/settings.json
 
 build_pure/
 **/build_pure/
