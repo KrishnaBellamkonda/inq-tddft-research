@@ -1,9 +1,8 @@
 /*
- *
- *  Limitations:
- *  1. Currently only work along the z axis. TODO: Generalise the class to all dims.
- *  2. TODO: Can implement time averaged total density. 
- *
+ * inqkit::screens::PlaneScreen — 2D electron-density slice on a plane normal to
+ * a chosen axis (D2: generalised from z-only to x/y/z; default axis=2=z is
+ * byte-identical to the previous behaviour). A time-averaged accumulator
+ * (TimeAveragedScreen) is provided for ⟨ρ⟩ = Σ_t ρ·dt / T.
  * */
 
 #pragma once
@@ -44,34 +43,33 @@ namespace inqkit {
 namespace screens {
 
 class PlaneScreen {
-  double z_bohr_;
+  double z_bohr_;        // position (Bohr) along axis_ of the screen plane
   std::string label_;
+  int axis_ = 2;         // plane NORMAL axis: 0=x, 1=y, 2=z (default z)
 
-  // ── Nearest-z-index helper ──────────────────────────────────────────────
-  // INQ stores fields in FFT-natural order: array index 0 corresponds to
-  // physical z = 0 (cell centre); indices in (Nz/2, Nz-1] map to negative
-  // physical z. The previous implementation clamped to [0, Nz-1], which
-  // pinned every negative-z screen to grid index 0 (the molecule plane) —
-  // every "transmission" screen was therefore sampling z = 0 instead of
-  // the requested plane. This wrap is the inverse of grid::to_symmetric_range
-  // used by point_op_.rvector_cartesian().
-  static int iz_nearest(inq::systems::electrons const &electrons,
-                        double z_target) {
+  // ── Nearest-index helper (along `axis`) ─────────────────────────────────
+  // INQ stores fields in FFT-natural order: array index 0 is physical 0 (cell
+  // centre); indices in (N/2, N-1] map to negative physical coords. The wrap
+  // `((i % N) + N) % N` is the inverse of grid::to_symmetric_range (fixes the
+  // old clamp that pinned every negative-coord screen to index 0).
+  static int index_nearest(inq::systems::electrons const &electrons,
+                           double target, int axis) {
     auto const &basis = electrons.states_basis();
-    int Nz = basis.sizes()[2];
-    double dz = basis.rspacing()[2];
-    int iz = static_cast<int>(std::round(z_target / dz));
-    int iz_nat = ((iz % Nz) + Nz) % Nz;     // FFT-natural wrap into [0, Nz)
-    return iz_nat;
+    int N = basis.sizes()[axis];
+    double d = basis.rspacing()[axis];
+    int i = static_cast<int>(std::round(target / d));
+    return ((i % N) + N) % N;               // FFT-natural wrap into [0, N)
   }
 
 public:
   PlaneScreen() = default;
 
-  PlaneScreen(double z_bohr, std::string label = "")
-      : z_bohr_(z_bohr), label_(std::move(label)) {}
+  PlaneScreen(double z_bohr, std::string label = "", int axis = 2)
+      : z_bohr_(z_bohr), label_(std::move(label)), axis_(axis) {}
 
-  double z_bohr() const { return z_bohr_; }
+  double z_bohr() const { return z_bohr_; }   // position along axis_ (legacy name)
+  double position() const { return z_bohr_; }
+  int axis() const { return axis_; }
   std::string const &label() const { return label_; }
 
   // ── Grid dimensions for this cell ──────────────────────────────────────
@@ -113,47 +111,48 @@ public:
     INQKIT_GPU_SYNC(); // flush device-resident orbital data before CPU reads
 
     auto const &basis = electrons.states_basis();
-    int Nx_g = basis.sizes()[0];
-    int Ny_g = basis.sizes()[1];
-    int iz_tgt = iz_nearest(electrons, z_bohr_);
+    // In-plane axes a0 < a1 (the two not equal to the normal axis_).
+    int a0 = (axis_ == 0) ? 1 : 0;
+    int a1 = (axis_ == 2) ? 1 : 2;
+    int S0 = basis.sizes()[a0];               // output plane: [S1][S0]
+    int S1 = basis.sizes()[a1];
+    int it_tgt = index_nearest(electrons, z_bohr_, axis_);
 
     auto const &phi = electrons.kpin()[0];
-    int Nx = phi.basis().cubic_part(0).local_size();
-    int Ny = phi.basis().cubic_part(1).local_size();
-    int Nz = phi.basis().cubic_part(2).local_size();
+    int La = phi.basis().cubic_part(axis_).local_size();
+    int Lb0 = phi.basis().cubic_part(a0).local_size();
+    int Lb1 = phi.basis().cubic_part(a1).local_size();
 
-    std::vector<std::vector<double>> slice(Ny_g,
-                                           std::vector<double>(Nx_g, 0.0));
+    std::vector<std::vector<double>> slice(S1, std::vector<double>(S0, 0.0));
     auto const &occ = electrons.occupations()[0];
     auto hc = phi.hypercubic();
 
     for (int ist = 0; ist < phi.set_part().local_size(); ist++) {
       double f = occ[ist];
       if (f == 0.0) continue;  // skip unused extra states
-      for (int iz = 0; iz < Nz; iz++) {
-        auto iz_g = phi.basis().cubic_part(2).local_to_global({iz}).value();
-        if (iz_g != iz_tgt)
-          continue;
-        for (int ix = 0; ix < Nx; ix++) {
-          auto ix_g = phi.basis().cubic_part(0).local_to_global({ix}).value();
-          for (int iy = 0; iy < Ny; iy++) {
-            auto iy_g = phi.basis().cubic_part(1).local_to_global({iy}).value();
-            auto w = hc[ix][iy][iz][ist];
-            slice[iy_g][ix_g] +=
-                f * (w.real() * w.real() + w.imag() * w.imag());
+      for (int la = 0; la < La; la++) {       // normal-axis index (outer; skip fast)
+        auto ga = phi.basis().cubic_part(axis_).local_to_global({la}).value();
+        if (static_cast<int>(ga) != it_tgt) continue;
+        for (int l0 = 0; l0 < Lb0; l0++) {
+          auto g0 = phi.basis().cubic_part(a0).local_to_global({l0}).value();
+          for (int l1 = 0; l1 < Lb1; l1++) {
+            auto g1 = phi.basis().cubic_part(a1).local_to_global({l1}).value();
+            int loc[3];
+            loc[axis_] = la; loc[a0] = l0; loc[a1] = l1;   // (ix,iy,iz) local
+            auto w = hc[loc[0]][loc[1]][loc[2]][ist];
+            slice[g1][g0] += f * (w.real() * w.real() + w.imag() * w.imag());
           }
         }
       }
     }
 
-    // E01 fix: reduce the partial slices across the basis (domain) and state
-    // communicators so every rank returns the complete slice. Flatten to a
-    // contiguous buffer for the in-place all_reduce, then unflatten.
+    // E01 fix: reduce partial [S1][S0] slices across the basis (domain) and
+    // state communicators so every rank returns the complete slice.
     if (phi.basis().comm().size() > 1 || phi.set_comm().size() > 1) {
-      std::vector<double> buf(static_cast<std::size_t>(Ny_g) * Nx_g);
-      for (int iy = 0; iy < Ny_g; ++iy)
-        for (int ix = 0; ix < Nx_g; ++ix)
-          buf[static_cast<std::size_t>(iy) * Nx_g + ix] = slice[iy][ix];
+      std::vector<double> buf(static_cast<std::size_t>(S1) * S0);
+      for (int i1 = 0; i1 < S1; ++i1)
+        for (int i0 = 0; i0 < S0; ++i0)
+          buf[static_cast<std::size_t>(i1) * S0 + i0] = slice[i1][i0];
 
       if (phi.basis().comm().size() > 1)
         phi.basis().comm().all_reduce_in_place_n(buf.data(), buf.size(),
@@ -162,9 +161,9 @@ public:
         phi.set_comm().all_reduce_in_place_n(buf.data(), buf.size(),
                                              std::plus<>{});
 
-      for (int iy = 0; iy < Ny_g; ++iy)
-        for (int ix = 0; ix < Nx_g; ++ix)
-          slice[iy][ix] = buf[static_cast<std::size_t>(iy) * Nx_g + ix];
+      for (int i1 = 0; i1 < S1; ++i1)
+        for (int i0 = 0; i0 < S0; ++i0)
+          slice[i1][i0] = buf[static_cast<std::size_t>(i1) * S0 + i0];
     }
     return slice;
   }
@@ -186,6 +185,36 @@ public:
       f << "\n";
     }
   }
+};
+
+// Time-averaged density screen: ⟨ρ⟩ = Σ_t ρ(t)·dt / Σ_t dt (D2). Accumulate a
+// PlaneScreen::extract() slice per step with its dt; average() returns the
+// dt-weighted mean. For constant frames this returns the frame exactly.
+class TimeAveragedScreen {
+  std::vector<std::vector<double>> accum_;
+  double total_dt_ = 0.0;
+
+public:
+  void add(std::vector<std::vector<double>> const &slice, double dt) {
+    if (accum_.empty())
+      accum_.assign(slice.size(),
+                    std::vector<double>(slice.empty() ? 0 : slice[0].size(), 0.0));
+    for (std::size_t i = 0; i < slice.size(); ++i)
+      for (std::size_t j = 0; j < slice[i].size(); ++j)
+        accum_[i][j] += slice[i][j] * dt;
+    total_dt_ += dt;
+  }
+
+  std::vector<std::vector<double>> average() const {
+    auto out = accum_;
+    if (total_dt_ > 0.0)
+      for (auto &row : out)
+        for (auto &v : row)
+          v /= total_dt_;
+    return out;
+  }
+
+  double total_time() const { return total_dt_; }
 };
 
 } // namespace screens
