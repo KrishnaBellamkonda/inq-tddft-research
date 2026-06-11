@@ -32,7 +32,7 @@ include = ["inqview", "inqview.*"]
 
 [tool.pytest.ini_options]
 # Portable pure-Python suite (ADR 0005): no GPU, no INQ engine, fixtures < 5 MB.
-testpaths = ["python/tests", "python/inqview/pipeline/test_lindhard.py"]
+testpaths = ["tests/python"]
 python_files = ["test_*.py"]
 addopts = "-ra"
 markers = [
