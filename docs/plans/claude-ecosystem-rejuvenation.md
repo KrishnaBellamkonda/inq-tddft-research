@@ -195,14 +195,15 @@ note, per explicit user instruction.)
 
 ## 5. Status
 
-- Subtask 1 (eval set): **COMPLETE — at review gate.** 12 eval specs written
-  under `.claude/evals/` (skills/4, rules/3, clusters/2, programmatic/5... see
-  inventory below). Every eval fixes its expected verdict before the component
-  exists (anti-circular).
+- Subtask 1 (eval set): **COMPLETE & LOCKED.** Specs under `.claude/evals/`;
+  every eval fixes its expected verdict before the component exists.
 - Subtask 2 (modularisation plan): **COMPLETE** — D1–D6', Cluster O, Cluster R,
   D4, D5' locked.
-- Subtasks 3–4 (implement, finetune): **ready to start** — gated on user lock of
-  the eval set.
+- Subtask 3 (implement): **COMPLETE.** C1–C11 done on branch
+  `rejuvenation/claude-ecosystem` (eval-first, each committed). 5/5 portable
+  evals green + theme pytest 9/9. Branch NOT pushed/merged (user-gated).
+- Subtask 4 (finetune): not started — iterate when the user runs the behavioural
+  (LLM-judge) specs.
 
 ## 6. Eval-set inventory (subtask 1 deliverable)
 
