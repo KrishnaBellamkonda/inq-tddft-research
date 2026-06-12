@@ -36,6 +36,10 @@ def load_track(path: str, mass: float = 1.0, axis: str = "z") -> Track:
     with open(path) as fh:
         r = csv.DictReader(fh)
         for row in r:
+            # tolerate a partial last line from a live-being-written CSV
+            if any(row.get(k) in (None, "") for k in
+                   ("time_au", "x", "y", "z", "vx", "vy", "vz")):
+                continue
             rows.append(row)
     # dedupe the duplicated t=0 header row some runs write
     seen = set()

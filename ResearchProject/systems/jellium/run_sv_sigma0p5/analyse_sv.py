@@ -38,9 +38,13 @@ def main():
 
     fig, ax = S.figure_one_col()
     rows = []
-    cmap = S.cmap_for("sequential")
+    cmap = S.plt.get_cmap(S.cmap_for("sequential"))
     for i, tpath in enumerate(tracks):
         sub = os.path.basename(os.path.dirname(tpath))
+        # only plot runs that have actually completed
+        summ = os.path.join(os.path.dirname(tpath), "run_summary.txt")
+        if not (os.path.exists(summ) and "run_completed  = true" in open(summ).read()):
+            print(f"  {sub}: in progress, skipping"); continue
         sig = 0.4 if "sig0p4" in sub else 0.5
         try:
             tr = load_track(tpath, mass=1.0, axis="z")
