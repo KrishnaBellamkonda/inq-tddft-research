@@ -19,18 +19,26 @@ short decel-segment S(v) runs + the analytic Lindhard reference + the kick
 *capability* (cost-blocked for production). This is honest graceful degradation,
 not silent truncation.
 
-### Results so far (3 of 6 S(v) points done; curve rising toward Bragg peak)
-| v | measured S (Ha/Bohr) | Lindhard S_LR | ratio |
-|---|---|---|---|
-| 2.98 | 0.0082 | 0.0067 | 1.22 (above LR) |
-| 1.94 | 0.0173 | 0.0131 | 1.33 (above LR) |
-| 1.13 | 0.0336 | 0.0301 | 1.12 (above LR) |
-| 0.58 | 0.0387 | 0.0543 | **0.71 (BELOW LR — Barkas)** |
-- **KEY: Z=−1 Barkas crossover observed** — rt-TDDFT above σ-Lindhard for v≳1,
-  crosses below at v≈0.6. Validates the PHYSICS, not just the toolchain. Peak
-  near v~0.8–1.3. (v0=0.6, σ0.4 still running for the low-v friction slope.)
-- f-sum: corrected Lindhard ELF = 1.000 at all q (old pipeline.lindhard FAILS, 0.01–0.13 at q<0.5).
-- Bragg-peak velocity/height + low-v friction Q: pending the v0=0.8/0.6 runs (below peak).
+### Results — COMPLETE (all 6 S(v) runs done)
+| v | measured S (Ha/Bohr) | Lindhard S_LR | ratio | regime |
+|---|---|---|---|---|
+| 2.98 | 0.0082 | 0.0067 | 1.22 | above LR |
+| 1.94 | 0.0173 | 0.0131 | 1.33 | above LR |
+| 1.13 | 0.0336 | 0.0301 | 1.12 | above LR |
+| 0.58 | 0.0387 | 0.0543 | 0.71 | BELOW LR (Barkas) |
+| 0.40 | 0.0360 | ~0.032 | 1.12 | friction tail (noisy) |
+| 0.77 (σ=0.4) | 0.0382 | 0.0480 | 0.79 | σ-sens = 1.05× σ=0.5 |
+
+**Three headline numbers (morning ask):**
+1. Bragg peak v≈1.0, S≈0.046 Ha/Bohr — shifted higher + broadened vs the Lindhard
+   peak (v≈0.6/0.054): nonlinear-screening signature.
+2. Z=−1 Barkas crossover confirmed (above LR for v≳1, below near LR peak v≈0.6).
+3. Low-v friction Q NOT cleanly determined (extraction noisy below v≈0.5) — honest
+   limitation; follow-up = longer averaging / force-based S.
+- f-sum: corrected Lindhard ELF = 1.000 at all q (old pipeline.lindhard FAILS 0.01–0.13).
+- **Executed `report.ipynb`** (0 errors, 4 figs) + REPORT.md + money plot all current.
+- Catalogue: `docs/runs_catalogue.csv` has a run_sv_sigma0p5 row (dir-level; per-velocity
+  detail in the report table — one-dir-one-run model mismatch noted).
 - **Executed `docs/reports/.../report.ipynb`** (0 errors, 4 figures) + REPORT.md done.
 - Refresh: `run_sv_sigma0p5/analyse_sv.py` (money plot) and
   `docs/reports/.../build_notebook.py` (notebook) — re-run as runs complete.
