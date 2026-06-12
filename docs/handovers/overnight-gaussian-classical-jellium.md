@@ -22,11 +22,13 @@ not silent truncation.
 ### Results so far (3 of 6 S(v) points done; curve rising toward Bragg peak)
 | v | measured S (Ha/Bohr) | Lindhard S_LR | ratio |
 |---|---|---|---|
-| 2.98 | 0.0082 | 0.0067 | 1.22 |
-| 1.94 | 0.0173 | 0.0131 | 1.33 |
-| 1.13 | 0.0336 | 0.0301 | 1.12 |
-- rt-TDDFT tracks the σ-Lindhard curve with a consistent ~1.1–1.3 ratio (above LR),
-  rising toward the Bragg peak as v→1. Workflow/methods/implementations VALIDATED.
+| 2.98 | 0.0082 | 0.0067 | 1.22 (above LR) |
+| 1.94 | 0.0173 | 0.0131 | 1.33 (above LR) |
+| 1.13 | 0.0336 | 0.0301 | 1.12 (above LR) |
+| 0.58 | 0.0387 | 0.0543 | **0.71 (BELOW LR — Barkas)** |
+- **KEY: Z=−1 Barkas crossover observed** — rt-TDDFT above σ-Lindhard for v≳1,
+  crosses below at v≈0.6. Validates the PHYSICS, not just the toolchain. Peak
+  near v~0.8–1.3. (v0=0.6, σ0.4 still running for the low-v friction slope.)
 - f-sum: corrected Lindhard ELF = 1.000 at all q (old pipeline.lindhard FAILS, 0.01–0.13 at q<0.5).
 - Bragg-peak velocity/height + low-v friction Q: pending the v0=0.8/0.6 runs (below peak).
 - **Executed `docs/reports/.../report.ipynb`** (0 errors, 4 figures) + REPORT.md done.
