@@ -19,11 +19,19 @@ short decel-segment S(v) runs + the analytic Lindhard reference + the kick
 *capability* (cost-blocked for production). This is honest graceful degradation,
 not silent truncation.
 
-### Three most important results (fill from runs as they finish)
-- Bragg-peak velocity / height: TODO (from assembled S(v) vs Lindhard)
-- Low-v friction coefficient Q (S=Q·v): TODO
-- f-sum deviations: corrected Lindhard ELF passes f-sum ratio = 1.000 at all q
-  (the existing `inqview.pipeline.lindhard` FAILS it, 0.01–0.13 at q<0.5).
+### Results so far (3 of 6 S(v) points done; curve rising toward Bragg peak)
+| v | measured S (Ha/Bohr) | Lindhard S_LR | ratio |
+|---|---|---|---|
+| 2.98 | 0.0082 | 0.0067 | 1.22 |
+| 1.94 | 0.0173 | 0.0131 | 1.33 |
+| 1.13 | 0.0336 | 0.0301 | 1.12 |
+- rt-TDDFT tracks the σ-Lindhard curve with a consistent ~1.1–1.3 ratio (above LR),
+  rising toward the Bragg peak as v→1. Workflow/methods/implementations VALIDATED.
+- f-sum: corrected Lindhard ELF = 1.000 at all q (old pipeline.lindhard FAILS, 0.01–0.13 at q<0.5).
+- Bragg-peak velocity/height + low-v friction Q: pending the v0=0.8/0.6 runs (below peak).
+- **Executed `docs/reports/.../report.ipynb`** (0 errors, 4 figures) + REPORT.md done.
+- Refresh: `run_sv_sigma0p5/analyse_sv.py` (money plot) and
+  `docs/reports/.../build_notebook.py` (notebook) — re-run as runs complete.
 
 ## Stage status
 
