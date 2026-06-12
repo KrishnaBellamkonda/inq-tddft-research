@@ -1,4 +1,17 @@
 {
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /local/data/public/skcb2/tddft/.claude/hooks/commit_message_check.py"
+          }
+        ]
+      }
+    ]
+  },
   "enabledPlugins": {
     "explanatory-output-style@claude-plugins-official": true,
     "context7@claude-plugins-official": true,
@@ -22,30 +35,9 @@
       }
     }
   },
-  "env": {
-    "INQ_SHARE_PATH": "/local/data/public/skcb2/tddft/inq/install/share",
-    "PSEUDOPOD_SHARE_PATH": "/local/data/public/skcb2/tddft/inq/install/share/pseudopod"
-  },
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 /local/data/public/skcb2/tddft/.claude/hooks/commit_message_check.py"
-          }
-        ]
-      },
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 /local/data/public/skcb2/tddft/.claude/hooks/file_placement_check.py"
-          }
-        ]
-      }
-    ]
-  }
+  "effortLevel": "high",
+  "autoUpdatesChannel": "latest",
+  "theme": "dark",
+  "agentPushNotifEnabled": true,
+  "skipAutoPermissionPrompt": true
 }
