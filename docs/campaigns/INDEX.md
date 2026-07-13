@@ -10,7 +10,7 @@
 | Campaign | Area | Progress | Handover |
 |---|---|---|---|
 | [Annular jellium tube — electron projectile down the bore, S(v) vs wall r_s](cylindrical_jellium/cylindrical_jellium_projectile.md) | cylindrical_jellium | 3/7 | [↗](../handovers/cylindrical-jellium-projectile.md) |
-| [CAP energy-artifact removal — wrap-around topology + parameter tuning](localised_jellium/cap-fix-experimentation.md) | localised_jellium | 0/6 | [↗](../handovers/cap-fix-experimentation.md) |
+| [CAP energy-artifact removal — wrap-around topology + parameter tuning](localised_jellium/cap-fix-experimentation.md) | localised_jellium | 3/6 | [↗](../handovers/cap-fix-experimentation.md) |
 | [Wide low-spread wavepacket — isolating purely quantum stopping (localised slab)](localised_jellium/wide_wavepacket_lowspread.md) | localised_jellium | 4/9 | [↗](../handovers/wide-wavepacket-lowspread.md) |
 | [Energy book-keeping analysis](localised_jellium_parameter_study_2/localised-jellium-parameter-study-2.md) | localised_jellium_parameter_study_2 | 9/9 | [↗](../handovers/localised-jellium-energy-book-keeping.md) |
 | [No-CAP quantum-vs-classical twin (sigma=3, 300 eV)](quantum_classical_nocap/run_nocap_sigma3.md) | quantum_classical_nocap | 0/3 | [↗](../plans/quantum-classical-sigma3-stopping.md) |
