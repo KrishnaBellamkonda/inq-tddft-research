@@ -1,0 +1,1 @@
+{"type":"config","name":"cap-fix-artifact-removal","metricName":"artifact_rise_eV","metricUnit":"eV","bestDirection":"lower","noiseFloor":0.1,"maxRuns":24,"maxSeconds":null,"targetMetric":0.1,"startedAt":1783949394}
