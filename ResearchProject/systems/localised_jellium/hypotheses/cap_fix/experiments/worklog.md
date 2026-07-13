@@ -227,3 +227,46 @@ strictness).
 - Next: run13 = winner @1200 steps (t=48) hardening (GPU 1, in flight);
   run12 wrap η=−1.5 w30 (GPU 0) completes the wrap ladder → final
   recommendation between w40/η−2 and any equally-clean gentler config.
+
+### Run 12: wrap η=−1.5 w30 @950 — artifact_rise_eV=8.5946 (DISCARD)
+- Timestamp: 2026-07-14 00:20
+- What changed: vs run 9, η −2.0 → −1.5 (wrap ladder left flank).
+- Result: 8.59 eV — 26× worse than wrap η=−2 w30. The wrap family ALSO needs
+  ≥ −2 strength; boundary coverage does not relax the transmit penalty.
+- Insight: strength and topology are independently necessary: η≥2 to finish
+  the fast era, wrap+wide ramp to absorb the slow spill without a hole or
+  reflection. Winner (wrap η=−2 w40, rise 0.000000) unchallenged.
+- Next: run14 = winner at HALF WP speed (K0 2.8465, one lever) @950 (GPU 0) —
+  transferability: the user wants ALL runs clean, so probe a slower projectile
+  (longer weak-absorption era = harsher test). run13 (winner @1200) on GPU 1.
+
+### Run 13: winner @1200 steps (t=48) — artifact_rise_eV=0.000000 (KEEP — hardened)
+- Timestamp: 2026-07-14 01:30
+- What changed: vs run 11, EM_N_STEPS 950→1200 (t=48; hardening only).
+- Result: monotone at EVERY sample to the final step; excursion 0.000;
+  drain −192.0 eV; absorbed 1.020e.
+- Insight: "monotone so far" now extends 12 a.u. beyond the era where η=−1
+  rose +31 eV — the winner is not merely delaying the rise. The slab-tail
+  nibble persists at ~5e-4 e/a.u. (0.005e over the extra window): a slow,
+  steady, MONOTONE drain — it feeds no rebound, but long production runs
+  should budget for it (or pull the wrap width back toward 35 if it matters).
+- Next: run14 (winner at half WP speed) decides transferability → then close:
+  study notebook + recommendation.
+
+### Run 14: winner @ half WP speed — artifact_rise_eV=0.000000 (KEEP — transfers)
+- Timestamp: 2026-07-14 02:40
+- What changed: vs run 11, EM_K0 5.693→2.8465 (half projectile speed).
+- Result: monotone to the end; excursion 0.0156 eV (early bound-tail nibble,
+  6× below the noise floor); absorbed 0.796e (slower transit).
+- Insight: the fix is not tuned to one velocity — the slow-projectile case
+  (longer weak-absorption era, the harsher test) stays clean.
+
+## FINAL SUMMARY (loop closed, 14 runs, target met)
+Winner: **unified wrap-around CAP (absorbing_wrap), η=−2.0, width 40 Bohr** —
+rise 0.000000 at t=38 AND t=48 AND at half speed; excursion ≤0.016 eV
+everywhere; whole WP absorbed. Both user arms necessary, neither sufficient
+(interaction effect). Falsified: topology@weak-η, geometry (both strengths),
+η beyond the convex optimum, gentler wrap strength. Caveats: ~5e-4 e/a.u.
+static-tail drain; reported E_total under ANY CAP remains
+bookkeeping-incomplete (absorbed-energy accumulator = future campaign).
+Study notebook: cap_fix_study.ipynb (executed, 0 errors).

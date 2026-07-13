@@ -2,7 +2,7 @@
 id: lj-cap-fix-experimentation
 area: localised_jellium
 title: CAP energy-artifact removal — wrap-around topology + parameter tuning
-status: running
+status: done
 hypothesis: "A CAP setup exists (unified wrap-around topology and/or tuned eta/footprint) in which the witness run's reported E_total decays monotonically (artifact_rise_eV <= 0.1 eV noise floor) while still absorbing the wavepacket (absorbed_e >= 0.5) — and the winning setup stays clean in the eta=-1, 950-step confirmation regime."
 handover: docs/handovers/cap-fix-experimentation.md
 tasks:
@@ -10,8 +10,8 @@ tasks:
   - { name: "baseline re-run on new binary (two-sided eta=-0.2, 700 steps) reproduces rise ~23.5 eV", done: true }
   - { name: "draft experiments: wrap-around twin, strong-eta, pushed-out footprint", done: true }
   - { name: "improve loop: refine best draft until rise <= 0.1 eV with checks passing", done: true }
-  - { name: "confirmation segment: winner(s) at eta=-1, 950 steps (phase-0 regime) stay clean", done: false }
-  - { name: "study notebook + ledger update + recommended production CAP config", done: false }
+  - { name: "confirmation segment: winner(s) at eta=-1, 950 steps (phase-0 regime) stay clean", done: true }
+  - { name: "study notebook + ledger update + recommended production CAP config", done: true }
 blocked_reason: ""
 ---
 

@@ -72,3 +72,47 @@ do; if ALL setup arms fail → the fix is the absorbed-energy ledger accumulator
 
 **GPU state at session start:** both free (25.0/25.2 GB via cudaMemGetInfo; NVML
 mismatch harmless as usual). No other users' jobs touched.
+
+## 2026-07-14 — CAMPAIGN COMPLETE (14 runs): winner found, hardened, transferred
+
+**Winner (production recommendation): unified wrap-around CAP
+(`inqkit::perturbations::absorbing_wrap`), η = −2.0, width 40 Bohr**
+(`EM_CAP_MODE=wrap EM_CAP_ETA=-2.0 EM_WRAP_WIDTH_BOHR=40`).
+- rise 0.000000 eV (strictly monotone every sample) at t=38 (run 11), t=48
+  (run 13, 12 a.u. past the +31 eV riser era), and at HALF projectile speed
+  (run 14; excursion 0.016 eV = 6× below noise floor).
+- Positive control validated the window (run 6: η=−1 @t=36 reproduces phase-0's
+  +31.27 eV excursion). Charge ledger (new charge.csv) confirms full WP
+  absorption (1.00–1.02e).
+
+**Key finding — the user's two arms COMPOSE:** topology alone WORSE at weak η
+(run 2: 35.3 vs 23.5 eV); strength alone floors at 3.5 eV (two-sided η ladder
+convex: 169/3.5/11.8/20.2 at η=−1/−2/−3/−4 — transmit-vs-reflect optimum);
+wrap × strong-η: 0.324 eV (w30) → 0.000000 (w40). Mechanistic reading: strong η
+ends the fast era before nibbling accumulates; the two-sided profile's W=0 hole
+AT the periodic boundary lets slow spill leak/linger (the rebound feeder); the
+wrap peak covers it and the gentle w40 ramp absorbs without reflecting.
+
+**Falsified (equally valuable):** geometry arms at weak AND strong η (runs 4,
+8); η beyond the optimum (7, 10); gentler wrap strength (12).
+
+**Caveats on record:** (i) w40 footprint (|z|>20) drains static slab tail at
+~5e-4 e/a.u. — monotone, no rebound, budget it in long runs or trim width to 35;
+(ii) reported E_total under ANY CAP remains bookkeeping-incomplete (diagnosis
+campaign) — absorbed-energy accumulator term = the principled complement,
+future campaign; (iii) validated for the slab_n52 cell/GS/WP family — re-check
+the η optimum on material config changes; (iv) run-6 timeout: per-step wall
+time can degrade ~4.7→21 s/step late in strong-absorption runs (cause unknown,
+watch-item).
+
+**Artefacts:** study notebook `hypotheses/cap_fix/cap_fix_study.ipynb`
+(executed, 0 errors) + builder; JSONL (2 segments, 14 result lines);
+dashboard; worklog with per-run insights + meta-reviews. Campaign frontmatter
+`status: done`, 6/6 tasks; INDEX regenerated. Runs data in
+`scripts/cap_fix/results/` (gitignored; provenance in worklog/JSONL).
+
+**Status: COMPLETE.** Both GPUs free. Suggested follow-ups (not started):
+(a) absorbed-energy accumulator campaign for a strictly conserved reported
+ledger; (b) adopt absorbing_wrap in the production run.cpp templates; (c)
+wrapper-suite Catch2 engine test for absorbing_wrap (only the task-specific
+profile test exists).
