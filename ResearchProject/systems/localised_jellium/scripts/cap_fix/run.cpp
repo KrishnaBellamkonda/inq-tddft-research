@@ -79,6 +79,11 @@ int main() {
 	const std::string CAP_MODE = env_s("EM_CAP_MODE", "two");     // two | wrap
 	const double WRAP_WIDTH_B = env_d("EM_WRAP_WIDTH_BOHR", 30.0);
 	const bool   USE_BG       = env_i("EM_BG", 1) != 0;
+	// z-periodicity of the cell (Arm-B campaign, 2026-07-14): 3 = fully
+	// periodic (ALL prior oscillation runs), 2 = periodic x,y + open z
+	// (slab-truncated Poisson — no electrostatic images along z). The GS
+	// loaded via EM_GS_DIR MUST have been converged at the SAME periodicity.
+	const int    PERIODICITY  = env_i("EM_PERIODICITY", 3);
 	const double CAP_MID   = CAP_CENTER_B / Cfg::LZ_BOHR;
 	const double CAP_WIDTH = CAP_WIDTH_B  / Cfg::LZ_BOHR;
 	const double WRAP_WIDTH = WRAP_WIDTH_B / Cfg::LZ_BOHR;
@@ -87,9 +92,14 @@ int main() {
 		std::cerr << "FATAL: EM_CAP_MODE must be 'two' or 'wrap', got: " << CAP_MODE << "\n";
 		return 2;
 	}
+	if (PERIODICITY != 2 && PERIODICITY != 3) {
+		std::cerr << "FATAL: EM_PERIODICITY must be 2 or 3, got " << PERIODICITY << "\n";
+		return 2;
+	}
 	if (!std::filesystem::exists(GS_DIR)) { std::cerr << "FATAL: GS missing: " << GS_DIR << "\n"; return 2; }
 
-	auto cell = systems::cell::orthorhombic(Cfg::LX_BOHR * 1.0_b, Cfg::LY_BOHR * 1.0_b, Cfg::LZ_BOHR * 1.0_b).periodic();
+	auto cell0 = systems::cell::orthorhombic(Cfg::LX_BOHR * 1.0_b, Cfg::LY_BOHR * 1.0_b, Cfg::LZ_BOHR * 1.0_b);
+	auto cell = (PERIODICITY == 2) ? cell0.periodicity(2) : cell0.periodic();
 	auto ions = systems::ions(cell);
 	auto electrons = systems::electrons(
 		ions,
@@ -219,6 +229,7 @@ int main() {
 		  << "WP = " << (USE_WP?"on":"off") << "  CAP = " << (USE_CAP?"on":"off")
 		  << "  BG = " << (USE_BG?"on":"off") << "\n"
 		  << "cap_mode = " << CAP_MODE << "\n"
+		  << "periodicity = " << PERIODICITY << "\n"
 		  << "cap_eta = " << CAP_ETA << "  cap_center_bohr = " << CAP_CENTER_B
 		  << "  cap_width_bohr = " << CAP_WIDTH_B << "\n"
 		  << "wrap_width_bohr = " << WRAP_WIDTH_B << "\n"
