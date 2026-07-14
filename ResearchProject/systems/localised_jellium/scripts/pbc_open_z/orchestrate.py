@@ -176,6 +176,11 @@ def main():
                 "completed steps resume idempotently.")
             sys.exit(1)
     log("=== ALL STEPS COMPLETE ===")
+    # auto-build: regenerate the study notebook from all completed runs
+    builder = HYP / "build_pbc_open_z_report.py"
+    subprocess.run([VENVPY, str(builder)], cwd=HYP, check=False,
+                   env={**os.environ,
+                        "PYTHONPATH": "/local/data/public/skcb2/tddft/inq-stack/python"})
 
 
 if __name__ == "__main__":
