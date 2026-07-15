@@ -14,7 +14,7 @@ Run:
 import os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(HERE))          # hypotheses/ for _nbreport
-from _nbreport import md, code, setup_cell, set_outdir, build
+from _nbreport import md, code, embed, setup_cell, set_outdir, build
 
 set_outdir(HERE)
 WP = ("/local/data/public/skcb2/tddft/ResearchProject/systems/localised_jellium/"
@@ -186,6 +186,26 @@ Computed by the cells above (all numbers live from the CSVs):
    turns, with a very long period; only a longer run (τ ≈ 200) decides.
    This is a caveat on "plateau", not a refutation.
 """))
+
+# ----- §7 density animations (required in every run notebook —
+# memory feedback_run_notebooks_require_density_gifs)
+GIF_SYS = {"total": "total density", "bath": "bath (total − WP)", "wp": "wavepacket |ψ|²"}
+GIF_VIEW = {"total": "n(x,z,t)", "dfirst": "Δn = n(t)−n(0)", "dprev": "Δn = n(t)−n(t−Δt)"}
+cells.append(md("""## §7 — Density animations (x–z plane, y=0)
+
+{total, bath = total − WP, wavepacket} × {n, Δn vs t=0, Δn per frame}.
+Dashed lines: slab faces ±12.5; dotted: CAP inner faces ±35."""))
+missing = []
+for key in ("total", "bath", "wp"):
+    for view in ("total", "dfirst", "dprev"):
+        p = os.path.join(HERE, "figs", f"p3_wp_m1_rerun_{key}_{view}.gif")
+        if os.path.exists(p):
+            cells.append(embed(p, f"{GIF_SYS[key]} · {GIF_VIEW[view]}", width=360))
+        else:
+            missing.append(os.path.basename(p))
+if missing:
+    cells.append(md("*Missing GIFs (regenerate via `_density_views.render_decomposition_views`): "
+                    + ", ".join(f"`{m}`" for m in missing) + "*"))
 
 out = os.path.join(HERE, "p3wp_m1_rerun_notebook.ipynb")
 build(cells, out, timeout=600)

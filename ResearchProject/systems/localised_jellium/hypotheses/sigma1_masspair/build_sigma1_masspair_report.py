@@ -16,7 +16,32 @@ Run:
 import os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(HERE))
-from _nbreport import md, code, setup_cell, set_outdir, build
+from _nbreport import md, code, embed, setup_cell, set_outdir, build
+
+GIF_SYS = {"total": "total density", "bath": "bath (total − WP)", "wp": "wavepacket |ψ|²"}
+GIF_VIEW = {"total": "n(x,z,t)", "dfirst": "Δn = n(t)−n(0)", "dprev": "Δn = n(t)−n(t−Δt)"}
+
+
+def gif_cells(prefix, section="§7"):
+    """Density animation GIFs (required in every run notebook — memory
+    feedback_run_notebooks_require_density_gifs). Embeds what exists, links
+    are relative so the GIFs travel beside the notebook in figs/."""
+    cells = [md(f"""## {section} — Density animations (x–z plane, y=0)
+
+{{total, bath = total − WP, wavepacket}} × {{n, Δn vs t=0, Δn per frame}}.
+Dashed lines: slab faces ±12.5; dotted: CAP inner faces ±35.""")]
+    missing = []
+    for key in ("total", "bath", "wp"):
+        for view in ("total", "dfirst", "dprev"):
+            p = os.path.join(HERE, "figs", f"{prefix}_{key}_{view}.gif")
+            if os.path.exists(p):
+                cells.append(embed(p, f"{GIF_SYS[key]} · {GIF_VIEW[view]}", width=360))
+            else:
+                missing.append(os.path.basename(p))
+    if missing:
+        cells.append(md("*Missing GIFs (regenerate via `_density_views.render_decomposition_views`): "
+                        + ", ".join(f"`{m}`" for m in missing) + "*"))
+    return cells
 
 WPRES = ("/local/data/public/skcb2/tddft/ResearchProject/systems/localised_jellium/"
          "scripts/sigma1_masspair/wp/results")
@@ -152,6 +177,7 @@ print("max closure:", f"{{(mrg.e_hartree_check-mrg.energy_hartree).abs().max():.
   checkpoints + segments intact, WP fully absorbed (~1.0 e).
 - Cross-run implications (clock scaling, mass correlation, comparison to the
   clean m=1 runs) are in `sigma1_masspair_study.ipynb`."""))
+    cells.extend(gif_cells(run, section="§7"))
     return cells
 
 
@@ -270,7 +296,15 @@ fig.tight_layout(); fig.savefig("figs/study_state60.png", dpi=150); plt.show()""
    run (the checkpoints allow it directly).
 
 Review path: per-run notebooks → this study → handover
-`docs/handovers/energy-oscillation-debugging.md`."""))
+`docs/handovers/energy-oscillation-debugging.md`.
+
+**Density animations** (per-run GIFs, §7 of each run notebook — passive links):
+[m2 total](figs/wp_m2_k4p5_total_total.gif) ·
+[m2 bath Δn](figs/wp_m2_k4p5_bath_dfirst.gif) ·
+[m2 wp](figs/wp_m2_k4p5_wp_total.gif) ·
+[m3 total](figs/wp_m3_k4p5_total_total.gif) ·
+[m3 bath Δn](figs/wp_m3_k4p5_bath_dfirst.gif) ·
+[m3 wp](figs/wp_m3_k4p5_wp_total.gif)"""))
     return cells
 
 
