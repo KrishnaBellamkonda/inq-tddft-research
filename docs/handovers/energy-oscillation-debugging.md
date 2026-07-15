@@ -83,3 +83,87 @@ rise 0.11 eV; last-quarter slope −8.6e-2 eV/a.u. (still draining).
 **Next:** S1/S2 discriminators (designed in the advisor note) and/or the
 zero-GPU S3 absorbed-fraction analysis. Rerun outputs kept at
 `wp/results/p3_wp_m1_rerun/`; smoke at `wp/results/smoke_m1_rerun/`.
+
+## 2026-07-15 — sigma1_masspair campaign planned (grill interview) + launching
+
+**User request:** new runs in the CLEAN geometry (energy must decay), same slab/
+CAP/everything, only the WP changed: σ=1, higher mass, aliasing-safe, spreading
+<4% at the slab, checkpoints, full + pairwise energy decomposition (twin
+contract observables, no classical twin). Plus (mid-implementation): "something
+must run for the full ~9 h; a fable agent intervenes if runs stop midway."
+
+**Plan (approved, full interview trail):**
+`/local/data/public/skcb2/tddft/docs/plans/sigma1-masspair-decay-runs.md`.
+Key resolution: spreading-at-arrival is MASS-FREE — σ(d)=σ0√(1+(d/(2k0σ0²))²);
+only k0 controls it and the grid caps k0 (CONTEXT.md "Spreading-at-arrival
+law"). User relaxed 4%→10%; locked: launch −16.5 (4σ from slab face), k0=4.5
+(guard WARN, tail 0.59% — verified), mass PAIR m=2 (v=2.25, 138 eV) + m=3
+(v=1.5, 92 eV), all else byte-identical to p3_wp_m1_rerun. Gate: guard +
+50-step smoke incl. checkpoint/resume round-trip.
+
+**Built artefacts (uncommitted at this milestone):**
+- `scripts/sigma1_masspair/wp/run.cpp` — qsp_phase3 full suite + mass fork
+  (`inverse_mass()[0][wp_idx]`, re-applied on resume) + interior ckpt every
+  200 steps + `LJ_RESUME=1` segment resume (from phase5_wp/muon references) +
+  per-step `interactions.csv` (compute_coulomb_wp; closure checks in-file) +
+  ledger extended with energy_external/nonlocal.
+- `scripts/sigma1_masspair/orchestrate.sh` — serial m2→m3 chain, GPU 1
+  (SMP_GPU), idempotent (skips completed, auto-LJ_RESUME=1 partials), stall
+  watchdog (no log growth 15 min → kill, exit 42). Requires pre-built ./run.
+- CONTEXT.md glossary entry "Spreading-at-arrival law (k0-only)".
+
+**Smoke gates (all passed, 2026-07-15 02:15–02:32):**
+- First smoke at `sigma(1.0)` CAUGHT a σ-convention error: the sigma() param is
+  the WAVEFUNCTION width (density std = σ/√2 = 0.707), so the interview's
+  spreading numbers (computed for density std 1) were unreachable — min-unc
+  core ~35 % at the face, measured second-moment ~73 % (orthogonalisation
+  broadening σ_pz 1.10 vs 0.707 min-unc at 4 Bohr standoff; actual wrapped
+  weight only ~0.01 %, the 4.5 % Gaussian estimate was moment-inflated; the
+  p3 run shows the same effect at a mild 8 %).
+- **Resolution (autonomous):** production runs at `sigma(√2)` → density std
+  1.0 Bohr (house label σ_WP=1.41). Rationale: satisfies the user's
+  twice-negotiated ≤10 % spreading bound and ALL approved plan numbers; guard
+  improves WARN→strict PASS (tail 0.02 %). Documented in the plan ("σ
+  convention correction") — FLAG FOR MORNING REVIEW.
+- Corrected smoke: σ_z(0)=1.0000, σ_pz=0.525 (5 % birth broadening),
+  pz_mean=4.497, closure ≤4e-10 Ha, projected spreading at face 10.4 %.
+- Resume round-trip: ckpt 50→70 extension OK, seam ~2e-6 Ha, segment velocity
+  2.253 → inverse_mass correctly re-applied; `.from50` segment CSVs written.
+
+**PRODUCTION IN FLIGHT (launched 02:32:44, detached via setsid — survives
+session loss):** `orchestrate.sh` on GPU 1: wp_m2_k4p5 (2500 steps, ~4–5 h)
+then wp_m3_k4p5. Logs: `scripts/sigma1_masspair/orchestrate.log` +
+`wp/wp_m2_k4p5.log`. GPU 0 carries the OTHER campaign
+(localised_jellium_dynamics `proj_dyn/p5_null_s2_k4_cl`,
+CUDA_VISIBLE_DEVICES=0) — no contention, verified from /proc environs.
+A watcher background task notifies the session when the orchestrator ends
+(success or watchdog exit 42/crash) → then spawn a fable agent to diagnose +
+relaunch (idempotent auto-resume, max 200 steps lost).
+**On completion:** verify both run_summaries `run_completed=true`, spreading
+at face vs 10.4 % projection, E_total decay shape vs the clean rerun, pairwise
+ledger narrative (twin-run-analysis skill), study notebook, commit.
+
+## 2026-07-15 (15:25) — CHAIN COMPLETE; ARTIFACT RETURNS IN CLEAN GEOMETRY
+
+Both runs completed clean mechanically (rc=0, run_completed=true; m=2 3.3 h,
+m=3 3.6 h; chain 02:32→09:26; watcher had a pgrep self-match bug → no
+notification, found at 15:22 status check; GPU idle 09:26→15:22).
+
+**HEADLINE: the drain-then-rise artifact is BACK, at full strength, in the
+CLEAN geometry** (same box/CAP/GS that decays monotonically at σ=0.5/m=1):
+- wp_m2_k4p5: drain 60 eV → E_min at t=32.6 → RISE +180 eV by τ=100.
+- wp_m3_k4p5: drain 44 eV → E_min at t=50.2 → rise +125 eV.
+- t_min ratio 50.2/32.6 = 1.54 ≈ velocity ratio 1.5, and t_min ≈ 1.44× the
+  WP→far-CAP arrival time in BOTH → **the clock tracks the PROJECTILE's CAP
+  arrival, not slow-spill** (new, sharpest clock datum).
+- H1 (CAP standoff geometry protects) REFUTED as sufficient. Mass correlation
+  returns: every oscillating run has m_eff>1 (2.10 family; now 2 and 3);
+  every clean run has m=1. Suspect: CAP-filtered norm-divided kinetic ledger
+  applied to the massive WP state itself.
+- Spreading at face 14.0/15.1 % (free-flight projection 10.4 %; slab
+  interaction adds the rest). Absorbed ≈1.01/1.02 e (WP fully absorbed).
+- Per-step pairwise interactions.csv exists for BOTH runs — the decomposition
+  can now finger WHICH term rises. NOT yet analysed.
+
+**Next:** pairwise-ledger analysis (twin-run-analysis interpretation rules),
+study notebook, commit of scripts/sigma1_masspair + plan + handover.

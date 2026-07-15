@@ -598,6 +598,15 @@ live in `docs/plans/` + `docs/adr/`; theory in
   eigenstate of the p2 Hamiltonian → spurious t=0 kick). Absolute energies are
   convention-dependent across p2/p3 — compare only ΔE_total(t) shapes. Campaign:
   `docs/campaigns/localised_jellium/pbc-open-z-oscillation.md`.
+- **Spreading-at-arrival law (k0-only)** — for a free Gaussian WP with dispersion
+  E = k²/2m, the width at a travel distance d is σ(d) = σ0·√(1 + (d/(2·k0·σ0²))²):
+  **mass cancels** (heavier packets spread slower in time but arrive later by the
+  same factor). Mass reduces spreading only at fixed *velocity*, by raising
+  k0 = m·v — and k0 is capped by the grid (cutoff guard: tail ≤ 2% BLOCK,
+  k_Nyq = π/dx). Consequence: a spreading target + σ_WP + dx jointly fix a
+  *minimum k0* and hence a maximum launch distance; mass then only apportions
+  k0 between velocity and kinetic energy E = k0²/2m. (Resolved 2026-07-15,
+  σ=1 mass-pair planning.)
 
 ## Campaigns (2026-06-22)
 
