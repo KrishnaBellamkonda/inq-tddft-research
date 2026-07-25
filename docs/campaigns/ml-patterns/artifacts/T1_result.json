@@ -1,0 +1,32 @@
+{
+  "phase": "T1",
+  "tests_pass": true,
+  "foncv_unity_q_5pct": 1.9,
+  "foncv_unity_q_2pct": 1.2,
+  "catalogue": [
+    {
+      "kernel": "pod.pod",
+      "test": "rank-2 synthetic recovers 2 modes + subspace",
+      "formula_validation": "CONFIRM (Brunton&Kutz/Halko)",
+      "status": "pass"
+    },
+    {
+      "kernel": "dmd.dmd",
+      "test": "damped sinusoid recovers omega & decay",
+      "formula_validation": "CONFIRM (Tu et al. 2014 exact DMD)",
+      "status": "pass"
+    },
+    {
+      "kernel": "formfactor.{F_WP,F_ONCV_from_upf,radial_power_spectrum,q_ratio}",
+      "test": "Gaussian width/ratio + F_ONCV~1 low-q",
+      "formula_validation": "CONFIRM (Jackson radial FT)",
+      "status": "pass"
+    }
+  ],
+  "plot": "/local/data/public/skcb2/tddft/docs/campaigns/ml-patterns/artifacts/T1_foncv.png",
+  "formula_validation": {
+    "POD": "CONFIRM",
+    "DMD": "CONFIRM",
+    "form_factor": "CONFIRM"
+  }
+}

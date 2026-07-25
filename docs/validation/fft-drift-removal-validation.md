@@ -497,9 +497,16 @@ results from the cited references.
 
 ---
 
-## Verdict (LEAVE BLANK — user fills)
+## Verdict (user — 2026-06-25) — OVERRIDES the per-observable recommendation above
 
-- canonical default for **current/dipole** spectra: ____
-- canonical default for **energy** spectra: ____
-- expose `subtract={'initial','mean','detrend','none'}` param?  Y/N ____
-- per-observable canonical variant emitted as the headline `spectrum_<col>.png`?  Y/N ____
+The user locks a single **uniform** baseline rather than the dossier's
+per-observable split — simpler and deterministic, one pipeline for every signal:
+
+- canonical default for **current/dipole** spectra: **`mean`**
+- canonical default for **energy** spectra: **`mean`** (no exception — accepts that
+  `mean` leaves a residual low-ω ramp on energy; peak *positions* are unaffected).
+- expose `subtract={'initial','mean','detrend','none'}` param?  **Y**
+- per-observable canonical variant as the headline?  **N** — instead a single
+  uniform pipeline (**mean → Hann → 4× zero-pad → coherent-gain rfft**) for every
+  observable, with **`detrend` overlaid dashed as the comparison**. Library default
+  `subtract` flipped to `'mean'` (`code-test`; `test_fourier.py` 19/19).

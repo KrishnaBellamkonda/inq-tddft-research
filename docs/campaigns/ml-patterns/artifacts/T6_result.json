@@ -1,0 +1,6 @@
+{
+  "phase": "T6",
+  "verdict": "EXPLORATORY",
+  "note": "CAVEAT: in-bath n_wp only; vacuum-WP/SIE control NOT applied -> this conflates bath scattering with intrinsic dispersion + the ~7 eV WP self-interaction (project-brief figure, externally unverified). Exploratory only, not a headline claim.",
+  "plot": "/local/data/public/skcb2/tddft/docs/campaigns/ml-patterns/artifacts/T6_exploratory.png"
+}

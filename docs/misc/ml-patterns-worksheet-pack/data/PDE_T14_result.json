@@ -1,0 +1,24 @@
+{
+  "classical": {
+    "verdict": "REFUTE",
+    "n_validated": 0
+  },
+  "wavepacket": {
+    "verdict": "CONFIRM",
+    "n_validated": 3
+  },
+  "comparison": {
+    "shared": [
+      "u_xx"
+    ],
+    "classical_only": [
+      "u*u_x",
+      "u*u_xx",
+      "u*u_xxx",
+      "u^2*u_x",
+      "u^2*u_xx",
+      "u^2*u_xxx"
+    ],
+    "wavepacket_only": []
+  }
+}

@@ -1,0 +1,436 @@
+{
+  "phase": "T11",
+  "projectile": "classical",
+  "frozen_config": {
+    "order": 2,
+    "threshold": 0.06,
+    "poly": 2,
+    "deriv_order": 3,
+    "smooth_t": 1.5,
+    "smooth_x": 1.0,
+    "pod_rank": 6
+  },
+  "frozen_from_try": 0,
+  "calib_attempts": [
+    {
+      "try": 0,
+      "config": {
+        "order": 2,
+        "threshold": 0.06,
+        "poly": 2,
+        "deriv_order": 3,
+        "smooth_t": 1.5,
+        "smooth_x": 1.0,
+        "pod_rank": 6
+      },
+      "calib_score": 0.0,
+      "n_validated": 0,
+      "calib": [
+        {
+          "E": 20.0,
+          "v": 1.212424383955333,
+          "admitted_equation": "u_tt = 0.95*u_xx + 0.13*u*u_x + 0.1*u*u_xx + 0.07*u*u_xxx + 0.098*u^2*u_x + 0.053*u^2*u_xxx",
+          "forward_rel_l2": 0.8170044673190409,
+          "residual_rel": 0.4698222912885885,
+          "admitted": [
+            {
+              "term": "u_xx",
+              "coeff": 0.95430800248039,
+              "physics": "diffusion / dispersion (compare Bohm-Gross 3 v_th^2 grad^2 n)"
+            },
+            {
+              "term": "u*u_x",
+              "coeff": 0.12683125481734597,
+              "physics": "nonlinear advection (Burgers-type)"
+            },
+            {
+              "term": "u*u_xx",
+              "coeff": 0.10190962509576991,
+              "physics": "uninterpreted term"
+            },
+            {
+              "term": "u*u_xxx",
+              "coeff": 0.07019671933420618,
+              "physics": "uninterpreted term"
+            },
+            {
+              "term": "u^2*u_x",
+              "coeff": 0.09754122919053945,
+              "physics": "uninterpreted term"
+            },
+            {
+              "term": "u^2*u_xxx",
+              "coeff": 0.05318118473034044,
+              "physics": "uninterpreted term"
+            }
+          ],
+          "validated": false
+        },
+        {
+          "E": 50.0,
+          "v": 1.91701127201268,
+          "admitted_equation": "u_tt = 1.9*u_xx + 0.12*u + 1.2*u*u_xx + 0.12*u^2 + -0.098*u^2*u_x + -0.081*u^2*u_xx + -0.063*u^2*u_xxx",
+          "forward_rel_l2": 1000.0,
+          "residual_rel": 0.6228242027586894,
+          "admitted": [
+            {
+              "term": "u_xx",
+              "coeff": 1.894824510910548,
+              "physics": "diffusion / dispersion (compare Bohm-Gross 3 v_th^2 grad^2 n)"
+            },
+            {
+              "term": "u",
+              "coeff": 0.1187103434477875,
+              "physics": "restoring / local response (compare -omega_p^2 n)"
+            },
+            {
+              "term": "u*u_xx",
+              "coeff": 1.219117047429308,
+              "physics": "uninterpreted term"
+            },
+            {
+              "term": "u^2",
+              "coeff": 0.1218172208221729,
+              "physics": "quadratic (Barkas / nonlinear response)"
+            },
+            {
+              "term": "u^2*u_x",
+              "coeff": -0.09779918781082092,
+              "physics": "uninterpreted term"
+            },
+            {
+              "term": "u^2*u_xx",
+              "coeff": -0.0809289797687244,
+              "physics": "uninterpreted term"
+            },
+            {
+              "term": "u^2*u_xxx",
+              "coeff": -0.06302458519593888,
+              "physics": "uninterpreted term"
+            }
+          ],
+          "validated": false
+        },
+        {
+          "E": 300.0,
+          "v": 4.695699447594793,
+          "admitted_equation": "u_tt = 0",
+          "forward_rel_l2": null,
+          "residual_rel": 0.8702118809981301,
+          "admitted": [],
+          "validated": false
+        }
+      ]
+    },
+    {
+      "try": 1,
+      "config": {
+        "order": 1,
+        "threshold": 0.06,
+        "poly": 2,
+        "deriv_order": 3,
+        "smooth_t": 1.5,
+        "smooth_x": 1.0,
+        "pod_rank": 6
+      },
+      "calib_score": 0.0,
+      "n_validated": 0,
+      "calib": [
+        {
+          "E": 20.0,
+          "v": 1.212424383955333,
+          "admitted_equation": "u_t = -0.62*u_x + 0.15*u_xxx + 0.096*u + -0.1*u*u_x + 0.04*u*u_xx + -0.059*u*u_xxx + 0.019*u^2",
+          "forward_rel_l2": 0.9600918694486461,
+          "residual_rel": 0.44658783431165705,
+          "admitted": [
+            {
+              "term": "u_x",
+              "coeff": -0.6240117934625188,
+              "physics": "advection / drift (compare v.grad n)"
+            },
+            {
+              "term": "u_xxx",
+              "coeff": 0.14779944016174282,
+              "physics": "dispersive (3rd-order) transport"
+            },
+            {
+              "term": "u",
+              "coeff": 0.09636382576844198,
+              "physics": "restoring / local response (compare -omega_p^2 n)"
+            },
+            {
+              "term": "u*u_x",
+              "coeff": -0.10401933348955696,
+              "physics": "nonlinear advection (Burgers-type)"
+            },
+            {
+              "term": "u*u_xx",
+              "coeff": 0.040368777595225655,
+              "physics": "uninterpreted term"
+            },
+            {
+              "term": "u*u_xxx",
+              "coeff": -0.05907157016480972,
+              "physics": "uninterpreted term"
+            },
+            {
+              "term": "u^2",
+              "coeff": 0.018852657008186006,
+              "physics": "quadratic (Barkas / nonlinear response)"
+            }
+          ],
+          "validated": false
+        },
+        {
+          "E": 50.0,
+          "v": 1.91701127201268,
+          "admitted_equation": "u_t = -0.29*u_x + 0.11*u + -0.14*u*u_x + 0.16*u*u_xxx + 0.012*u^2 + -0.11*u^2*u_x + -0.05*u^2*u_xxx",
+          "forward_rel_l2": 1000.0,
+          "residual_rel": 0.703653557819348,
+          "admitted": [
+            {
+              "term": "u_x",
+              "coeff": -0.2860725326056843,
+              "physics": "advection / drift (compare v.grad n)"
+            },
+            {
+              "term": "u",
+              "coeff": 0.11097347915843804,
+              "physics": "restoring / local response (compare -omega_p^2 n)"
+            },
+            {
+              "term": "u*u_x",
+              "coeff": -0.1405698620011779,
+              "physics": "nonlinear advection (Burgers-type)"
+            },
+            {
+              "term": "u*u_xxx",
+              "coeff": 0.1648869296325486,
+              "physics": "uninterpreted term"
+            },
+            {
+              "term": "u^2",
+              "coeff": 0.011765776415359775,
+              "physics": "quadratic (Barkas / nonlinear response)"
+            },
+            {
+              "term": "u^2*u_x",
+              "coeff": -0.10909038312095862,
+              "physics": "uninterpreted term"
+            },
+            {
+              "term": "u^2*u_xxx",
+              "coeff": -0.04983334092924286,
+              "physics": "uninterpreted term"
+            }
+          ],
+          "validated": false
+        },
+        {
+          "E": 300.0,
+          "v": 4.695699447594793,
+          "admitted_equation": "u_t = -0.18*u_x + 0.2*u_xx + 0.33*u + -0.074*u*u_x + 0.23*u*u_xx + 0.022*u^2 + -0.054*u^2*u_x + 0.12*u^2*u_xx + -0.097*u^2*u_xxx",
+          "forward_rel_l2": 1000.0,
+          "residual_rel": 0.3807347385749504,
+          "admitted": [
+            {
+              "term": "u_x",
+              "coeff": -0.1798353510547897,
+              "physics": "advection / drift (compare v.grad n)"
+            },
+            {
+              "term": "u_xx",
+              "coeff": 0.1961581260642609,
+              "physics": "diffusion / dispersion (compare Bohm-Gross 3 v_th^2 grad^2 n)"
+            },
+            {
+              "term": "u",
+              "coeff": 0.3344782776562559,
+              "physics": "restoring / local response (compare -omega_p^2 n)"
+            },
+            {
+              "term": "u*u_x",
+              "coeff": -0.07410344049567277,
+              "physics": "nonlinear advection (Burgers-type)"
+            },
+            {
+              "term": "u*u_xx",
+              "coeff": 0.22874348648986167,
+              "physics": "uninterpreted term"
+            },
+            {
+              "term": "u^2",
+              "coeff": 0.021541268655737356,
+              "physics": "quadratic (Barkas / nonlinear response)"
+            },
+            {
+              "term": "u^2*u_x",
+              "coeff": -0.05357592224210916,
+              "physics": "uninterpreted term"
+            },
+            {
+              "term": "u^2*u_xx",
+              "coeff": 0.12088014444995782,
+              "physics": "uninterpreted term"
+            },
+            {
+              "term": "u^2*u_xxx",
+              "coeff": -0.09665493032427669,
+              "physics": "uninterpreted term"
+            }
+          ],
+          "validated": false
+        }
+      ]
+    },
+    {
+      "try": 2,
+      "config": {
+        "order": 2,
+        "threshold": 0.04,
+        "poly": 2,
+        "deriv_order": 2,
+        "smooth_t": 2.0,
+        "smooth_x": 1.0,
+        "pod_rank": 8
+      },
+      "calib_score": 0.0,
+      "n_validated": 0,
+      "calib": [
+        {
+          "E": 20.0,
+          "v": 1.212424383955333,
+          "admitted_equation": "u_tt = 1.2*u_xx + -0.043*u^2*u_xx",
+          "forward_rel_l2": 1.3039371548411893,
+          "residual_rel": 0.41289994266704627,
+          "admitted": [
+            {
+              "term": "u_xx",
+              "coeff": 1.1874560229931,
+              "physics": "diffusion / dispersion (compare Bohm-Gross 3 v_th^2 grad^2 n)"
+            },
+            {
+              "term": "u^2*u_xx",
+              "coeff": -0.04332984754251229,
+              "physics": "uninterpreted term"
+            }
+          ],
+          "validated": false
+        },
+        {
+          "E": 50.0,
+          "v": 1.91701127201268,
+          "admitted_equation": "u_tt = 2.1*u_xx + 0.12*u + 1.5*u*u_xx + 0.17*u^2 + -0.17*u^2*u_xx",
+          "forward_rel_l2": 1000.0,
+          "residual_rel": 0.5214295064364819,
+          "admitted": [
+            {
+              "term": "u_xx",
+              "coeff": 2.0716576156655515,
+              "physics": "diffusion / dispersion (compare Bohm-Gross 3 v_th^2 grad^2 n)"
+            },
+            {
+              "term": "u",
+              "coeff": 0.1192123343933826,
+              "physics": "restoring / local response (compare -omega_p^2 n)"
+            },
+            {
+              "term": "u*u_xx",
+              "coeff": 1.5477226065870948,
+              "physics": "uninterpreted term"
+            },
+            {
+              "term": "u^2",
+              "coeff": 0.16793730790939546,
+              "physics": "quadratic (Barkas / nonlinear response)"
+            },
+            {
+              "term": "u^2*u_xx",
+              "coeff": -0.16777045301042015,
+              "physics": "uninterpreted term"
+            }
+          ],
+          "validated": false
+        },
+        {
+          "E": 300.0,
+          "v": 4.695699447594793,
+          "admitted_equation": "u_tt = 0",
+          "forward_rel_l2": null,
+          "residual_rel": 0.8959783159624444,
+          "admitted": [],
+          "validated": false
+        }
+      ]
+    }
+  ],
+  "heldout": [
+    {
+      "E": 25.0,
+      "v": 1.355531670051215,
+      "admitted_equation": "u_tt = 1.4*u_xx + 0.35*u*u_x + 0.12*u*u_xx + 0.21*u*u_xxx + 0.14*u^2*u_x + -0.014*u^2*u_xx + 0.047*u^2*u_xxx",
+      "forward_rel_l2": 0.9141241313310486,
+      "residual_rel": 0.45086395721692013,
+      "admitted": [
+        {
+          "term": "u_xx",
+          "coeff": 1.420621360905908,
+          "physics": "diffusion / dispersion (compare Bohm-Gross 3 v_th^2 grad^2 n)"
+        },
+        {
+          "term": "u*u_x",
+          "coeff": 0.3491344934439294,
+          "physics": "nonlinear advection (Burgers-type)"
+        },
+        {
+          "term": "u*u_xx",
+          "coeff": 0.11942074500202947,
+          "physics": "uninterpreted term"
+        },
+        {
+          "term": "u*u_xxx",
+          "coeff": 0.2142125229172292,
+          "physics": "uninterpreted term"
+        },
+        {
+          "term": "u^2*u_x",
+          "coeff": 0.1375648545015613,
+          "physics": "uninterpreted term"
+        },
+        {
+          "term": "u^2*u_xx",
+          "coeff": -0.014170673245274582,
+          "physics": "uninterpreted term"
+        },
+        {
+          "term": "u^2*u_xxx",
+          "coeff": 0.04737242418676418,
+          "physics": "uninterpreted term"
+        }
+      ],
+      "validated": false
+    },
+    {
+      "E": 100.0,
+      "v": 2.71106334010243,
+      "admitted_equation": "u_tt = 0",
+      "forward_rel_l2": 46.90957039975529,
+      "residual_rel": 1.0,
+      "admitted": [],
+      "validated": false
+    },
+    {
+      "E": 600.0,
+      "v": 6.640721843616406,
+      "admitted_equation": "u_tt = 0",
+      "forward_rel_l2": null,
+      "residual_rel": 0.9367902612607634,
+      "admitted": [],
+      "validated": false
+    }
+  ],
+  "n_heldout_validated": 0,
+  "n_heldout": 3,
+  "verdict": "REFUTE",
+  "plot": "/local/data/public/skcb2/tddft/docs/campaigns/ml-patterns/artifacts/T11_heldout.png"
+}

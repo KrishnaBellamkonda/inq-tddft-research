@@ -1,0 +1,230 @@
+{
+  "track_b_split": {
+    "calibration_E": [
+      20.0,
+      50.0,
+      300.0
+    ],
+    "heldout_E": [
+      25.0,
+      100.0,
+      600.0
+    ]
+  },
+  "wake_cells": {
+    "calibration": [
+      {
+        "energy_ev": 20.0,
+        "velocity_au": 1.212424383955333,
+        "sigma_wp": 5.0,
+        "omega_p_ev": 3.4726266651007043,
+        "r_s": 5.68986719379413,
+        "dx": 0.4,
+        "cl_run": "jellium/run_classical_n162_L50_E20",
+        "wp_run": "jellium/run_wp_n162_L50_E20",
+        "cl_bath_dir": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_classical_n162_L50_E20/results/raw/vti/density_system",
+        "wp_bath_dir": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E20/results/raw/vti/density_system",
+        "cl_gs": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_classical_n162_L50_E20/results/raw/vti/density_gs_system/density_gs_system.vti",
+        "wp_gs": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E20/results/raw/vti/density_gs_system/density_gs_system.vti",
+        "frame_dt_au_cl": 0.06,
+        "frame_dt_au_wp": 0.06
+      },
+      {
+        "energy_ev": 50.0,
+        "velocity_au": 1.91701127201268,
+        "sigma_wp": 5.0,
+        "omega_p_ev": 3.4726266651007043,
+        "r_s": 5.68986719379413,
+        "dx": 0.4,
+        "cl_run": "jellium/run_classical_n162_L50_E50_attempt2",
+        "wp_run": "jellium/run_wp_n162_L50_E50_attempt2",
+        "cl_bath_dir": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_classical_n162_L50_E50_attempt2/results/raw/vti/density_system",
+        "wp_bath_dir": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E50_attempt2/results/raw/vti/density_system",
+        "cl_gs": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_classical_n162_L50_E50_attempt2/results/raw/vti/density_gs_system/density_gs_system.vti",
+        "wp_gs": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E50_attempt2/results/raw/vti/density_gs_system/density_gs_system.vti",
+        "frame_dt_au_cl": 0.04,
+        "frame_dt_au_wp": 0.04
+      },
+      {
+        "energy_ev": 300.0,
+        "velocity_au": 4.695699447594793,
+        "sigma_wp": 5.0,
+        "omega_p_ev": 3.4726266651007043,
+        "r_s": 5.68986719379413,
+        "dx": 0.4,
+        "cl_run": "jellium/run_classical_n162_L50_E300_v2",
+        "wp_run": "jellium/run_wp_n162_L50_E300_v2",
+        "cl_bath_dir": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_classical_n162_L50_E300_v2/results/raw/vti/density_system",
+        "wp_bath_dir": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E300_v2/results/raw/vti/density_system",
+        "cl_gs": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_classical_n162_L50_E300_v2/results/raw/vti/density_gs_system/density_gs_system.vti",
+        "wp_gs": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E300_v2/results/raw/vti/density_gs_system/density_gs_system.vti",
+        "frame_dt_au_cl": 0.03,
+        "frame_dt_au_wp": 0.02
+      }
+    ],
+    "heldout": [
+      {
+        "energy_ev": 25.0,
+        "velocity_au": 1.355531670051215,
+        "sigma_wp": 5.0,
+        "omega_p_ev": 3.4726266651007043,
+        "r_s": 5.68986719379413,
+        "dx": 0.4,
+        "cl_run": "jellium/run_classical_n162_L50_E25",
+        "wp_run": "jellium/run_wp_n162_L50_E25",
+        "cl_bath_dir": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_classical_n162_L50_E25/results/raw/vti/density_system",
+        "wp_bath_dir": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E25/results/raw/vti/density_system",
+        "cl_gs": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_classical_n162_L50_E25/results/raw/vti/density_gs_system/density_gs_system.vti",
+        "wp_gs": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E25/results/raw/vti/density_gs_system/density_gs_system.vti",
+        "frame_dt_au_cl": 0.06,
+        "frame_dt_au_wp": 0.06
+      },
+      {
+        "energy_ev": 100.0,
+        "velocity_au": 2.71106334010243,
+        "sigma_wp": 5.0,
+        "omega_p_ev": 3.4726266651007043,
+        "r_s": 5.68986719379413,
+        "dx": 0.4,
+        "cl_run": "jellium/run_classical_n162_L50_E100_v2",
+        "wp_run": "jellium/run_wp_n162_L50_E100",
+        "cl_bath_dir": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_classical_n162_L50_E100_v2/results/raw/vti/density_system",
+        "wp_bath_dir": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E100/results/raw/vti/density_system",
+        "cl_gs": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_classical_n162_L50_E100_v2/results/raw/vti/density_gs_system/density_gs_system.vti",
+        "wp_gs": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E100/results/raw/vti/density_gs_system/density_gs_system.vti",
+        "frame_dt_au_cl": 0.06,
+        "frame_dt_au_wp": 0.04
+      },
+      {
+        "energy_ev": 600.0,
+        "velocity_au": 6.640721843616406,
+        "sigma_wp": 5.0,
+        "omega_p_ev": 3.4726266651007043,
+        "r_s": 5.68986719379413,
+        "dx": 0.4,
+        "cl_run": "jellium/run_classical_n162_L50_E600_v2",
+        "wp_run": "jellium/run_wp_n162_L50_E600_v2",
+        "cl_bath_dir": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_classical_n162_L50_E600_v2/results/raw/vti/density_system",
+        "wp_bath_dir": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E600_v2/results/raw/vti/density_system",
+        "cl_gs": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_classical_n162_L50_E600_v2/results/raw/vti/density_gs_system/density_gs_system.vti",
+        "wp_gs": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E600_v2/results/raw/vti/density_gs_system/density_gs_system.vti",
+        "frame_dt_au_cl": 0.02,
+        "frame_dt_au_wp": 0.02
+      }
+    ]
+  },
+  "wake_skipped": [
+    {
+      "energy": 1.5,
+      "v": 0.3320360921808203,
+      "role": "calibration",
+      "reason": "no matched classical"
+    },
+    {
+      "energy": 15.0,
+      "v": 1.049990316673017,
+      "role": "heldout",
+      "reason": "no matched classical"
+    },
+    {
+      "energy": 700.0,
+      "v": 7.172799419404593,
+      "role": "calibration",
+      "reason": "no matched classical"
+    },
+    {
+      "energy": 1500.0,
+      "v": 10.499903214963208,
+      "role": "heldout",
+      "reason": "no matched classical"
+    }
+  ],
+  "form_factor_cells": {
+    "calibration": [
+      {
+        "energy_ev": 100.0,
+        "velocity_au": 2.71106334010243,
+        "sigma_wp": 1.0,
+        "omega_p_ev": 3.4726266651007043,
+        "r_s": 5.68986719379413,
+        "dx": 0.4,
+        "cl_run": "jellium/run_classical_n162_L50_E100_v2",
+        "wp_run": "jellium/run_wp_n162_L50_E100_sigma1_v2",
+        "cl_bath_dir": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_classical_n162_L50_E100_v2/results/raw/vti/density_system",
+        "wp_bath_dir": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E100_sigma1_v2/results/raw/vti/density_system",
+        "cl_gs": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_classical_n162_L50_E100_v2/results/raw/vti/density_gs_system/density_gs_system.vti",
+        "wp_gs": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E100_sigma1_v2/results/raw/vti/density_gs_system/density_gs_system.vti",
+        "frame_dt_au_cl": 0.06,
+        "frame_dt_au_wp": 0.03
+      },
+      {
+        "energy_ev": 100.0,
+        "velocity_au": 2.71106334010243,
+        "sigma_wp": 5.0,
+        "omega_p_ev": 3.4726266651007043,
+        "r_s": 5.68986719379413,
+        "dx": 0.4,
+        "cl_run": "jellium/run_classical_n162_L50_E100_v2",
+        "wp_run": "jellium/run_wp_n162_L50_E100",
+        "cl_bath_dir": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_classical_n162_L50_E100_v2/results/raw/vti/density_system",
+        "wp_bath_dir": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E100/results/raw/vti/density_system",
+        "cl_gs": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_classical_n162_L50_E100_v2/results/raw/vti/density_gs_system/density_gs_system.vti",
+        "wp_gs": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E100/results/raw/vti/density_gs_system/density_gs_system.vti",
+        "frame_dt_au_cl": 0.06,
+        "frame_dt_au_wp": 0.04
+      }
+    ],
+    "heldout": [
+      {
+        "energy_ev": 100.0,
+        "velocity_au": 2.71106334010243,
+        "sigma_wp": 0.5,
+        "omega_p_ev": 3.4726266651007043,
+        "r_s": 5.68986719379413,
+        "dx": 0.4,
+        "cl_run": "jellium/run_classical_n162_L50_E100_v2",
+        "wp_run": "jellium/run_wp_n162_L50_E100_sigma0p5_wf",
+        "cl_bath_dir": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_classical_n162_L50_E100_v2/results/raw/vti/density_system",
+        "wp_bath_dir": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E100_sigma0p5_wf/results/raw/vti/density_system",
+        "cl_gs": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_classical_n162_L50_E100_v2/results/raw/vti/density_gs_system/density_gs_system.vti",
+        "wp_gs": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E100_sigma0p5_wf/results/raw/vti/density_gs_system/density_gs_system.vti",
+        "frame_dt_au_cl": 0.06,
+        "frame_dt_au_wp": 0.02
+      },
+      {
+        "energy_ev": 100.0,
+        "velocity_au": 2.71106334010243,
+        "sigma_wp": 3.0,
+        "omega_p_ev": 3.4726266651007043,
+        "r_s": 5.68986719379413,
+        "dx": 0.4,
+        "cl_run": "jellium/run_classical_n162_L50_E100_v2",
+        "wp_run": "jellium/run_wp_n162_L50_E100_sigma3_wf",
+        "cl_bath_dir": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_classical_n162_L50_E100_v2/results/raw/vti/density_system",
+        "wp_bath_dir": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E100_sigma3_wf/results/raw/vti/density_system",
+        "cl_gs": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_classical_n162_L50_E100_v2/results/raw/vti/density_gs_system/density_gs_system.vti",
+        "wp_gs": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E100_sigma3_wf/results/raw/vti/density_gs_system/density_gs_system.vti",
+        "frame_dt_au_cl": 0.06,
+        "frame_dt_au_wp": 0.04
+      },
+      {
+        "energy_ev": 100.0,
+        "velocity_au": 2.71106334010243,
+        "sigma_wp": 8.0,
+        "omega_p_ev": 3.4726266651007043,
+        "r_s": 5.68986719379413,
+        "dx": 0.4,
+        "cl_run": "jellium/run_classical_n162_L50_E100_v2",
+        "wp_run": "jellium/run_wp_n162_L50_E100_sigma8_wf",
+        "cl_bath_dir": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_classical_n162_L50_E100_v2/results/raw/vti/density_system",
+        "wp_bath_dir": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E100_sigma8_wf/results/raw/vti/density_system",
+        "cl_gs": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_classical_n162_L50_E100_v2/results/raw/vti/density_gs_system/density_gs_system.vti",
+        "wp_gs": "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E100_sigma8_wf/results/raw/vti/density_gs_system/density_gs_system.vti",
+        "frame_dt_au_cl": 0.06,
+        "frame_dt_au_wp": 0.02
+      }
+    ]
+  },
+  "form_factor_skipped": [],
+  "fwd_pass_threshold": 0.6
+}

@@ -4,6 +4,73 @@ Rolling handover. Task plan: `docs/plans/overnight-gaussian-classical-jellium.md
 Branch: `overnight-gaussian-classical` (off `main`, which now includes the merged
 `rejuvenation/claude-ecosystem`). Started 2026-06-11T23:59Z, 10 h budget.
 
+---
+
+## Milestone: 2026-06-14 — S(v) re-extracted by ΔE_system regression (replaces local-slope spread)
+
+### Current status
+DONE and cross-checked. The original `sv_money_plot.png` extraction (local
+−dKE/ds binned by instantaneous v → a *spread* of points per run) was rejected
+by the user as the wrong observable. Replaced with a **global energy-gain
+regression per run**, delivered as an executed step-by-step notebook. Two
+independent energy ledgers agree to within 1–7 %, and the Z=−1 Barkas crossover
+survives the cleaner method.
+
+### Method (as specified by the user)
+- **Primary (Method A):** ΔE_system(t) = `energy_total`(t) − `energy_total`(t₀)
+  from `observables.csv` (electronic KS energy, logged every 50 steps).
+  Discard the **first 20 % of simulation time** (transient). Linear-regress
+  ΔE_system vs projectile position s along motion (+z; s = |z−z₀|, interpolated
+  onto the energy timestamps). Gradient = S (positive); `linregress` stderr = its
+  uncertainty. **One point per run, no spread.**
+- **Diagnostic (Method B):** projectile kinetic energy / speed-integration over
+  the SAME window — energy deposited = ∫F·v dt = ∫ m v dv = ½m(v₀²−v_f²),
+  divided by the speed-integrated path ∫v dt. (Interpretation of the user's
+  "speed integration of F·dv"; flagged for confirmation.)
+
+### Results (executed notebook)
+| run | v | S_energy ± | S_kinetic | A/B | S_Lindhard | sim/LR |
+|---|---|---|---|---|---|---|
+| v3p0 | 2.98 | 0.0089±0.0004 | 0.0083 | 1.07 | 0.0067 | 1.32 |
+| v2p0 | 1.94 | 0.0179±0.0008 | 0.0175 | 1.02 | 0.0131 | 1.36 |
+| v1p3 | 1.12 | 0.0341±0.0013 | 0.0335 | 1.02 | 0.0305 | 1.12 |
+| sig0p4_v1p0 | 0.81 | 0.0371±0.0016 | 0.0360 | 1.03 | 0.0479 | 0.77 |
+| v0p8 | 0.62 | 0.0357±0.0017 | 0.0344 | 1.04 | 0.0540 | 0.66 |
+| v0p6 | 0.44 | 0.0307±0.0015 | 0.0293 | 1.05 | 0.0359 | 0.86 |
+Linear-fit R² = 0.975–0.993. Barkas crossover: sim/LR > 1 for v≳1, < 1 near/below
+the Lindhard Bragg peak (v≈0.63). Method A sits ~2–7 % above B (energy not yet
+fully thermalised / drift), well within the story.
+
+### Files touched
+- `/local/data/public/skcb2/tddft/docs/reports/overnight-gaussian-classical-jellium/build_sv_extraction_notebook.py` — NEW reproducible builder
+- `/local/data/public/skcb2/tddft/docs/reports/overnight-gaussian-classical-jellium/sv_stopping_extraction.ipynb` — NEW executed notebook (9 steps)
+- `/local/data/public/skcb2/tddft/docs/reports/overnight-gaussian-classical-jellium/figures/sv_preexisting_extraction.png` — REPLACED: now point-per-run errorbars vs Lindhard (spread removed)
+- `/local/data/public/skcb2/tddft/docs/reports/overnight-gaussian-classical-jellium/figures/sv_method_crosscheck.png` — NEW parity sanity check (A vs B)
+- `/local/data/public/skcb2/tddft/docs/reports/overnight-gaussian-classical-jellium/figures/sv_fit_example_v1p3.png` — NEW single-run fit diagnostic
+- `/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_sv_sigma0p5/make_sv_comparison.py` — earlier (now-superseded) spread-plot script; kept
+
+### Commands run
+```bash
+cd docs/reports/overnight-gaussian-classical-jellium
+/local/data/public/skcb2/tddft/venv/bin/python3 build_sv_extraction_notebook.py
+```
+
+### Validation
+- Cross-check: Method A vs B agree to 1–7 % per run (parity plot) — energy
+  conservation between electronic-system gain and projectile-KE loss confirmed.
+- R² 0.975–0.993 for all linear fits. v3p0 has only n=5 post-transient energy
+  samples (sparse 50-step logging on a 6 a.u. run) → largest relative uncertainty.
+
+### Assumptions still in play
+- "speed integration of F·dv" read as ∫F·v dt = ½m Δ(v²) (KE deposited). If the
+  user meant a different integrand, only Method B changes.
+- Position "x" taken as displacement along +z motion (x,y ≈ 0 in these runs).
+
+### Exact next steps
+1. Confirm the Method-B interpretation with the user.
+2. If adopting this as canonical, update `REPORT.md` §6 numbers (currently quote
+   the old local-slope ratios 1.22/1.33/1.12/0.71) to the regression values above.
+
 ## MORNING SUMMARY (read first)
 
 What this run does: a classical −1 / σ=0.5 Bohr erf-smoothed Gaussian electron

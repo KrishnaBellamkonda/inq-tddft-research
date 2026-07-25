@@ -1,0 +1,22 @@
+{
+  "shared_terms": {
+    "u_xx": {
+      "classical": 1.420621360905908,
+      "wavepacket": 7.048008996678425,
+      "ratio_wp_over_cl": 4.961215698026686,
+      "physics": "diffusion / dispersion (compare Bohm-Gross 3 v_th^2 grad^2 n)"
+    }
+  },
+  "classical_only": {
+    "u*u_x": 0.3491344934439294,
+    "u*u_xx": 0.11942074500202947,
+    "u*u_xxx": 0.2142125229172292,
+    "u^2*u_x": 0.1375648545015613,
+    "u^2*u_xx": -0.014170673245274582,
+    "u^2*u_xxx": 0.04737242418676418
+  },
+  "wavepacket_only": {},
+  "classical_verdict": "REFUTE",
+  "wavepacket_verdict": "CONFIRM",
+  "plot": "/local/data/public/skcb2/tddft/docs/campaigns/ml-patterns/artifacts/T13_compare.png"
+}

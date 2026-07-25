@@ -172,3 +172,88 @@ run that adopts this stays byte-identical.
 - inqview: `validate_run` on synthetic run dirs — a complete one PASSES; one
   with a dropped required column FAILS tier-1; a NaN-injected column FAILS
   tier-3; a norm=2.0 column FAILS tier-4. Plus a real-run audit smoke test.
+
+---
+
+## 2026-06-15 — Expanded approved set (user accept/reject session)
+
+Status: **approved 2026-06-15** by interactive per-observable accept/reject
+(session "minimal-set-observables"). This is the authoritative target the
+phase-3 design (above) is now expanded to. It **adds a derived (post-processed)
+layer** — previously enforced nowhere — and closes the drift gaps the earlier
+design left open (`current`/`dipole` unrequired; `density_wp` optional;
+`delta_density_l2`/`step`/`time_au` unimplemented). Implementation is tracked in
+`docs/plans/minimal-observable-set-expansion.md`; nothing below is encoded in
+`minimum_observable_set.hpp` yet.
+
+Two layers per run-type now: **PRIMARY** (raw, written by `run.cpp`, manifest +
+C++ table) and **DERIVED** (post-processed by `analyse.py`, needs a new derived
+contract — see plan). Legend: **(new)** not in current header; ⚠ needs building.
+
+### UNIVERSAL CORE (every run)
+
+- **Primary:** `energy_total` (drift<1mHa), `energy_kinetic`, `energy_hartree`,
+  `energy_xc`, `current_xyz` **(new — promote)**, `dipole_xyz` **(new —
+  promote)**, `density_l2` (=0 at t0), `delta_density_l2` **(new)**,
+  GS `eigenvalues`, GS `occupations`, GS system density VTI, `run_summary.txt`,
+  `step` (monotone +WRITE_EVERY) **(new)**, `time_au` (t0=0) **(new)**.
+- **Derived:** `dipole_spectrum_xyz`, `current_spectrum_xyz`, `energy_fft`,
+  `detrended_spectra_variants` (raw/mean/detrended/plateau), `energy_conservation_audit`
+  (|ΔE_total| ledger), `REPORT.md`, `validate_run_PASS` (the 4-tier gate run +
+  recorded), `ks_eigenenergy_evolution`.
+
+### + jellium-WP
+
+- **Primary:** density VTIs `total`, `system`, **`wp` (PROMOTED optional→required —
+  equal cadence to total)**, `density_delta_raw`, `density_delta_coarse`,
+  `step_delta` δn **(new)**; `wp_config.txt`, `wp_injection_report.txt`;
+  `wp_momentum_stats`, `wp_real_space_stats`, `momentum_distribution`;
+  `state_energies`, `occupations_vs_time`; WP-only overlap, full O_ij overlap
+  (t0,tf); complex WP wavefunction VTI **(new — promote from v2)**;
+  `gamma_transitions`.
+- **Derived:** `energy_decomposition_vs_z`, `kl_divergence`,
+  `energy_bookkeeping_vs_time` **(new — time-series, not just t_IFW bar)**,
+  `gs_basis_decomposition`, `overlap_heatmap_log`, `sigma_xyz_vs_time`,
+  `momentum_band_free_vs_jellium`, `wp_position_velocity_vs_time`,
+  `density_z_profile_evolution`, `delta_density_xz_snapshots`, `diff_vs_free_WP`
+  (needs free-WP companion), `loss_function`, `momentum_distribution_evolution`,
+  `momentum_scattering_map_2d`, `wp_momentum_distribution_before_after`,
+  `secondary_electron_yield` ⚠ (skill flags not-yet-implemented).
+- **Rejected (NOT in minimal set):** `norm_per_state`, all-orbital wavefunction
+  dump at t_f, proxy overlap+shells, `knudsen_ke` (WP S(v) taken from
+  energy-decomposition + momentum-band instead), `density_fourier` n_q modes,
+  `plasmon_fft`, `planewave_decomposition` (dropped with its all-orbital-dump
+  dependency).
+
+### + jellium-classical
+
+- **Primary:** `electron_track` (every step), `state_energies`,
+  `occupations_vs_time`, `momentum_distribution`; density VTIs `total`,
+  `system`, `density_delta_raw`, `density_delta_coarse`, `step_delta` δn **(new)**;
+  full O_ij overlap (t0,mid,tf), proxy overlap+shells, `gamma_transitions`.
+- **Derived:** `delta_E_total_vs_z` (windowed S±SE — the classical S(v)),
+  `classical_force_fixed` (F_z=m·dv/dt), `running_slope_vs_z` (box-deficit),
+  `stopping_force_vs_z`+`dE_kinetic_vs_z`, `bath_energy_vs_time`,
+  `delta_E_total_vs_time`, `energy_decomposition_vs_z`,
+  `energy_bookkeeping_vs_time` **(new)**, `overlap_heatmap_log_classical`,
+  `gs_basis_decomposition`, `gs_projected_occupations`,
+  `density_z_profile_evolution`+`delta_density_xz_snapshots`.
+
+### + coronene  (all options accepted)
+
+- **Primary:** `density_rt_{total,system,wp}`, `wp_momentum_distribution`,
+  WP-only overlap (every step), WP initial density + wavefunction VTI; LEED
+  full-time accumulators, time-windowed + paper-window, instantaneous snapshots +
+  `screen_config` + `window_ranges`; GS orbital densities (per-orbital VTI).
+- **Derived:** `all_screens_grid`+per-screen (lin+log), screen IFFT (amp +
+  Patterson), time-windowed patterns, instantaneous screen gifs,
+  `gs_orbital_gallery`, `wp_position_vs_time`, WP-GS overlap gif,
+  `state_energies`+spectra.
+
+### + free-WP  (all options accepted — the analytic anchor)
+
+- **Primary:** density_wp VTI, `wp_momentum_stats`, `wp_real_space_stats`,
+  `momentum_distribution`.
+- **Derived (invariant checks):** `sigma_vs_analytic_spread`,
+  `centroid_linearity_check` (z=k0·t), `momentum_conservation_check` (⟨p_z⟩=k0,
+  |ψ̃(k)|² stationary), `norm_conservation_check` (∫|ψ|²=1, unitarity).

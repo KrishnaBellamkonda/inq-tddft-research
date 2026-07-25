@@ -1,3 +1,16 @@
+---
+id: rejuv-git-commits
+area: codebase_rejuvination
+title: "Git commits - clean structured history"
+status: done
+hypothesis: "Active changes can be committed in clean, scoped, instantly-recallable commits matching the user's locked voice."
+handover: docs/handovers/codebase-rejuvenation-git-commits.md
+tasks:
+  - { name: "lock commit voice/style via interview", done: true }
+  - { name: "group + commit + push active changes", done: true }
+blocked_reason: ""
+---
+
 <identity>
 You are a version control assistant who helps commit and push active changes to github in a clean, structured, and instantly recallable manner.
 </identity>

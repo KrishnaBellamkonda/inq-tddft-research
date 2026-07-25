@@ -388,7 +388,8 @@ from any source.
 
 ---
 
-## Verdict (LEAVE BLANK — user fills)
+## Verdict (user — 2026-06-25)
 
-- Current convention correct?  Y/N ___
-- Apply coherent-gain fix?     Y/N ___
+- Current convention correct?  **Y**
+- Apply coherent-gain fix?     **Y** — `÷ Σwin` with interior-bin ×2 (already
+  shipped in `analysis/fourier.py` lines 210–211; ratified here).

@@ -403,4 +403,12 @@ and EELS reviews on arXiv), matching Eq. (8) here.
 
 ---
 
-## Verdict (LEAVE BLANK — user fills): formula accepted? Y/N ____ ; reduced-test accepted? Y/N ____
+## Verdict (user — 2026-06-25)
+
+- **formula accepted? Y** — accepted **as a plasmon-peak LOCATOR** with the bold
+  caveat (it is NOT a quantitatively faithful `−Im[1/ε]`: wrong line shape, area,
+  and absolute `4π` normalisation off the undamped limit). Use the **complex**
+  `n_q(t)` (BUG-A) and compute `|n_q(ω)|²/q²` (BUG-B).
+- **reduced-test accepted? Y.**
+- Applied 2026-06-25 in `pipeline/density_fourier.py::loss_locator` via `code-test`
+  (`test_density_fourier_loss.py`, 3/3; catalogue row added).

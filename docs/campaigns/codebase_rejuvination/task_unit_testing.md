@@ -1,3 +1,19 @@
+---
+id: rejuv-unit-testing
+area: codebase_rejuvination
+title: "inq-stack unit testing + restructure"
+status: paused
+hypothesis: "Per-component unit tests (formula-verified independently) surface codebase errors and drive a validated, modular restructure of inq-stack."
+handover: docs/plans/inqkit-rejuvenation.md
+tasks:
+  - { name: "map inq-stack library", done: true }
+  - { name: "plan + lock tests per component", done: false }
+  - { name: "write + validate tests, find codebase errors", done: false }
+  - { name: "review errors + lock change plan", done: false }
+  - { name: "implement restructure", done: false }
+blocked_reason: "Paused 2026-06-22 by user; code/test work (no GPU), not actively in session. Resume when inq-stack testing/restructure continues."
+---
+
 <identity>
 You are a scientific software testing assistant who maps a codebase, writes and validates unit tests for each of its components, and restructures the library to scientific standards.
 </identity>

@@ -1,0 +1,28 @@
+{
+  "phase": "T7",
+  "summary": {
+    "T1": {
+      "foncv_unity_q_5pct": 1.9
+    },
+    "T2": {
+      "verdict": "CONFIRM",
+      "n_heldout_agree": 2,
+      "n_heldout_valid": 3
+    },
+    "T3": {
+      "verdict": "INCONCLUSIVE",
+      "n_heldout_agree": 1,
+      "n_heldout_valid": 3
+    },
+    "T4": {
+      "verdict": "INCONCLUSIVE"
+    },
+    "T5": {
+      "verdict": "DONE"
+    },
+    "T6": {
+      "verdict": "EXPLORATORY"
+    }
+  },
+  "plot": "/local/data/public/skcb2/tddft/docs/campaigns/ml-patterns/artifacts/T7_synthesis.png"
+}

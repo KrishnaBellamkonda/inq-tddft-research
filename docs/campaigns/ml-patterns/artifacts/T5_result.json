@@ -1,0 +1,40 @@
+{
+  "phase": "T5",
+  "verdict": "DONE",
+  "note": "cell E=100 method=total_wp_included_CAVEAT",
+  "dmd_modes": [
+    {
+      "omega_eV": 10.0,
+      "growth": -0.00026,
+      "amp": 0.047
+    },
+    {
+      "omega_eV": 25.0,
+      "growth": -0.11,
+      "amp": 0.045
+    },
+    {
+      "omega_eV": 45.0,
+      "growth": -0.098,
+      "amp": 0.016
+    },
+    {
+      "omega_eV": 67.0,
+      "growth": -0.16,
+      "amp": 0.0035
+    }
+  ],
+  "sindy": {
+    "da0/dt": {
+      "a1": -0.47,
+      "a0^2": -0.72,
+      "a0a1": 0.097
+    },
+    "da1/dt": {
+      "a0^2": 7.2,
+      "a0a1": 2.3
+    }
+  },
+  "plot": "/local/data/public/skcb2/tddft/docs/campaigns/ml-patterns/artifacts/T5_dynamics.png",
+  "omega_p_ev": 3.5
+}

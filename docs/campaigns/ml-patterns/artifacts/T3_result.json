@@ -1,0 +1,244 @@
+{
+  "phase": "T3",
+  "split": {
+    "calibration": [
+      20.0,
+      50.0,
+      300.0
+    ],
+    "heldout": [
+      25.0,
+      100.0,
+      600.0
+    ],
+    "skipped": [
+      {
+        "energy": 1.5,
+        "v": 0.3320360921808203,
+        "role": "calibration",
+        "reason": "no matched classical"
+      },
+      {
+        "energy": 15.0,
+        "v": 1.049990316673017,
+        "role": "heldout",
+        "reason": "no matched classical"
+      },
+      {
+        "energy": 700.0,
+        "v": 7.172799419404593,
+        "role": "calibration",
+        "reason": "no matched classical"
+      },
+      {
+        "energy": 1500.0,
+        "v": 10.499903214963208,
+        "role": "heldout",
+        "reason": "no matched classical"
+      }
+    ]
+  },
+  "attempts": [
+    {
+      "try": 1,
+      "config": {
+        "rank": 10,
+        "max_frames": 250,
+        "window_frac": [
+          0.0,
+          0.5
+        ],
+        "project_pod_rank": 25,
+        "line_axis": 2
+      },
+      "calib_score": 0.074,
+      "calib_per_cell": [
+        {
+          "E": 20.0,
+          "omega_dmd": 6.6,
+          "omega_p": 3.5,
+          "rel": 0.9,
+          "nyquist_ok": true
+        },
+        {
+          "E": 50.0,
+          "omega_dmd": 19.0,
+          "omega_p": 3.5,
+          "rel": 4.6,
+          "nyquist_ok": true
+        },
+        {
+          "E": 300.0,
+          "omega_dmd": 0.42,
+          "omega_p": 3.5,
+          "rel": 0.88,
+          "nyquist_ok": true
+        }
+      ]
+    },
+    {
+      "try": 2,
+      "config": {
+        "rank": 8,
+        "max_frames": 200,
+        "window_frac": [
+          0.0,
+          0.45
+        ],
+        "project_pod_rank": 20,
+        "line_axis": 2
+      },
+      "calib_score": 0.0,
+      "calib_per_cell": [
+        {
+          "E": 20.0,
+          "omega_dmd": 24.0,
+          "omega_p": 3.5,
+          "rel": 6.0,
+          "nyquist_ok": true
+        },
+        {
+          "E": 50.0,
+          "omega_dmd": 31.0,
+          "omega_p": 3.5,
+          "rel": 7.8,
+          "nyquist_ok": true
+        },
+        {
+          "E": 300.0,
+          "omega_dmd": 62.0,
+          "omega_p": 3.5,
+          "rel": 17.0,
+          "nyquist_ok": true
+        }
+      ]
+    },
+    {
+      "try": 3,
+      "config": {
+        "rank": 14,
+        "max_frames": 300,
+        "window_frac": [
+          0.0,
+          0.6
+        ],
+        "project_pod_rank": 30,
+        "line_axis": 2
+      },
+      "calib_score": 0.054,
+      "calib_per_cell": [
+        {
+          "E": 20.0,
+          "omega_dmd": 0.57,
+          "omega_p": 3.5,
+          "rel": 0.84,
+          "nyquist_ok": true
+        },
+        {
+          "E": 50.0,
+          "omega_dmd": 29.0,
+          "omega_p": 3.5,
+          "rel": 7.3,
+          "nyquist_ok": true
+        },
+        {
+          "E": 300.0,
+          "omega_dmd": 22.0,
+          "omega_p": 3.5,
+          "rel": 5.4,
+          "nyquist_ok": true
+        }
+      ]
+    },
+    {
+      "try": 4,
+      "config": {
+        "rank": 6,
+        "max_frames": 180,
+        "window_frac": [
+          0.05,
+          0.4
+        ],
+        "project_pod_rank": 15,
+        "line_axis": 2
+      },
+      "calib_score": 0.0,
+      "calib_per_cell": [
+        {
+          "E": 20.0,
+          "omega_dmd": 9.9,
+          "omega_p": 3.5,
+          "rel": 1.8,
+          "nyquist_ok": true
+        },
+        {
+          "E": 50.0,
+          "omega_dmd": 18.0,
+          "omega_p": 3.5,
+          "rel": 4.1,
+          "nyquist_ok": true
+        },
+        {
+          "E": 300.0,
+          "omega_dmd": 130.0,
+          "omega_p": 3.5,
+          "rel": 36.0,
+          "nyquist_ok": true
+        }
+      ]
+    }
+  ],
+  "frozen_config": {
+    "rank": 10,
+    "max_frames": 250,
+    "window_frac": [
+      0.0,
+      0.5
+    ],
+    "project_pod_rank": 25,
+    "line_axis": 2
+  },
+  "frozen_from_try": 1,
+  "heldout": [
+    {
+      "E": 25.0,
+      "v": 1.4,
+      "omega_dmd_ev": 12.0,
+      "omega_p_ev": 3.5,
+      "lambda_dmd": 19.0,
+      "lambda_theory": 67.0,
+      "rel": 2.5,
+      "nyquist_ok": true,
+      "agrees": false,
+      "wp_method": "total_wp_included_CAVEAT"
+    },
+    {
+      "E": 100.0,
+      "v": 2.7,
+      "omega_dmd_ev": 3.5,
+      "omega_p_ev": 3.5,
+      "lambda_dmd": 130.0,
+      "lambda_theory": 130.0,
+      "rel": 0.0092,
+      "nyquist_ok": true,
+      "agrees": true,
+      "wp_method": "total_wp_included_CAVEAT"
+    },
+    {
+      "E": 600.0,
+      "v": 6.6,
+      "omega_dmd_ev": 17.0,
+      "omega_p_ev": 3.5,
+      "lambda_dmd": 68.0,
+      "lambda_theory": 330.0,
+      "rel": 3.8,
+      "nyquist_ok": true,
+      "agrees": false,
+      "wp_method": "total_wp_included_CAVEAT"
+    }
+  ],
+  "n_heldout_agree": 1,
+  "n_heldout_valid": 3,
+  "verdict": "INCONCLUSIVE",
+  "plot": "/local/data/public/skcb2/tddft/docs/campaigns/ml-patterns/artifacts/T3_heldout.png"
+}

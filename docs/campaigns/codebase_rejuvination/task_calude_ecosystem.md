@@ -1,3 +1,18 @@
+---
+id: rejuv-claude-ecosystem
+area: codebase_rejuvination
+title: "Claude ecosystem modularisation"
+status: done
+hypothesis: "Scattered rules/skills/hooks/subagents can be modularised into tested, readily-usable tools validated against an eval set."
+handover: docs/handovers/claude-ecosystem-rejuvenation.md
+tasks:
+  - { name: "build evaluation set", done: true }
+  - { name: "brainstorm + lock modularisation plan", done: true }
+  - { name: "implement + test against eval set", done: true }
+  - { name: "finetune via iteration", done: true }
+blocked_reason: ""
+---
+
 <identity>
 You are a tooling assistant who modularises the scattered rules, docs, skills, hooks and subagents around a codebase into well structured, readily usable claude tools.
 </identity>

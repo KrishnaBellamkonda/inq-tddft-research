@@ -607,6 +607,21 @@ live in `docs/plans/` + `docs/adr/`; theory in
   *minimum k0* and hence a maximum launch distance; mass then only apportions
   k0 between velocity and kinetic energy E = k0²/2m. (Resolved 2026-07-15,
   σ=1 mass-pair planning.)
+- **classical stopping baseline (localised slab)** — the matched-geometry classical
+  projectile S(v) twin of the WP `qsp_phase5` S(E) sweep, in the identical
+  localised-slab cell (50×50×90, N=82, σ_WP=0.5), so the slab WP stopping has a
+  like-for-like classical expectation instead of the ADR-0010 bulk/point-charge
+  reference. Campaign: `docs/campaigns/localised_jellium/classical-stopping-baseline.md`.
+- **drive mode (Ehrenfest vs prescribed constant-velocity)** — the two ways the
+  moving Gaussian-charge projectile advances. **Ehrenfest** (`LJ_CONST_V=0`): the
+  charge moves under its own Hellmann–Feynman force; a light electron DECELERATES
+  and stops inside the slab, so the stopping power is the **initial-drag slope**
+  S(v₀)=−d(KE_proj)/ds over the early v≥0.85·v₀ window (`light-projectile-stopping`).
+  **Prescribed constant-velocity** (`LJ_CONST_V=1`): zero force ⇒ a=0 ⇒ R=R₀+V₀·t;
+  the charge transits the slab at fixed v and exits, so the stopping power is
+  **ΔE_deposited/L_slab** read off the energy plateau after it clears the slab
+  (`stopping-power-extraction` slab method). N_STEPS is sized to stop the center
+  before the Gaussian wraps the periodic box. The two bracket S_classical(v).
 
 ## Campaigns (2026-06-22)
 
@@ -737,3 +752,63 @@ live in `docs/plans/` + `docs/adr/`; theory in
   (∝ 1/m at fixed σ_WP) that can imprint an apparent mass dependence on S even
   where NG predicts none; any flatness/violation verdict must be checked against
   the measured packet width channel before being attributed to NG physics.
+
+## High-density classical S(v) benchmark (campaign `classical-highdensity-sv`, 2026-07-21)
+
+- **high-density classical S(v) benchmark** — the classical electronic-stopping
+  reference curve produced by this campaign: a mass-1 Gaussian-charge electron
+  (σ_WP=0.5) driven by Ehrenfest through a *denser* localised jellium slab
+  (r_s≈4.2, N=100, 25-Bohr thick, 35×35 transverse), sampled at 6 high
+  velocities. The classical baseline a later matched WP run is compared against.
+  Distinct from the earlier r_s=5.68 `classical-slab-stopping` baseline (a single
+  v=1.3 pair, periodicity-3, wrap-limited).
+- **clean-exit plateau (CAP-free)** — the operational basis of the E_absorbed
+  definition here: with z-open `periodicity(2)` the projectile Gaussian LEAVES the
+  box, and with NO CAP the total electronic energy is conserved, so after full
+  exit E_electronic is exactly flat. `E_absorbed = E_electronic(plateau) −
+  E_electronic(0)`; `S = E_absorbed / L_slab`. Contrast the old wrap/CAP regimes
+  where E_total never plateaued.
+- **z-open slab (periodicity 2)** — `cell.periodicity(2)`: x,y periodic (infinite
+  slab), z finite/open (mixed-BC Poisson). The boundary setting that lets the
+  moving Gaussian charge exit without wraparound; the GS it loads must share it.
+- **transit floor velocity (v_min)** — the lowest projectile velocity at which a
+  mass-1 electron still fully transits the dense 25-Bohr slab (does not stop
+  inside). Measured by the Phase-2 pilot (est. ~1.8–2.0); sets the bottom of the
+  6-point grid. Below it, E_absorbed/L_slab is undefined and the curve cannot go.
+- **two stopping definitions (this campaign)** — Definition 2 = E_absorbed/L_slab
+  (headline, localised-slab deposit). Definition 1 = energy-component
+  decomposition (formula still being derived by the user; here it is DATA-COLLECT
+  ONLY — every run emits the full pairwise ledger E_PP/E_PS/E_SS/E_SB/E_PB/E_BB +
+  KE/E_xc/E_hartree/E_external so the formula is computable post-hoc).
+
+## Stopping power from decomposed energy (campaign `stopping-from-energy-decomposition`, 2026-07-21)
+
+> The analysis dual of `classical-highdensity-sv`: that campaign records the
+> ledger (Definition 1, data-collect only); THIS one derives + applies the formula.
+
+- **decomposition-S / Definition 1** — a stopping-power number built from the
+  decomposed energy ledger (pairwise Coulomb E_PP/E_PS/E_SS/E_SB/E_PB/E_BB +
+  kinetic split KE_slab/KE_proj + E_xc), as opposed to **Definition 2** =
+  `E_absorbed/L_slab` (the localised-slab deposit headline). This campaign realises
+  Definition 1; the formula is **not locked** until its Phase-1 human gate.
+- **target-absorption vs projectile-loss (duality)** — the two views of S: energy
+  ABSORBED by the slab electrons per unit path vs energy LOST by the projectile per
+  unit path. For the **classical** projectile (an external potential) they are exact
+  duals by construction (`−ΔKE_proj = ΔE_electronic + ΔU_proj_bg`). For the **WP**
+  the projectile is a KS electron, so any projectile-partitioned energy is a *choice
+  of partition*, not a partition-free observable — the honest question is "which
+  partition, and is it defensible", not "loss vs absorption".
+- **matched-estimator (apples-to-apples) rule** — classical and WP S must be
+  computed by the SAME functional of the SAME columns so the two curves are
+  comparable; a single-representation definition is never overlaid on the shared S
+  axis without a caveat.
+- **path length ds (per unit *what*)** — the S denominator choice, quoted with every
+  reported S: projectile arc-length ∫|v|dt (classical, right for a decelerating
+  projectile); slab thickness L_slab (aggregate deposit); WP centroid arc-length
+  (valid only while the WP density is unimodal — flag bimodality).
+- **gauge-clean combination** — individual E_hartree/E_external (or single pair
+  terms E_PP/E_PS/E_PB) are Poisson-G=0-convention dependent in the net-charged WP
+  cell; only combinations whose gauge-invariant terms Δ(E_SS,E_SB,E_BB)≈0 across the
+  twin are physical. The **gauge test** must pass before any pair-term-based WP
+  number is quoted (`reference_charged_cell_hartree_convention`,
+  `reference_twin_pairwise_decomposition`).
