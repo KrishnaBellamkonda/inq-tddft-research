@@ -8,6 +8,7 @@ ParaView-6.1.0-MPI-Linux-Python3.12-x86_64/
 # Subprojects tracked by their own independent git repositories
 Tutorial/
 QuantumKickExtension/
+inq-study/
 
 # Restructure scratch dir
 .restructure-backups/
@@ -33,6 +34,11 @@ __pycache__/
 # Simulation outputs
 results/
 **/results/
+results_*/
+**/results_*/
+# raw field/screen/observable dumps written next to a run
+raw/
+**/raw/
 *.raw
 *.vti
 *.vtk
@@ -43,15 +49,48 @@ results/
 *.h5
 *.hdf5
 
-# electrons.save() / electrons.load() checkpoint directories
+# electrons.save() / electrons.load() checkpoint + ground-state save directories
+# (INQ writes each KS orbital as a ~100+ MB binary state file — never track these)
 checkpoints/
 **/checkpoints/
+checkpoint/
+**/checkpoint/
+states/
+**/states/
+grid_scratch/
+**/grid_scratch/
+gs/
+**/gs/
+shared_gs/
+**/shared_gs/
+save_gs/
+**/save_gs/
+rt_ckpt/
+**/rt_ckpt/
+spin_density/
+**/spin_density/
 
 # Large rendered/media
 *.png
 *.pdf
 *.gif
 *.mp4
+
+# Executed analysis notebooks carry base64-embedded density GIFs (tens of MB
+# each) — the builders (build_*.py / *_notebook_builder.py) stay tracked, so the
+# notebooks are regenerable. Track a specific one with `git add -f` if needed.
+*.ipynb
+
+# Generated run-database dump (absolute local paths); runs_catalogue.csv is the
+# tracked source-of-truth catalogue.
+docs/run_database.json
+docs/run_database.csv
+docs/run_database_columns.json
+
+# Incomplete/stray note files (truncated names, no extension) — do not track
+docs/notes/classical-stopping-power-baselines-for-l
+docs/notes/gaussian-pertubation-for-classical-simul
+ResearchProject/systems/localised_jellium/hypotheses/perturbation_method/classical-gaussian-pertubation-constant-
 
 # Per-run runtime logs (dispatcher / postprocess / inq-run)
 *.log
@@ -79,6 +118,12 @@ nvim
 
 # Remove executales
 run
+run_cl
+run_wp
+run_b1_full
+run_pilot_validated
+self_hartree
+gpu_probe
 run_convergence
 gaussian_wave_packet
 n2
@@ -107,9 +152,15 @@ syntax_check
 # Office/binary/archive docs — keep tracked history pure text
 *.pptx
 *.xlsx
+*.docx
 *.zip
 *.epub
 *.html
+
+# Rotated dispatcher/orchestrator logs and run-state markers
+**/*.log.run*
+*.marker
+*_DONE
 
 # LaTeX build artifacts
 *.aux
