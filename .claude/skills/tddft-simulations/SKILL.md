@@ -48,7 +48,7 @@ Record the type. All subsequent phases branch on this.
 Check that the target system directory exists under `ResearchProject/systems/<system>/`:
 - `shared/configs/` — at least one base config `.hpp`
 - `shared/cpp/run_template.hpp` — propagation template
-- `checkpoints/` or `save_gs/` — at least one GS checkpoint
+- `shared_gs/` (new systems) or legacy `checkpoints/` / `save_gs/` — at least one GS checkpoint
 
 If missing, stop and tell the user:
 > "This system doesn't have the infrastructure for TDDFT runs yet.
@@ -76,6 +76,16 @@ an existing GS, reuse it. If not, flag that a new GS is needed (defer to
 
 ## Phase 2: Configuration planning
 
+> **Record the JUSTIFICATION of every non-trivial decision, not just the value.**
+> For each chosen parameter or design choice (σ, energy, box size, CAP length/depth,
+> launch position, N_STEPS, observable set, grid, …) write down *why* it was chosen —
+> the constraint, calculation, plot, prior run, or user rationale behind it. Keep a
+> running **decision log** (in the plan/handover and surfaced in the run notebook's
+> setup section) so a future reader (or the user) can reconstruct the reasoning, not
+> just the numbers. "σ_WP=3 because the 20% self-spread budget over the 36-Bohr
+> transit lands at E≈500 eV (see fig_spread_tradeoff)" — not just "σ_WP=3". A value
+> without its justification is an incomplete decision.
+
 ### 2a. Collect run parameters from user
 
 Required parameters (type-dependent):
@@ -91,21 +101,47 @@ Required parameters (type-dependent):
 | Impact offset | — | — | ✓ (WP_CX, CY, CZ) | — |
 | Kick direction/strength | — | — | — | ✓ |
 
-### 2b. Nyquist validation (PLANNING PHASE — before any build)
+### 2b. Grid-cutoff (aliasing) gate — MANDATORY, PRE-EMPTIVE (before any build/launch)
 
-For WP simulations, compute:
+**Every projectile run MUST pass this gate before it is built or launched. A BLOCK
+is a HARD STOP. The ONLY exception is an explicit user instruction to override.**
+Run the skill-local guard (it encodes the maths below and is self-testing):
+
 ```
-k₀ = sqrt(2 × E_eV / 27.211)
-σ_k = 1 / (σ × sqrt(2))
-k_max = k₀ + 3 × σ_k
-dx_max = π / k_max
+python3 .claude/skills/tddft-simulations/cutoff_guard.py \
+    --spacing <h_bohr> --kind wp --energy-ev <E_drift> --sigma-wp <σ_WP>      # WP
+python3 .claude/skills/tddft-simulations/cutoff_guard.py \
+    --spacing <h_bohr> --kind classical --energy-ev <E_kin>                   # classical
+# exit 0 = PASS/WARN (proceed), 3 = BLOCK (stop). Add --override only on explicit user say-so.
 ```
 
-**If dx > dx_max: HARD STOP.** Report:
-> "Grid spacing dx={dx} exceeds Nyquist limit dx_max={dx_max:.3f} for
-> E={E} eV, σ={σ} Bohr. Either reduce dx (requires new GS) or reduce E."
+**Why:** a grid of spacing `h` represents momenta only up to `k_Nyq = π/h`, i.e.
+single-particle KE up to `E_cut = ½(π/h)²`. Anything beyond aliases — wraps to
+spurious momenta and injects energy — so the dynamics and stopping power are garbage
+(positive late-time energy slope, runaway S). Verified the hard way: the σ_WP=0.5
+sweep at h=0.5 (E_cut=537 eV) gave S=13–19 eV/Bohr at 340/490 eV (18%/42% of the
+packet above Nyquist); 122 eV (1%) was clean. (qsp_phase5, 2026-06-27.)
 
-Display the Nyquist table for the user showing all requested energies.
+**Classical projectile** (monochromatic, `p0 = √(2·E_kin)`):
+- **BLOCK if `E_cut < margin·E_kin`** (margin default **1.10** — "10% higher").
+- Note: the projectile induces electron excitations up to ~2v (binary-collision
+  pickup), i.e. ~4×E_kin; `--response-factor 2` applies that stricter physical bound.
+
+**Wavepacket projectile** (Gaussian — NOT monochromatic):
+```
+σ_p   = 1 / (√2 · σ_WP)          # momentum-space std. ψ ∝ exp(−r²/2σ²) (wavepacket.hpp:254);
+                                 # σ_WP is the .sigma() ENVELOPE width, density std = σ_WP/√2.
+                                 # ⚠ NOT 1/(2·σ_WP) — that √2 error makes σ_p too small.
+p0    = √(2 · E_drift)           # mean (drift) momentum
+f     = 1 − Φ((k_Nyq − p0)/σ_p)  # fraction of the packet aliased past Nyquist
+```
+- **HARD BLOCK if `f > 2%`** (genuinely aliased).
+- **WARN (proceed) if `p0 + 3σ_p > k_Nyq` but `f ≤ 2%`** (marginal tail).
+- **PASS** otherwise. (Empirical calibration: f≈1% clean, ≈5% borderline, ≈18% destroyed.)
+
+Display the per-energy verdict table to the user for all requested energies. On a
+BLOCK: reduce `h` (⇒ **new GS required** — grid-dependent) or reduce `E`; do not
+launch until it passes or the user explicitly overrides.
 
 ### 2c. Memory estimation (PLANNING PHASE)
 
@@ -143,6 +179,82 @@ N_STEPS = ceil(t_total / dt)
 ```
 
 **For coronene:** Use `compute_n_steps(Lz, offset, sigma, k0, dt)` from the base config.
+
+### 2d′. Classical ↔ wavepacket σ MATCHING (CANONICAL — do not get this wrong)
+
+When a run pairs a **quantum wavepacket** with a **classical Gaussian-charge
+projectile** (e.g. quantum-vs-classical stopping), they MUST present the *same
+charge cloud* to the bath, or the comparison is meaningless. The two codebases use
+**different σ conventions**, so a shared numeric label does NOT mean matched widths:
+
+- **Wavepacket (the convention we keep):** `WavePacket.sigma = σ_WP` is the
+  *wavefunction* width, ψ ∝ exp(−r²/2σ_WP²). Its **charge-density std is σ_WP/√2**.
+- **Classical pseudopotential** (`inqview.io.gaussian_psp.generate_gaussian_psp`,
+  V(r)=erf(r/(σ_pot√2))/r): the arg `sigma = σ_pot` is the **charge-density std**.
+
+**Rule:** label every run by the wavepacket σ_WP, and generate the matching
+classical projectile at
+```
+σ_pot = σ_WP / √2          # classical charge std == WP density std
+```
+A WP at σ_WP=2.0 (density std 1.414) is matched by a classical UPF generated with
+`sigma=1.414`, NOT `sigma=2.0`. The shipped `electron_gaussian_sigma0p5.upf` is a
+σ_pot=0.5 charge (= a WP of σ_WP=0.707), so it does NOT match a σ_WP=0.5 WP — it
+must be regenerated per pairing. (See CONTEXT.md "σ-convention matching"; the WP
+self-spread formula in 2d uses the same σ_WP/√2 density std.)
+
+> **Caveat to carry into analysis, not the run:** the WP carries a ~7 eV
+> self-interaction error (self-Hartree minus LDA-x) that the classical ion lacks.
+> We deliberately do NOT correct it in the simulation for now; it is a known TODO
+> and MUST be flagged + bounded (vacuum-WP control) when reporting any
+> S_WP − S_classical "quantum component."
+
+### 2d″. Classical projectile MUST be zeroed at the box edge (REQUIRED)
+
+**Every classical-projectile jellium run must zero the projectile ion's radial
+potential once the ion is about to leave the simulation box** (e.g. when `z_ion ≥
+z_edge`, just inside the box face). Without this the run is NOT a clean single pass
+and the energy ledger `ΔE_jellium = E_total(t_f) − E_GS` is contaminated.
+
+**Why (the failure mode — observed).** The classical projectile is an Ehrenfest ion
+with an **erf-smoothed Coulomb potential** `V(r) = C·erf(r/(σ_pot√2))/r`, which is
+**long-range (a 1/r tail), NOT Gaussian-suppressed** — at ~22.5 Bohr from the slab it
+is still ~1 eV, plus periodic images. And the **CAP absorbs wavefunctions, not the
+classical point ion**, so the ion is never removed. The contamination this rule fixes:
+- **Wrap-around re-entry** (seen in the τ=40 70-box run `p2_classical`): the ion
+  exits the slab, reaches the box edge, **wraps through the periodic boundary and
+  re-enters the slab**, so `E_total(t_f)` includes a projectile sitting back in the
+  slab — `E_total ≠ E_bath`. Edge-zeroing removes this.
+
+**The requirement.** Zero the projectile's potential once it reaches the edge so the
+late-time state is a **relaxing bath with no projectile**, comparable to the WP's
+fully-absorbed state, making `E_total(t_f) = E_bath(t_f)` clean.
+
+> **Distinct issue, NOT fixed by this rule:** in the τ=100 90-box run `p3_classical`
+> the ion **stalled mid-slab (KE→0) and reversed without ever reaching the edge** —
+> trapped/reflected, depositing ~10× the expected stopping. Edge-zeroing never
+> triggers there (the ion never left), so that anomaly needs its own investigation
+> (projectile charge sign / mass / slab-potential depth / launch energy), separate
+> from this requirement.
+
+**Neutrality-safe (verified).** The projectile UPF has **`z_valence = 0`** — it is a
+pure external Gaussian potential contributing **no valence charge** to the electron
+count or the `G=0` Hartree balance. So zeroing it does NOT unbalance the periodic
+cell. (Zeroing the charge is physically preferable to velocity-parking, which leaves
+the ~1 eV Coulomb tail acting on the slab.)
+
+**Mechanism (run.cpp only — never edit `inq/`).** `real_time::propagate` takes
+`ions&` by reference, so the step lambda can mutate the real ion. Once `z_ion ≥
+z_edge`: null the ion's pseudopotential contribution (zero/scale the species, or an
+`inqkit` potential-gate) — and optionally freeze velocity. True mid-run ion deletion
+is unsupported by stock INQ (the Hamiltonian is built around the fixed ions list), so
+the potential-zeroing is the faithful equivalent. Probe first whether INQ honours an
+in-step ion/species mutation; if not, add a non-const ion hook in
+`inqkit::real_time_session`. code-test + simulation-validation gates apply (new run).
+
+**STATUS: not yet implemented** — the existing `p2_classical`/`p3_classical` runs lack
+it, so their late-time classical energy ledgers are contaminated (p3 anomalously so).
+Required for all future quantum-vs-classical stopping runs.
 
 ### 2e. WRITE_EVERY and frame cadence
 
@@ -292,6 +404,16 @@ Key diagnostic plots produced by `analyse.py` and their purposes:
 
 ## Phase 4: Config and run.cpp creation
 
+> **Checkpoint the last timestep — MANDATORY (rule `final-timestep-checkpoint.md`).**
+> Every run.cpp MUST save a FINAL checkpoint (`electrons.save(OUT/checkpoint)` +
+> `rt_state.txt` with `last_step`/`dt` and any dynamical state not in `electrons` —
+> a moving projectile's `proj_z`/`proj_vz`, a WP's `wp_idx`) and support a
+> `*_RESUME=1` branch (`electrons.load(ckpt)`, restore state, `propagate(…, START)`,
+> segment-suffixed CSVs). This makes every run a resumable prefix so it can be
+> EXTENDED to more steps without recomputing. Long runs additionally take interior
+> checkpoints (`checkpoint-dont-block.md`). Reference: `nazarov_gross/wp/run.cpp`,
+> `localised_jellium_dynamics/proj_dyn/run.cpp`.
+
 ### 4a. Create config header
 
 Follow the naming convention:
@@ -401,9 +523,12 @@ After the pilot completes, present these key diagnostics:
 4. **WP centroid position** — `wp_position_vs_time.png` (should be monotonic for single-pass)
 5. **Eigenergies over time** — `ks_energies_absolute.gif` or first frame
 
-If Gmail notification is requested, email these plots to the user via:
+If Gmail/email notification is requested, **invoke the `email-notifications` skill** —
+it owns the send mechanism (`inqview.email.send_run_email`) AND the mandatory
+four-part result-email contract (hypothesis → what was done → what the plot shows →
+conclusion, with ≥1 plot attached). Do not hand-roll result emails.
 ```python
-from inqview.email import send_run_email
+from inqview.email import send_run_email   # see the email-notifications skill
 send_run_email(subject, body, attachments=[...], to="chiddukanna@gmail.com")
 ```
 
@@ -421,6 +546,18 @@ Wait for user approval before proceeding to batch.
 ---
 
 ## Phase 6: Batch dispatch
+
+> **Use a Python orchestrator, NOT a bash dispatcher, for autonomous multi-phase
+> runs** (user decision 2026-06-27). Bash autonomous scripts are brittle — no
+> structured error handling, no resume, silent stalls. A Python orchestrator gives
+> structured logging, **idempotent resume** (skip runs whose `run_summary` shows
+> `run_completed = true`), **per-phase `try/except` with full-traceback failure
+> emails** (chain continues; one bug never kills the rest), one-shot retry on a
+> sim failure, and direct reuse of `analyse.py`/`inqview.email`. Keep bash only for
+> a single build+run smoke. Reference implementation:
+> `ResearchProject/systems/localised_jellium/scripts/campaign_autorun/orchestrate.py`
+> (runs each phase via `subprocess`, skips completed runs, emails per phase via the
+> `email-notifications` skill).
 
 ### 6a. GPU queue-based scheduling
 
@@ -708,9 +845,13 @@ Results from multi-run analyses go in `hypotheses/<topic>/physics/`.
 | Shared C++ templates | `shared/cpp/run_template.hpp` |
 | Shared Python analysis | `shared/python/analyse_extras.py` |
 | Multi-run scripts | `scripts/<script_name>.py` |
-| Hypothesis results | `hypotheses/<topic>/physics/*.png` |
-| GS checkpoints | `save_gs/<gs_name>/` and `checkpoints/<gs_name>/` |
+| Hypothesis results | `hypotheses/<NN_purpose>/` (combined CSVs, `build_*.py`, `.ipynb`, `README.md`, figures) |
+| Task-specific run tests | `hypotheses/<NN_purpose>/tests/` (mechanism/implementation checks) |
+| GS checkpoints | new systems: `shared_gs/<gs_name>/`; legacy: `save_gs/`, `checkpoints/` |
 | Pseudopotentials | `shared/pseudopotentials/` |
+
+This is the ADR 0007 standard (plural `hypotheses/`, FLAT top-level `run_*`).
+Library-generic `inqkit` unit tests live in `inq-stack/tests/`, NOT here.
 
 ---
 

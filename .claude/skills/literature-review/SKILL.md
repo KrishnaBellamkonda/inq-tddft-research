@@ -55,7 +55,7 @@ Create `/local/data/public/skcb2/tddft/docs/sources/<author-year-keyword>.md`:
 ## Cross-references
 - Plan: docs/plans/<task>.md
 - Code: inq-stack/include/inqkit/<module>/<file>:<line> (if code adapted)
-       or ResearchProject/systems/<material>/<task>/<file>:<line>
+       or ResearchProject/systems/<name>/run_<type>_<params>/<file>:<line>
 ```
 
 ## 5. Propagate source awareness

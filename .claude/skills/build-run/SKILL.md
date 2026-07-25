@@ -71,7 +71,7 @@ target_link_libraries(my_target PRIVATE ${FFTW3_LIBRARIES} m)
 
 | Project area | Location | Tracked by |
 |---|---|---|
-| Production research runs | `ResearchProject/systems/<material>/<task>/run.cpp` | main git |
+| Production research runs | `ResearchProject/systems/<name>/run_<type>_<params>/run.cpp` (per-run); build-once binaries in `systems/<name>/scripts/` (ADR 0007) | main git |
 | Learning examples | `Tutorial/<name>/run.cpp` | own git (separate repo) |
 | QBall references | `QuantumKickExtension/<system>/...` | own git (separate repo) |
 

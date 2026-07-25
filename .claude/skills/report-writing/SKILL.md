@@ -62,7 +62,11 @@ Perturbations: [describe kick/laser].
 
 ## Report files
 
-Place drafts in `/local/data/public/skcb2/tddft/docs/reports/<topic>.md`
+`docs/reports/` is for **cross-system / manuscript-level** writeups only. A report
+that analyses a single system's **run-set** (combined CSVs + study `.ipynb`) belongs
+in `ResearchProject/systems/<name>/hypotheses/<NN_purpose>/`, not here (ADR 0007).
+
+Place cross-system drafts in `/local/data/public/skcb2/tddft/docs/reports/<topic>.md`
 (or `.tex` for LaTeX manuscripts). Store figure-caption working notes in
 `/local/data/public/skcb2/tddft/docs/reports/figure-captions.md`. Save
 figures as `.png` unless the user explicitly requests `.pdf` or `.svg`.

@@ -10,15 +10,42 @@ Apply to: entire project
 | Session handovers | `docs/handovers/` |
 | Literature notes, source summaries, citations | `docs/sources/` |
 | Test matrices, benchmark definitions, validation notes | `docs/validation/` |
-| Report drafts, manuscript fragments, figure captions | `docs/reports/` |
+| Cross-**system** / manuscript-level report drafts, figure captions | `docs/reports/` |
+| Run-tied analysis of a **run-set** (combined CSVs, plotting scripts, study `.ipynb`) | `ResearchProject/systems/<name>/hypotheses/<sweep_name>/` (ADR 0007 + 2026-06-15 amendment) |
 | Temporary working notes | `docs/notes/` |
-| INQ configuration files (user `.cpp`) | `ResearchProject/systems/<material>/<task>/` (e.g. `ResearchProject/systems/coronene/<task>/`, `ResearchProject/systems/jellium/<task>/`) |
+| INQ run machinery (build-once `run.cpp`, dispatcher, per-run `analyse.py`) | `ResearchProject/systems/<name>/scripts/` (ADR 0007) |
 | Tutorial examples (separate git) | `Tutorial/<name>/` |
 | QBall reference calculations (separate git) | `QuantumKickExtension/<system>/` |
 | inqkit C++ headers | `inq-stack/include/inqkit/<module>/` |
 | inqview Python modules | `inq-stack/python/inqview/` |
 | Always-on project rules | `.claude/rules/` |
 | On-demand skills and reference material | `.claude/skills/` |
+
+## Canonical `systems/<name>/` structure (ADR 0007 + 2026-06-15 amendment)
+
+Every production system under `ResearchProject/systems/<name>/` uses these
+folders with fixed contracts. Runs are **grouped by sweep** (2026-06-15
+amendment), one `<sweep_name>/` folder per run-set, matching its analysis folder
+`hypotheses/<sweep_name>/` (bare names, no `NN_` prefix). jellium/coronene stay
+grandfathered-flat; vacuum is migrated as the reference instance.
+
+| Folder | Holds |
+|---|---|
+| `shared_gs/` | converged ground state(s), reused across runs (new unifying name; legacy systems keep `checkpoints/` / `save_gs/`) |
+| `shared/` | shared config headers / `Common_`-derived cfg structs |
+| `scripts/<sweep_name>/` | how runs are PRODUCED: build-once binary (`run.cpp` + `build/`), dispatcher, `gpu_probe`, per-run `analyse.py` template |
+| `<sweep_name>/<run_name>/` | runs grouped by sweep, one subdir per run; outputs only (logs gitignored). Supersedes flat top-level `run_*` |
+| `hypotheses/<sweep_name>/` | what a run-SET MEANS: combined CSVs, `build_*.py` scripts, study `.ipynb`, `README.md` + figures, and a `tests/` subfolder |
+
+Two-tier tests:
+- **Library-generic** feature test (new `inqkit` capability) → wrapper suite
+  `inq-stack/tests/include/inqkit/<module>/` (Catch2; `_engine.cpp` when a live
+  `electrons` is needed, pure host test otherwise).
+- **Task-specific** implementation / mechanism check → `hypotheses/<NN_purpose>/tests/`.
+
+`hypotheses/` is for system-local, run-tied analysis; `docs/reports/` is only for
+cross-system / manuscript-level writeups. **Grandfathered:** jellium/coronene
+already match this and are not migrated.
 
 ## Rules
 
