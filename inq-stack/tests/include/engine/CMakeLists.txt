@@ -137,3 +137,8 @@ inqkit_add_engine_test(test_free_wp_engine
 inqkit_add_engine_test(test_state_norm_engine
   test_engine_main.cpp
   ../inqkit/observables/test_state_norm_engine.cpp)
+
+# T0: localised jellium background (∫n₊=N for slab/sphere; attractive well).
+inqkit_add_engine_test(test_localised_background_engine
+  test_engine_main.cpp
+  ../inqkit/jellium/test_localised_background_engine.cpp)

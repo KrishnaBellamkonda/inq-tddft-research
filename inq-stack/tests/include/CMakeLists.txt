@@ -76,3 +76,5 @@ inqkit_add_pure_test(test_real_field_writer inqkit/io/test_real_field_writer.cpp
 inqkit_add_pure_test(test_complex_field_writer inqkit/io/test_complex_field_writer.cpp)
 inqkit_add_pure_test(test_vti_writer inqkit/io/test_vti_writer.cpp)
 inqkit_add_pure_test(test_jellium_shells inqkit/jellium/test_jellium_shells.cpp)
+inqkit_add_pure_test(test_mask_shape inqkit/absorbers/test_mask_shape.cpp)
+inqkit_add_pure_test(test_projectile inqkit/dynamics/test_projectile.cpp)

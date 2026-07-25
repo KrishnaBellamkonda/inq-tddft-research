@@ -31,6 +31,19 @@ struct StepContext {
     double energy_kinetic = 0.0;
     double energy_hartree = 0.0;
     double energy_xc      = 0.0;
+    // Remaining INQ energy components. The eight terms
+    //   kinetic + external + non_local + hartree + xc + exact_exchange
+    //     + ion + ion_kinetic
+    // sum to energy_total (inq/src/hamiltonian/energy.hpp::total()); nvxc and
+    // eigenvalues are diagnostics and are NOT part of the total. Left zero unless
+    // the run copies them in real_time_session::step().
+    double energy_external       = 0.0;   // E_ext = ∫ n·v_ext (local pseudopotential/external)
+    double energy_nonlocal       = 0.0;   // non-local pseudopotential energy
+    double energy_ion            = 0.0;   // ion-ion (Ewald / background) energy
+    double energy_ion_kinetic    = 0.0;   // classical ionic kinetic energy
+    double energy_exact_exchange = 0.0;   // exact-exchange (0 for pure LDA/GGA)
+    double energy_nvxc           = 0.0;   // ∫ n·v_xc (diagnostic; not in total)
+    double energy_eigenvalues    = 0.0;   // Σ occupied eigenvalues (diagnostic; not in total)
     // current/dipole as a Vec3 unit (consistency with center_of_density which
     // already returns inqkit::detail::Vec3). CSV columns current_{x,y,z} /
     // dipole_{x,y,z} are unchanged — observables_writer reads ctx.current[0..2]

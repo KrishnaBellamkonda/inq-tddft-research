@@ -58,6 +58,16 @@ public:
     ctx.energy_kinetic = data.energy().kinetic();
     ctx.energy_hartree = data.energy().hartree();
     ctx.energy_xc = data.energy().xc();
+    // Full energy decomposition (all remaining INQ components). Written only if
+    // the ObservableSelection enables the matching columns; copying them here is
+    // cheap (plain doubles already computed by INQ each step).
+    ctx.energy_external = data.energy().external();
+    ctx.energy_nonlocal = data.energy().non_local();
+    ctx.energy_ion = data.energy().ion();
+    ctx.energy_ion_kinetic = data.energy().ion_kinetic();
+    ctx.energy_exact_exchange = data.energy().exact_exchange();
+    ctx.energy_nvxc = data.energy().nvxc();
+    ctx.energy_eigenvalues = data.energy().eigenvalues();
     // current/dipole computed on demand; guard in case observables aren't
     // active
     // Convert INQ's vector3 -> inqkit::detail::Vec3 (StepContext's type) here,

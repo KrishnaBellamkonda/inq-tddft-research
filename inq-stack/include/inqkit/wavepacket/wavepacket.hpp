@@ -128,6 +128,11 @@ class WavePacket {
   double kx_ = 0, ky_ = 0, kz_ = 0;
   bool do_ortho_ = false;
   double ortho_tol_ = 1e-6;
+  // Longitudinal (z) focusing: launch a wider, converging packet whose waist
+  // (density std sigma_/sqrt2) forms a focal distance ahead (e.g. the slab face).
+  bool   do_focus_z_ = false;
+  double focus_dist_ = 0.0;   // Bohr, launch -> focal point along +z
+  double focus_mass_ = 1.0;   // effective mass of the WP (sets v = kz/m)
 
 public:
   WavePacket &center(double x_bohr, double y_bohr, double z_bohr) {
@@ -146,6 +151,19 @@ public:
     kx_ = kx;
     ky_ = ky;
     kz_ = kz;
+    return *this;
+  }
+
+  // Launch a LONGITUDINALLY FOCUSING packet: instead of a minimum-width Gaussian
+  // at t=0, inject a wider, converging packet along z whose waist (density std
+  // sigma_/sqrt2) forms after travelling `focal_distance_bohr` (launch -> slab
+  // face). `effective_mass` is the WP mass (v = kz/m). Transverse (x,y) stay at
+  // sigma_. Width + chirp derived from time-reversed free propagation of a
+  // min-width Gaussian (validated 1D known-case). Requires k0(...,kz>0).
+  WavePacket &focus_z(double focal_distance_bohr, double effective_mass) {
+    do_focus_z_ = true;
+    focus_dist_ = focal_distance_bohr;
+    focus_mass_ = effective_mass;
     return *this;
   }
 
@@ -237,6 +255,24 @@ WavePacket::inject_into_last_extra_state(inq::systems::electrons &electrons,
   double kxv = kx_, kyv = ky_, kzv = kz_;
   int ist_w = ist_wp; // index of the wave-packet
 
+  // Longitudinal focusing setup. Default (no focus): sigz = sig, chirp = 0 — the
+  // ordinary spherical min-width packet. With focus_z() set, launch a wider,
+  // converging z-packet: q^2 = a0^4 + (tau/m)^2 with a0 = sigma_, tau = D/v,
+  // v = kz/m; launch z-width sigz = |q|/a0, chirp = -(tau/m)/(2 q^2). Derived from
+  // time-reversed free propagation (1D-validated); the anisotropic norm_fac is
+  // approximate and corrected by the post-orthogonalisation renormalise.
+  double sigz = sig;
+  double chirp = 0.0;
+  if (do_focus_z_) {
+    double a0 = sigma_;
+    double vgz = kzv / focus_mass_;
+    double tau = focus_dist_ / vgz;
+    double tm = tau / focus_mass_;
+    double q2 = a0 * a0 * a0 * a0 + tm * tm;
+    sigz = std::sqrt(q2) / a0;
+    chirp = -tm / (2.0 * q2);
+  }
+
   // Gets access to the first element in the 4D vector
   // Used to get the pointer that can be manipulated in GPU accelerated
   // functions.
@@ -250,9 +286,12 @@ WavePacket::inject_into_last_extra_state(inq::systems::electrons &electrons,
              double ry = rvec[1];
              double rz = rvec[2];
              double dx_ = rx - bx, dy_ = ry - by, dz_ = rz - bz;
-             double r2 = dx_ * dx_ + dy_ * dy_ + dz_ * dz_;
-             double amp = norm_fac * exp(-r2 / (2.0 * sig * sig));
-             double ph = kxv * rx + kyv * ry + kzv * rz;
+             // anisotropic when focusing (sigz != sig); spherical otherwise
+             double amp = norm_fac *
+                 exp(-(dx_ * dx_ + dy_ * dy_) / (2.0 * sig * sig) -
+                     dz_ * dz_ / (2.0 * sigz * sigz));
+             // converging quadratic phase on z (chirp = 0 when not focusing)
+             double ph = kxv * rx + kyv * ry + kzv * rz + chirp * dz_ * dz_;
              phicub_[ix][iy][iz][ist_w] = complex(amp * cos(ph), amp * sin(ph));
            });
   INQKIT_GPU_SYNC();
