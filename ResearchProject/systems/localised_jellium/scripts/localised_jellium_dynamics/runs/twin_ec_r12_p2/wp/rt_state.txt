@@ -1,0 +1,4 @@
+last_step=4
+time_au=0.04
+dt=0.01
+wp_idx=60

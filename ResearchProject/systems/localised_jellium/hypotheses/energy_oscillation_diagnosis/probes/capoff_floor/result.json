@@ -1,0 +1,78 @@
+{
+  "name": "capoff_floor",
+  "aim": "Split hypothesis (a) CAP-as-energy-source vs (d) propagator/grid numerics: rerun effmass_sigma1 with EM_CAP=0 (two-sided CAP OFF), WP on, full energy decomposition, write_every=5, 200 steps. If the >0 \u0394E rise VANISHES with CAP off => (a) confirmed; if it survives => (a) refuted and the newly-logged components (external/nonlocal/ion/eigenvalues/nvxc) expose the culprit.",
+  "method": "inq-study mass fork; 40x40x80 cell, dx=0.333, dt=0.04, ETRS, LDA, gamma; GS reused from shared_gs/slab_n52_L40x40x80_dx0p333; WP injected (wp_idx=35, m_eff=2.10) but CAP eta set to 0 via EM_CAP=0; v_bg background ON (EM_BG=1); full ObservableSelection energy decomposition ON.",
+  "run_dir": "ablation",
+  "observables_csv": "ablation/results/capoff_floor/raw/observables/observables.csv",
+  "plot_png": "/local/data/public/skcb2/tddft/ResearchProject/systems/localised_jellium/hypotheses/energy_oscillation_diagnosis/probes/capoff_floor/capoff_floor_energy.png",
+  "columns": [
+    "step",
+    "time_au",
+    "energy_total",
+    "energy_kinetic",
+    "energy_hartree",
+    "energy_xc",
+    "energy_external",
+    "energy_nonlocal",
+    "energy_ion",
+    "energy_ion_kinetic",
+    "energy_exact_exchange",
+    "energy_nvxc",
+    "energy_eigenvalues",
+    "current_x",
+    "current_y",
+    "current_z",
+    "density_l2"
+  ],
+  "component_gap": [],
+  "summary": {
+    "n_steps": 41,
+    "t_final_au": 8.0,
+    "dE_total_vs_rt0_final": -0.01473501963697993,
+    "dE_total_vs_rt0_max": 0.0,
+    "dE_total_vs_gs_final": 221.0936129140754,
+    "dE_total_vs_gs_max": 221.10834793371237,
+    "crosses_zero_above": false,
+    "N_initial": null,
+    "N_final": null,
+    "eig_tracks_total": false
+  },
+  "advisor_verdict": {
+    "probe_reading": "CAP-off (eta=0), WP+v_bg on, full decomp, 200 steps/t=8 a.u.: E_total(t)-E_total(0_RT) MAX=0.0 eV, final=-0.0147 eV -- never crosses above 0, conserved to propagator floor. +221 eV vs E_GS is a flat WP-injection offset, not a drift. Big component motions (H +23, ext -30, kin +3.5 eV) cancel: 8 components sum to E_total to 1e-13 Ha every step. Sigma eps_i drifts +24 eV while E_total flat (band != total, benign). CAVEAT: t=8 a.u. window may pre-date WP reaching the CAP (z=+/-32.5, launch z=-16.5).",
+    "verdict": "continue",
+    "confidence": 0.72,
+    "confirmed_cause": null,
+    "ledger": [
+      {
+        "id": "a",
+        "status": "SUPPORTED",
+        "evidence": "Removing ONLY the CAP removes the >0 rise (MAX=0.0 eV); with phase-0 eta-tracking this isolates the CAP as the ledger's non-Hermitian energy term. Not yet CONFIRMED at this early window."
+      },
+      {
+        "id": "b",
+        "status": "OPEN",
+        "evidence": "v_bg was ON yet E_total conserved to -0.015 eV; the isolating +v_bg-only control still owed."
+      },
+      {
+        "id": "c",
+        "status": "REFUTED",
+        "evidence": "Component sum == E_total to 1e-13 Ha; CAP-off conserves vs RT0; E_GS gap is a flat offset. Rise is CAP-gated, not reference-gated."
+      },
+      {
+        "id": "d",
+        "status": "REFUTED",
+        "evidence": "Same ETRS/dx/dt/cutoff/WP conserve E_total to -0.015 eV with CAP off."
+      },
+      {
+        "id": "e",
+        "status": "REFUTED",
+        "evidence": "kin+H+xc+ext+nl+ion+ion_kin+exx == E_total to 1e-13 Ha every step; drifts cancel exactly; no KS double-counting."
+      }
+    ],
+    "next_probe": {
+      "name": "capon_matched",
+      "aim": "witness the >0 rise emerging in the SAME window with CAP on; verify WP reaches the CAP",
+      "spec": "identical to capoff_floor but EM_CAP=1, eta=-1; extend to ~600-800 steps if CAP-region density still ~0 at step 200"
+    }
+  }
+}

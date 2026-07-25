@@ -1,0 +1,10 @@
+{
+  "done": [
+    "phase1",
+    "phase2",
+    "phase3",
+    "phase3b"
+  ],
+  "status": "blocked",
+  "blocked_reason": "phase4: awaiting user muon-XC pick (write muon_xc_pick.json)"
+}

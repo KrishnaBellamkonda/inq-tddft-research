@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
-"""Assemble the S(v) curve from completed run_sv_sigma0p5 velocity runs.
+"""Quick-look S(v) money plot from completed run_sv_sigma0p5 velocity runs.
 
-Scans results/<subdir>/electron_track.csv, extracts local S(v) (binned by
-instantaneous v) per run, overlays the corrected Lindhard S_LR(v; sigma=0.5)
-reference, and writes the money plot + a summary table. Tolerant of partial
-runs: processes whatever has produced a track so far.
+SUPERSEDED for the report: the authoritative S(v) extraction is the
+energy-gain regression in
+``docs/reports/overnight-gaussian-classical-jellium/build_sv_extraction_notebook.py``
+(Method A, one point per run). This script keeps the older binned-by-v local
+slope only as a live dispatcher quick-look; do not use its output in the report.
+
+Overlays the SINGLE point-charge Lindhard reference (``stopping_power_point``)
+— the one analytical curve used in every plot.
 
 Usage (venv): python3 analyse_sv.py
 """
@@ -61,11 +65,11 @@ def main():
         print(f"  {sub}: σ={sig} v∈[{v.min():.2f},{v.max():.2f}] "
               f"S∈[{Sv.min():.4f},{Sv.max():.4f}] n={v.size}")
 
-    # Lindhard reference S_LR(v; sigma=0.5)
+    # single point-charge Lindhard reference (the one curve used in every plot)
     vgrid = np.linspace(0.1, 3.2, 40)
-    slr = np.array([E.stopping_power_sigma(v, KF, SIGMA) for v in vgrid])
+    slr = np.array([E.stopping_power_point(v, KF) for v in vgrid])
     ax.plot(vgrid, slr, "-", color="k", lw=1.2,
-            label="Lindhard S_LR(v;σ=0.5)", zorder=1)
+            label="Lindhard S_LR (point charge)", zorder=1)
 
     ax.axvline(KF, ls=":", color="gray", lw=0.8)
     ax.set_xlabel("v  (a.u.)")

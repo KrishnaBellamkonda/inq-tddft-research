@@ -1,0 +1,37 @@
+Twin decomposition  representation=perturbation  sigma_WP=2.0  k0=1.1  DYNAMIC
+config parity: OK (periodicity, lz, sigma_wp, launch_z, gs_dir)
+
+Findings (step 0, eV):
+  term                                            value  expected  unexpl.
+  dKin_localisation (motional-matched)             5.10      5.10     0.00
+      -> WP localisation zero-point 3/(4*sigma^2); classical proj KE subtracted
+  dXC (xc surplus)                                -4.66 - -
+      -> additional XC of the WP alone; local => r-independent
+  residual R = d(E_H+E_ext) - U_proj_bg            4.37      5.43    -1.06
+      -> WP self-Hartree E_H[WP-WP]; the ~0.9 eV shortfall vs the free-space ref is the open-z gauge, not missing physics
+  SIE = R + dXC                                   -0.30 - -
+      -> LDA one-electron self-interaction error (Perdew-Zunger): the part of the WP self-Hartree that XC fails to cancel
+
+Per-step drift (max |Δ| between steps, eV):
+  dKin           0.0229
+  dHartree       0.3031
+  dXC            0.0148
+  dExt           0.6059  MOVING
+  residual       0.0279
+
+Pairwise Coulomb decomposition (step 0, eV):
+  term          classical   wavepacket   Δ(WP-cl)
+  e_ss          -2194.987    -2194.987     0.0000
+  e_pp              4.367        4.365    -0.0011
+  e_ps            -98.303      -98.301     0.0023
+  e_sb           3994.000     3994.000     0.0000
+  e_pb             93.429       93.426    -0.0024
+  e_bb          -1802.997    -1802.997     0.0000
+  gauge test: max|Δ| of slab/bg terms = 0.0000 eV -> NO GAUGE (zero-points agree)
+  -> every non-zero Δ is physically attributable (projectile terms only)
+
+Energy conservation (max |E(t)-E(0)|, eV; dynamics correctness gate):
+  classical      0.0007
+  wp             0.0001
+
+Note: quantum stopping = total electronic energy deposited (E_deposited_wp), NOT projectile KE. Projectile-KE stopping is CLASSICAL-only (use stopping-power-extraction on proj_ke_classical).

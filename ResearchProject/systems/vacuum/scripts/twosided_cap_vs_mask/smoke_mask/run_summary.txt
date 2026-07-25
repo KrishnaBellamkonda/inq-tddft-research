@@ -1,0 +1,10 @@
+run_completed = true
+mode = mask
+epsilon = 0.232882
+absorbed_fraction = 0.765399
+N0 = 0.04114
+E_eV = 9.99269
+L_total = 20
+eta_Ha = 0
+k0 = 0.857
+N_STEPS = 13910

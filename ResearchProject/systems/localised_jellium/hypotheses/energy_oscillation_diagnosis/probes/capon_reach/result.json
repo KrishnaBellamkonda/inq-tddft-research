@@ -1,0 +1,78 @@
+{
+  "name": "capon_reach",
+  "aim": "Extended CAP-ON run (EM_CAP=1, eta=-1, 700 steps, t=27.6 a.u.) so the WP-derived density reaches the CAP and absorption demonstrably begins. Decisive completing half of hypothesis (a): does \u0394E(vs RT0) turn POSITIVE (the anomaly) as the CAP absorbs, or does the CAP correctly remove energy (\u0394E<0)?",
+  "method": "identical to capoff_floor/capon_matched but CAP ON (eta=-1), 700 steps. Same cell/GS/WP. Full energy decomposition + density_l2 recorded, write_every=5.",
+  "run_dir": "ablation",
+  "observables_csv": "ablation/results/capon_reach/raw/observables/observables.csv",
+  "plot_png": "/local/data/public/skcb2/tddft/ResearchProject/systems/localised_jellium/hypotheses/energy_oscillation_diagnosis/probes/capon_reach/capon_reach_energy.png",
+  "columns": [
+    "step",
+    "time_au",
+    "energy_total",
+    "energy_kinetic",
+    "energy_hartree",
+    "energy_xc",
+    "energy_external",
+    "energy_nonlocal",
+    "energy_ion",
+    "energy_ion_kinetic",
+    "energy_exact_exchange",
+    "energy_nvxc",
+    "energy_eigenvalues",
+    "current_x",
+    "current_y",
+    "current_z",
+    "density_l2"
+  ],
+  "component_gap": [],
+  "summary": {
+    "n_steps": 141,
+    "t_final_au": 28.0,
+    "dE_total_vs_rt0_final": -138.01805033209797,
+    "dE_total_vs_rt0_max": 0.0,
+    "dE_total_vs_gs_final": 83.0902976016144,
+    "dE_total_vs_gs_max": 221.10834793371237,
+    "crosses_zero_above": false,
+    "N_initial": null,
+    "N_final": null,
+    "eig_tracks_total": false
+  },
+  "advisor_verdict": {
+    "probe_reading": "capon_reach (t=28, 700 steps): once density reaches the CAP, \u0394E(vs RT0) goes monotonically NEGATIVE (-0.11->-5.4->-28->-88->-121->-138 eV), MAX=0.0, crosses_zero_above=FALSE, decelerating as l2->0.0001. Ledger EXACT (sum==E_total to 1.3e-13 Ha). CAP removes energy correctly; the phase-0 >0 rise is NOT reproduced in this clean single-transit at eta=-1.",
+    "verdict": "continue",
+    "confidence": 0.55,
+    "confirmed_cause": null,
+    "ledger": [
+      {
+        "id": "a",
+        "status": "SUPPORTED",
+        "evidence": "CAP is the SOLE non-conservative term (off=>-0.015 eV conserved, on=>-138 eV drain, ledger exact). But the unphysical >0 excursion NOT yet witnessed under control."
+      },
+      {
+        "id": "b",
+        "status": "WEAKENED",
+        "evidence": "v_bg on in both capoff_floor and capon_reach yet contributes no drift; isolating +v_bg-only control still absent."
+      },
+      {
+        "id": "c",
+        "status": "REFUTED",
+        "evidence": "sum==E_total to 1e-13 Ha; +221 eV is flat WP offset."
+      },
+      {
+        "id": "d",
+        "status": "REFUTED",
+        "evidence": "same ETRS/grid/dt conserve CAP-off; CAP-on drift fully accounted by CAP term."
+      },
+      {
+        "id": "e",
+        "status": "REFUTED",
+        "evidence": "8 components sum to E_total to 1.3e-13 Ha through full absorption; Sigma eps_i band!=total, benign."
+      }
+    ],
+    "next_probe": {
+      "name": "capon_weak_partial",
+      "aim": "witness \u0394E>0 in the weak/partial-absorption regime (phase-0's regime)",
+      "spec": "CAP ON weak eta~=-0.2 and/or reflection/lingering geometry; same exact-ledger instrumentation; PASS(a) if \u0394E rises >0 while ledger stays exact."
+    }
+  }
+}

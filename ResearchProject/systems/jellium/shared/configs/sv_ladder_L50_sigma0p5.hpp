@@ -46,4 +46,23 @@ struct SV_Ladder_L50_sigma0p4 : SV_Ladder_L50_sigma0p5 {
         "shared/pseudopotentials/electron_gaussian_sigma0p4.upf";
 };
 
+// ----------------------------------------------------------------------------
+// sigma=3.0 Bohr large-width probe (2026-06-15 extension; plan §12).
+//
+// A broad Gaussian (V(0)=0.532 Ry in-file ≈ 0.266 Ha physical) whose form
+// factor e^{−q²σ²} strongly suppresses all q≳0.3 Bohr⁻¹ — expected to deviate
+// markedly BELOW the point-charge Lindhard reference. Unlike the small-σ runs,
+// the trailing 4σ=12 Bohr tail forces the STANDARD boundary rule launch:
+//   launch_z = -L/2 + 4σ = -25 + 12 = -13 Bohr  (NOT the -20 of the small-σ
+//   ladder, which would push the σ=3 tail 9 Bohr past the -25 face).
+// stop_z = +22, traversal 35 Bohr; max centroid reach at v0=3 (const v) = +5.
+// Needs its own build (launch_z is compile-time, not env-driven).
+// ----------------------------------------------------------------------------
+struct SV_Ladder_L50_sigma3p0 : SV_Ladder_L50_sigma0p5 {
+    static constexpr const char* PROJ_PSEUDO_PATH =
+        "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/"
+        "shared/pseudopotentials/electron_gaussian_sigma3p0.upf";
+    static constexpr double PROJ_LAUNCH_Z = -13.0;   // -L/2 + 4σ, σ=3, L=50
+};
+
 }  // namespace jellium::config

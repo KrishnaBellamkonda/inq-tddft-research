@@ -1,0 +1,51 @@
+{
+  "name": "capon_matched",
+  "aim": "Matched CAP-ON twin of capoff_floor (EM_CAP=1, eta=-1, 200 steps) to check whether the >0 rise emerges at the same early window and whether the WP has reached the CAP.",
+  "method": "identical to capoff_floor but CAP ON (eta=-1); 200 steps, t=8 a.u.",
+  "run_dir": "ablation",
+  "observables_csv": "ablation/results/capon_matched/raw/observables/observables.csv",
+  "plot_png": "/local/data/public/skcb2/tddft/ResearchProject/systems/localised_jellium/hypotheses/energy_oscillation_diagnosis/probes/capon_matched/capon_matched_energy.png",
+  "columns": [
+    "step",
+    "time_au",
+    "energy_total",
+    "energy_kinetic",
+    "energy_hartree",
+    "energy_xc",
+    "energy_external",
+    "energy_nonlocal",
+    "energy_ion",
+    "energy_ion_kinetic",
+    "energy_exact_exchange",
+    "energy_nvxc",
+    "energy_eigenvalues",
+    "current_x",
+    "current_y",
+    "current_z",
+    "density_l2"
+  ],
+  "component_gap": [],
+  "summary": {
+    "n_steps": 41,
+    "t_final_au": 8.0,
+    "dE_total_vs_rt0_final": -0.01581801845940161,
+    "dE_total_vs_rt0_max": 0.0,
+    "dE_total_vs_gs_final": 221.09252991525298,
+    "dE_total_vs_gs_max": 221.10834793371237,
+    "crosses_zero_above": false,
+    "N_initial": null,
+    "N_final": null,
+    "eig_tracks_total": false
+  },
+  "advisor_verdict": {
+    "probe_reading": "At t=8 a.u. CAP-on and CAP-off are indistinguishable (dE final -0.016 vs -0.015 eV, neither >0). WP density_l2 DECAYS 0.052->0.001 (dispersing, NOT yet reaching CAP at z=+/-32.5). Confirms the caveat: 200 steps pre-dates WP arrival at the CAP, so absorption has not begun and the CAP cannot yet source energy. Extended run capon_reach (700 steps, t=28 a.u.) launched to let the WP reach the CAP.",
+    "verdict": "continue",
+    "confidence": 0.7,
+    "confirmed_cause": null,
+    "next_probe": {
+      "name": "capon_reach",
+      "aim": "reach the CAP absorption onset",
+      "spec": "EM_CAP=1 700 steps"
+    }
+  }
+}
