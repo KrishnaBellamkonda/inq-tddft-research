@@ -52,6 +52,40 @@ def _bohm_gross_omega(q: float, omega_p: float, vF: float) -> float:
     return float(np.sqrt(omega_p**2 + (3.0 / 5.0) * vF**2 * q**2 + q**4 / 4.0))
 
 
+def loss_locator(n_q_t: np.ndarray, win: np.ndarray, n_pad: int,
+                 q: float) -> np.ndarray:
+    """Loss-function PEAK-LOCATOR ``|n_q(ω)|² / q²`` (positive-frequency half).
+
+    Fixes the two bugs the audit confirmed on real E15 data
+    (``docs/validation/loss-function-formula-validation.md``, user verdict
+    2026-06-25):
+
+    - **BUG-A** — uses the **complex** phasor ``n_q(t)`` (NOT ``.real``). Taking
+      the real part folds the ±ω lobes together and halves the amplitude
+      (verified ratio 0.500); the density wave's *direction* (forward vs
+      backward) is lost.
+    - **BUG-B** — returns ``|n_q(ω)|² / q²`` (the loss-function form), NOT the
+      bare ``|n_q(ω)|``.
+
+    **CAVEAT (keep in any caption):** this is a plasmon-peak *locator* — right
+    pole positions and the right ``1/q²`` q-trend — but it is **not** a
+    quantitatively faithful ``−Im[1/ε]``: off the undamped limit the line shape
+    (Lorentzian² vs Lorentzian), the spectral area, and the absolute ``4π``
+    Coulomb normalisation are all wrong.
+
+    Parameters
+    ----------
+    n_q_t : complex 1-D array, the (transient-cut) time series ``n_q(t)``.
+    win   : real window, same length as ``n_q_t`` (e.g. ``np.hanning``).
+    n_pad : zero-padded FFT length (``>= len(n_q_t)``).
+    q     : wavevector magnitude ``|q_m|`` (a.u.).
+    """
+    sig = np.asarray(n_q_t) * win
+    full = np.fft.fft(sig, n=n_pad)                 # complex FFT — BUG-A fix
+    half = full[: n_pad // 2 + 1]
+    return (np.abs(half) ** 2) / (q ** 2)           # |n_q|²/q² — BUG-B fix
+
+
 def run(
     results_dir: Path,
     run_name: str,
@@ -175,12 +209,10 @@ def run(
     n_pad = nused * 4  # zero-pad x4 for smoother spectrum
     spectra = np.zeros((n_pad // 2 + 1, m_max))
     for m in range(1, m_max + 1):
-        sig = n_q[mask, m - 1] * win
-        # We can FFT real and imaginary parts separately or use complex FFT.
-        # Plasmon n_q(t) oscillates as a complex phasor; complex FFT gives
-        # the right spectrum.
-        full = np.fft.fft(sig.real, n=n_pad)
-        spectra[:, m - 1] = np.abs(full[:n_pad // 2 + 1])
+        # Loss-function peak-locator |n_q(ω)|²/q² on the COMPLEX phasor
+        # (BUG-A/B fixed; see loss_locator docstring + the bold caveat).
+        spectra[:, m - 1] = loss_locator(n_q[mask, m - 1], win, n_pad,
+                                         q_vals[m - 1])
 
     freq_au = np.fft.rfftfreq(n_pad, d=dt_sample)
     omega_au = 2 * np.pi * freq_au
@@ -190,7 +222,7 @@ def run(
     # Write spectrum CSV
     spec_csv = out_dir / "n_q_spectrum.csv"
     with open(spec_csv, "w") as fh:
-        fh.write("omega_au,omega_eV,m,abs_FFT_n_q\n")
+        fh.write("omega_au,omega_eV,m,loss_nq2_over_q2\n")
         for k, om in enumerate(omega_au):
             for m in range(1, m_max + 1):
                 fh.write(f"{om:.6f},{omega_eV[k]:.6f},{m},{spectra[k, m-1]:.6e}\n")
@@ -206,9 +238,10 @@ def run(
         ax.axvline(omega_pred[m - 1] * Ha2eV, color=cmap(m - 1), ls=":",
                    lw=0.8, alpha=0.7)
     ax.set_xlabel(r"$\hbar\omega$ (eV)")
-    ax.set_ylabel(r"$|\mathrm{FFT}[n_{q_m}(t)]|$")
+    ax.set_ylabel(r"$|n_{q_m}(\omega)|^2 / q^2$  (loss-function locator)")
     ax.set_title(f"{run_name} — plasmon spectrum (Hann + 4x zero-pad, "
-                 f"transient t<{t_start_au} a.u. cut)")
+                 f"transient t<{t_start_au} a.u. cut)\n"
+                 r"peak-LOCATOR $|n_q|^2/q^2$ — NOT a quantitative $-\mathrm{Im}[1/\epsilon]$")
     ax.legend(fontsize=8, ncol=2)
     ax.grid(alpha=0.3)
     fig.tight_layout()

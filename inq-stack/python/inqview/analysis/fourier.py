@@ -69,7 +69,7 @@ class FourierResult:
     dt_au: float
     window: WindowSpec
     t_start_au: float = 0.0       # §13.6 transient cutoff applied (0 = none)
-    subtract: str = "detrend"     # baseline removed before windowing (IV-M12)
+    subtract: str = "mean"        # baseline removed before windowing (IV-M12)
 
 
 class FourierTransform:
@@ -79,8 +79,10 @@ class FourierTransform:
     ----------
     window : WindowSpec
         Window function and its parameters. Default: Hann window.
-    detrend : bool
-        If True, subtract a linear trend before transforming (removes DC drift).
+    detrend : bool | None
+        Legacy switch, retained for back-compat. None (default) → the canonical
+        'mean' baseline is used (user verdict 2026-06-25). True → 'detrend'
+        (linear trend removed); False → 'none'. Prefer the explicit ``subtract=``.
     zero_pad : int
         Multiplier on signal length applied via zero-padding before the FFT.
         Larger values give a smoother frequency-axis interpolation (no extra
@@ -106,7 +108,7 @@ class FourierTransform:
     def __init__(
         self,
         window: WindowSpec | None = None,
-        detrend: bool = True,
+        detrend: bool | None = None,
         zero_pad: int = 4,
         smooth_sigma_bins: float = 0.0,
         t_start_au: float = 0.0,
@@ -114,11 +116,19 @@ class FourierTransform:
     ) -> None:
         self.window = window if window is not None else WindowSpec("hann")
         # Baseline removal (IV-M12). `subtract` supersedes the legacy `detrend`
-        # bool; if unset, derive from it ('detrend' default per the dossier).
-        # Canonical per observable: 'initial' (s-s(0)) for dipole/current,
-        # 'detrend' for energy — the postprocess layer sets those.
-        self.subtract = subtract if subtract is not None else (
-            "detrend" if detrend else "none")
+        # bool. CANONICAL DEFAULT = 'mean' (user verdict 2026-06-25, overriding
+        # the fft-drift-removal dossier's per-observable split): a single uniform
+        # pipeline — mean removal → Hann → 4x pad → coherent-gain rfft — for EVERY
+        # observable (dipole, current, energy). `detrend` is retained as an opt-in
+        # comparison (the panel overlays it dashed). Back-compat: an explicit
+        # `subtract=` wins; an explicit `detrend=True/False` maps to
+        # 'detrend'/'none'; only when BOTH are unset do we fall to 'mean'.
+        self.subtract = (
+            subtract if subtract is not None
+            else "detrend" if detrend is True
+            else "none" if detrend is False
+            else "mean"
+        )
         if self.subtract not in self._SUBTRACT:
             raise ValueError(
                 f"unknown subtract={self.subtract!r}; valid: {self._SUBTRACT}")

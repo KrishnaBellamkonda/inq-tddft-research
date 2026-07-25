@@ -26,8 +26,37 @@ from .plasmon_spectrum import (
     spectrum_from_nq,
 )
 from .fourier import FourierResult, FourierTransform, WindowSpec
+from .efield import EField, electric_field
+from .diffraction import Diffraction, diffraction_pattern, hann2d
+from .planar_density import PlanarDeltaN, planar_delta_map, planar_profile
+from .heuristics import (
+    Heuristics,
+    compute_heuristics,
+    electron_gas_scales,
+    projectile_timescales,
+    wp_zero_point,
+    norm_absorption,
+    spreading,
+    lindhard_references,
+)
 
 __all__ = [
+    "Heuristics",
+    "compute_heuristics",
+    "electron_gas_scales",
+    "projectile_timescales",
+    "wp_zero_point",
+    "norm_absorption",
+    "spreading",
+    "lindhard_references",
+    "EField",
+    "electric_field",
+    "Diffraction",
+    "diffraction_pattern",
+    "hann2d",
+    "PlanarDeltaN",
+    "planar_delta_map",
+    "planar_profile",
     "COD",
     "CODComparison",
     "compare_cod",

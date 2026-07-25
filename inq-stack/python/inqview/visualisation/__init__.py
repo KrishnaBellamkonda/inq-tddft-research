@@ -21,8 +21,14 @@ from .energy_components import (
     render_flow_lines,
     render_initial_vs_final_bars,
 )
+from .field_io import VtiField, load_vti
+from .density_gifs import make_density_gif_battery, make_twin_density_matrix
 
 __all__ = [
+    "VtiField",
+    "load_vti",
+    "make_density_gif_battery",
+    "make_twin_density_matrix",
     "ONE_COL_IN",
     "TWO_COL_W_IN",
     "ROLE_CMAP",

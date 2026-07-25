@@ -37,42 +37,51 @@ def _read_local(path: Path) -> tuple[np.ndarray, np.ndarray]:
     return np.asarray(r), np.asarray(v)
 
 
-@pytest.mark.parametrize("sigma", [0.5, 0.4])
-def test_vr_matches_erf_form(tmp_path, sigma):
-    out = tmp_path / f"electron_gaussian_sigma{sigma}.upf"
-    res = G.generate_gaussian_psp(TEMPLATE, sigma, out)
+# NOTE: the parametrize values are UNIFIED (wavepacket) sigmas. The charge std the
+# erf actually uses is sigma_charge = sigma_wp/sqrt(2) (unified convention, 2026-06-21).
+@pytest.mark.parametrize("sigma_wp", [0.5, 0.4])
+def test_sigma_convention(tmp_path, sigma_wp):
+    """generate uses charge std = sigma_wp/sqrt(2) (the unification contract)."""
+    out = tmp_path / f"electron_gaussian_wpsigma{sigma_wp}.upf"
+    res = G.generate_gaussian_psp(TEMPLATE, sigma_wp, out)
+    assert res.sigma_wp == pytest.approx(sigma_wp)
+    assert res.sigma_charge == pytest.approx(sigma_wp / math.sqrt(2.0))
+
+
+@pytest.mark.parametrize("sigma_wp", [0.5, 0.4])
+def test_vr_matches_erf_form(tmp_path, sigma_wp):
+    out = tmp_path / f"electron_gaussian_wpsigma{sigma_wp}.upf"
+    res = G.generate_gaussian_psp(TEMPLATE, sigma_wp, out)
     r, v = _read_local(out)
     mask = (r >= 0.05) & (r <= 10.0)
-    analytic = res.coulomb_coeff * G.v_erf_hartree(r[mask], sigma)
+    # potential is built from the CHARGE std, not sigma_wp:
+    analytic = res.coulomb_coeff * G.v_erf_hartree(r[mask], res.sigma_charge)
     rel = np.abs(v[mask] - analytic) / np.abs(analytic)
     assert rel.max() < 1e-6, f"max rel dev {rel.max():.2e}"
 
 
-@pytest.mark.parametrize("sigma", [0.5, 0.4])
-def test_v0_hartree(tmp_path, sigma):
-    out = tmp_path / f"electron_gaussian_sigma{sigma}.upf"
-    res = G.generate_gaussian_psp(TEMPLATE, sigma, out)
-    expected = math.sqrt(2.0 / math.pi) / sigma
+@pytest.mark.parametrize("sigma_wp", [0.5, 0.4])
+def test_v0_hartree(tmp_path, sigma_wp):
+    out = tmp_path / f"electron_gaussian_wpsigma{sigma_wp}.upf"
+    res = G.generate_gaussian_psp(TEMPLATE, sigma_wp, out)
+    expected = math.sqrt(2.0 / math.pi) / res.sigma_charge   # uses charge std
     assert abs(res.v0_hartree - expected) < 1e-3
-    # and the actual r=0 mesh value, converted to Hartree, matches:
+    # v[0] is in template units = coulomb_coeff * sqrt(2/pi)/sigma_charge
     r, v = _read_local(out)
-    v0_ha = v[0] / res.coulomb_coeff * (math.sqrt(2.0 / math.pi) / sigma) / (
-        math.sqrt(2.0 / math.pi) / sigma
-    )
-    # v[0] is in template units = coulomb_coeff * sqrt(2/pi)/sigma
     assert abs(v[0] / res.coulomb_coeff - expected) < 1e-3
 
 
-@pytest.mark.parametrize("sigma", [0.5, 0.4])
-def test_fourier_form_factor(tmp_path, sigma):
-    """FT of V_Ha(r)=erf/r compared to (4pi/q^2)exp(-q^2 sigma^2/2).
+@pytest.mark.parametrize("sigma_wp", [0.5, 0.4])
+def test_fourier_form_factor(tmp_path, sigma_wp):
+    """FT of V_Ha(r)=erf/r compared to (4pi/q^2)exp(-q^2 sigma_charge^2/2).
 
-    Stable evaluation: V_Ha = 1/r - erfc(r/sigma sqrt2)/r. The 1/r part has
+    Stable evaluation: V_Ha = 1/r - erfc(r/sigma_charge sqrt2)/r. The 1/r part has
     known FT 4pi/q^2; the erfc residual decays as a Gaussian so its radial sine
     transform converges on the finite mesh.
     """
-    out = tmp_path / f"electron_gaussian_sigma{sigma}.upf"
-    res = G.generate_gaussian_psp(TEMPLATE, sigma, out)
+    out = tmp_path / f"electron_gaussian_wpsigma{sigma_wp}.upf"
+    res = G.generate_gaussian_psp(TEMPLATE, sigma_wp, out)
+    sigma = res.sigma_charge                         # form factor uses the charge std
     r, v_template = _read_local(out)
     v_ha = v_template / res.coulomb_coeff           # to Hartree (C=1 form)
 

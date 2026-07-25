@@ -75,3 +75,23 @@ def test_stopping_positive_and_monotone_lowv():
     s1 = E.stopping_power_sigma(0.2, KF, sigma)
     s2 = E.stopping_power_sigma(0.4, KF, sigma)
     assert 0.0 < s1 < s2
+
+
+@pytest.mark.parametrize("v", [0.2, 0.62, 1.0, 1.94, 2.98])
+def test_stopping_point_converged(v):
+    """THE single point-charge reference is converged: stable < 1% under both
+    qmax-margin and q-grid refinement (the natural kinematic cutoff means no
+    1/sigma blow-up). Guards the one analytical curve overlaid on every plot."""
+    s_a = E.stopping_power_point(v, KF, margin=2.0, n_q=2000)
+    s_b = E.stopping_power_point(v, KF, margin=6.0, n_q=8000)
+    assert s_b > 0.0
+    assert abs(s_a - s_b) / s_b < 1e-2, (v, s_a, s_b)
+
+
+def test_stopping_point_above_finite_sigma():
+    """A bare point charge couples to all q, so it must stop at least as hard as
+    any finite-width (form-factor-suppressed) projectile at the same v."""
+    v = 1.0
+    s_point = E.stopping_power_point(v, KF)
+    for sigma in (0.2, 0.35, 0.5):
+        assert s_point > E.stopping_power_sigma(v, KF, sigma), sigma

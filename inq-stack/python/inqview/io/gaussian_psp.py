@@ -21,6 +21,19 @@ matches the template's units exactly — no hard-coded factor of 2.
 Reference for the erf-smoothed (Gaussian-charge) Coulomb form: standard result,
 e.g. soft/regularised Coulomb pseudopotentials (the Gaussian charge -> erf
 potential pair); see `ResearchProject/literature/.../soft-scf-pseudopotentials`.
+
+SIGMA CONVENTION (UNIFIED 2026-06-21 — wavepacket is the single source of truth).
+``generate_gaussian_psp`` takes ``sigma_wp``, the *wavepacket* sigma shared with
+``inqkit::WavePacket`` (psi ~ exp(-r^2 / 2 sigma_wp^2), so the charge/density std is
+sigma_charge = sigma_wp / sqrt(2)). The erf potential is built from sigma_charge, so a
+CLASSICAL projectile and a WAVEPACKET given the SAME sigma present the IDENTICAL
+charge cloud exp(-r^2 / sigma_wp^2) to the bath. The low-level ``v_erf_hartree`` still
+takes the *charge std* (the honest math); only this high-level entry point converts.
+
+WARNING: pre-2026-06-21 UPFs on disk (``electron_gaussian_sigma*.upf``) were generated
+with the OLD convention where the filename sigma was the CHARGE STD directly
+(= unified sigma_wp / sqrt(2)). See CONTEXT.md "sigma-convention unification" for the
+full registry mapping every legacy file/run to its unified sigma_wp.
 """
 
 from __future__ import annotations
@@ -40,6 +53,10 @@ def v_erf_hartree(r: np.ndarray, sigma: float) -> np.ndarray:
 
     V(r) = erf(r / (sigma*sqrt2)) / r, with the finite r->0 limit
     V(0) = sqrt(2/pi) / sigma.
+
+    Here ``sigma`` is the **charge-density std** (the honest math of the erf form).
+    In the unified convention this equals sigma_wp / sqrt(2); callers wanting the
+    wavepacket sigma should use ``generate_gaussian_psp(sigma_wp=...)``.
     """
     r = np.asarray(r, dtype=float)
     out = np.empty_like(r)
@@ -54,10 +71,11 @@ def v_erf_hartree(r: np.ndarray, sigma: float) -> np.ndarray:
 @dataclass(frozen=True)
 class GaussianPspResult:
     path: Path
-    sigma: float
+    sigma_wp: float            # unified (wavepacket) sigma: psi ~ exp(-r^2/2 sigma_wp^2)
+    sigma_charge: float        # charge-density std = sigma_wp/sqrt(2) (what the erf uses)
     coulomb_coeff: float       # C in V = C*erf(.)/r, in the template's units
     v0_template_units: float   # V(0) in template units
-    v0_hartree: float          # V(0) in Hartree (= C/2 * ... -> sqrt(2/pi)/sigma)
+    v0_hartree: float          # V(0) in Hartree = sqrt(2/pi)/sigma_charge
     n_mesh: int
 
 
@@ -91,17 +109,21 @@ def _format_block(values: np.ndarray, columns: int = 4) -> str:
 
 def generate_gaussian_psp(
     template_path: str | Path,
-    sigma: float,
+    sigma_wp: float,
     out_path: str | Path,
     *,
     tail_fit_range: tuple[float, float] = (8.0, 16.0),
 ) -> GaussianPspResult:
-    """Write an erf-smoothed UPF for the given sigma, based on ``template_path``.
+    """Write an erf-smoothed UPF for the given **wavepacket** sigma.
 
-    The Coulomb coefficient C and the unit convention are inferred from the
-    template's large-r tail (V*r -> C). The generated PP_LOCAL is
-    ``C * erf(r/(sigma*sqrt2)) / r`` on the template's own radial mesh.
+    ``sigma_wp`` is the UNIFIED (wavepacket) sigma (see module docstring). The
+    charge-density std actually used in the erf is ``sigma_charge = sigma_wp/sqrt(2)``,
+    so the classical projectile presents the same cloud exp(-r^2/sigma_wp^2) as a
+    wavepacket of the same sigma. The Coulomb coefficient C and the unit convention
+    are inferred from the template's large-r tail (V*r -> C). The generated PP_LOCAL
+    is ``C * erf(r/(sigma_charge*sqrt2)) / r`` on the template's own radial mesh.
     """
+    sigma_charge = sigma_wp / math.sqrt(2.0)
     template_path = Path(template_path)
     out_path = Path(out_path)
     text = template_path.read_text()
@@ -122,20 +144,21 @@ def generate_gaussian_psp(
         raise ValueError("no template mesh points in tail_fit_range")
     coulomb_coeff = float(np.mean(v_template[mask] * r[mask]))
 
-    # New PP_LOCAL: C * erf(r/(sigma*sqrt2)) / r, finite at r=0.
-    v_new = coulomb_coeff * v_erf_hartree(r, sigma)  # v_erf_hartree uses C=1 form
+    # New PP_LOCAL: C * erf(r/(sigma_charge*sqrt2)) / r, finite at r=0.
+    v_new = coulomb_coeff * v_erf_hartree(r, sigma_charge)  # charge-std form
 
     new_block = _format_block(v_new, columns=4)
     new_text = text[:loc_start] + new_block + text[loc_end:]
     out_path.write_text(new_text)
 
     # Hartree V(0): template-units V(0)/ (C / C_hartree); C_hartree=1 form gives
-    # V(0)_Ha = sqrt(2/pi)/sigma regardless of template units.
-    v0_template = coulomb_coeff * math.sqrt(2.0 / math.pi) / sigma
-    v0_hartree = math.sqrt(2.0 / math.pi) / sigma
+    # V(0)_Ha = sqrt(2/pi)/sigma_charge regardless of template units.
+    v0_template = coulomb_coeff * math.sqrt(2.0 / math.pi) / sigma_charge
+    v0_hartree = math.sqrt(2.0 / math.pi) / sigma_charge
     return GaussianPspResult(
         path=out_path,
-        sigma=sigma,
+        sigma_wp=sigma_wp,
+        sigma_charge=sigma_charge,
         coulomb_coeff=coulomb_coeff,
         v0_template_units=v0_template,
         v0_hartree=v0_hartree,

@@ -171,10 +171,17 @@ def run(results_dir: Path, *, run_name: str, rebuild: bool, **_) -> dict:
     #   "X Y Z (orthorhombic, ...)"  — coronene runs (three lengths)
     # Detect "<int>^3" up front; otherwise fall back to whitespace-split.
     cube_match = re.match(r"^\s*(\d+(?:\.\d+)?)\s*\^\s*3", cell)
+    # "AxBxC" compact orthorhombic form (jellium big-box runs), e.g.
+    #   "50x50x90  spacing = 0.5"  — anchored match ignores any trailing tail.
+    ortho_x_match = re.match(
+        r"^\s*(\d+(?:\.\d+)?)\s*x\s*(\d+(?:\.\d+)?)\s*x\s*(\d+(?:\.\d+)?)", cell)
     if cube_match:
         L = float(cube_match.group(1))
         Lx_bohr = L
         Lz_bohr = L
+    elif ortho_x_match:
+        Lx_bohr = float(ortho_x_match.group(1))
+        Lz_bohr = float(ortho_x_match.group(3))
     else:
         parts = cell.split()
         if len(parts) < 3:

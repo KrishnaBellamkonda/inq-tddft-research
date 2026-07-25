@@ -46,6 +46,9 @@ _LAZY_EXPORTS = {
     "FourierResult": "analysis.fourier",
     "FourierTransform": "analysis.fourier",
     "WindowSpec": "analysis.fourier",
+    # visualisation: the canonical VTI LOADER (physical order, no fftshift)
+    "load_vti": "visualisation.field_io",
+    "VtiField": "visualisation.field_io",
     # visualisation: VTI writer (legacy Python writer; verify-then-cut)
     "write_vti": "visualisation.vti",
     "convert_real_meta_to_vti": "visualisation.vti",

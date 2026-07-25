@@ -38,7 +38,7 @@ import numpy as np
 __all__ = [
     "kF_from_rs", "density_from_kF", "omega_p", "k_TF",
     "chi0", "epsilon_rpa", "loss_function", "plasmon_dispersion",
-    "stopping_power_sigma",
+    "stopping_power_sigma", "stopping_power_point",
 ]
 
 _PI = np.pi
@@ -125,3 +125,30 @@ def stopping_power_sigma(
         inner[i] = np.trapezoid(w * Lw, w)
     integrand = np.exp(-(q_grid ** 2) * sigma ** 2) * inner / q_grid
     return float((2.0 / (_PI * v ** 2)) * np.trapezoid(integrand, q_grid))
+
+
+def stopping_power_point(
+    v: float, kF: float, *,
+    margin: float = 4.0, n_q: int = 4000, n_omega: int = 4000, eta: float = 1e-2,
+) -> float:
+    """THE single point-charge (sigma -> 0) Lindhard linear-response reference.
+
+    This is the one analytical curve the rt-TDDFT S(v) points are compared
+    against (see docs/handovers/stopping-power-measurement.md): a *bare* unit
+    charge, no Gaussian form factor (exp(-q^2 sigma^2) = 1), in the infinite
+    r_s electron gas. No finite-box correction is applied.
+
+    Unlike the sigma>0 case, the q-integral has NO form-factor cutoff; instead
+    it converges by the natural kinematics of the Lindhard loss function: the
+    e-h continuum's lower edge ~ q^2/2 - q vF climbs above the inner omega<=qv
+    limit near q ~ 2(v + vF), so the integrand dies on its own. Hence
+    ``qmax = 2 kF + 2 v + margin`` (margin a few a.u.) is rigorous and the
+    runaway ``6/sigma`` branch of ``stopping_power_sigma`` is bypassed.
+
+    Verified converged to 0.00% across qmax margin (2..8) and n_q (4k..16k),
+    f-sum rule to <1e-3 (2026-06-14).
+    """
+    qmax = 2.0 * kF + 2.0 * v + margin
+    return stopping_power_sigma(
+        v, kF, 0.0, qmax=qmax, n_q=n_q, n_omega=n_omega, eta=eta
+    )

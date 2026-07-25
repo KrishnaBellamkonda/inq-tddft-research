@@ -157,6 +157,29 @@ def test_invalid_subtract_raises():
         FourierTransform(subtract="bogus")
 
 
+# ---------------------------------------------------------------------------
+# Canonical default = 'mean' (user verdict 2026-06-25, overriding the dossier
+# per-observable split). Known case: mean removal strips a constant offset, so a
+# bare-default transform of (offset + tone) peaks at f0, NOT at the DC bin.
+# ---------------------------------------------------------------------------
+def test_default_subtract_is_mean():
+    """A no-kwargs FourierTransform uses the 'mean' baseline."""
+    assert FourierTransform().subtract == "mean"
+    # explicit legacy switches still honoured (back-compat)
+    assert FourierTransform(detrend=True).subtract == "detrend"
+    assert FourierTransform(detrend=False).subtract == "none"
+    assert FourierTransform(subtract="initial").subtract == "initial"
+
+
+def test_default_mean_removes_dc_and_recovers_f0():
+    """Bare default (now mean) strips a constant offset; the true peak returns."""
+    tn = make_tone(offset=50.0)
+    ft = FourierTransform(window=WindowSpec("boxcar"), zero_pad=1)   # default subtract
+    f_peak, _ = _peak(ft.transform(tn.t, tn.y))
+    bin_w = 1.0 / (tn.n * tn.dt)
+    assert f_peak == pytest.approx(tn.f0, abs=0.5 * bin_w)           # not hijacked to DC
+
+
 if __name__ == "__main__":
     import subprocess
     import sys
