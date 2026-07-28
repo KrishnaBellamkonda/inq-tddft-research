@@ -45,7 +45,13 @@ Both branch from the current `overnight-gaussian-classical` HEAD; the plain
   - `c1e6f96` docs(repo): ADR 0013
   - `e9dba4f` chore(repo): setup.sh + inq-local.patch
   - `1ca25e6` cut(coronene): remove stray tracked profile.dat
-- Created local branch pointer **`quantum-stopping-power`** at `1ca25e6`.
+- Created local branch **`quantum-stopping-power`** (now the active branch),
+  committed the handover (`95105c5`).
+- Folded the mid-session background work into `quantum-stopping-power` (tree now
+  fully clean): `67f6f65` chore(repo) (gitignore `*_DONE.*` + settings),
+  `eb21fe4` sim(jellium) (qsp5 momentum / wp-cap plateau / vacuum pipeline),
+  `e0b9976` docs(jellium) (qsp5 handover, report-2 catalogue, cap notes). All
+  ~1 MB source/docs; run outputs stayed gitignored.
 
 ## NOT DONE — gated on GitHub auth (SSH publickey currently failing)
 
@@ -68,11 +74,8 @@ key. Then, in order:
 
 ## OPEN decisions / caveats
 
-- **Surprise working-tree mods (369 insertions)** appeared mid-session (real
-  work, not churn): `vacuum/scripts/wp_traversal_energy/run.cpp` (+139),
-  `wp_cap_energy_plateau/analyse.py`, `docs/handovers/wp-localised-jellium-
-  solving-cap.md` (+155), INDEX.md, `.claude/settings.json`, etc. NOT yet
-  committed — need user's call on folding into `quantum-stopping-power`.
+- Surprise mid-session work: RESOLVED — folded into `quantum-stopping-power`
+  (`67f6f65`/`eb21fe4`/`e0b9976`).
 - **`inq-immutable` rule is stale**: it documents only the CUB fix; `inq/`
   actually has TWO sanctioned deltas (add the `ham()` accessor). Update the rule
   + its memory so a future session doesn't "restore upstream purity" and break
