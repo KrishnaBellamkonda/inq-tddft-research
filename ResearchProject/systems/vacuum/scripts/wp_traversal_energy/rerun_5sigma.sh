@@ -5,7 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 export INQ_SOURCE=/local/data/public/skcb2/tddft/inq-study
-export CUDA_VISIBLE_DEVICES=0
+export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-1}
 PATH="/local/data/public/skcb2/tddft/shared/bin:$PATH"
 
 echo "== removing superseded results =="
@@ -17,7 +17,7 @@ WP_OUT=nocap WP_ETA=0 inq-run
 echo "== run CAP (WP_ETA=-0.7) with the same binary =="
 env INQ_SHARE_PATH="${INQ_SHARE_PATH:-/local/data/public/skcb2/tddft/inq/install/share}" \
     PSEUDOPOD_SHARE_PATH="${PSEUDOPOD_SHARE_PATH:-/local/data/public/skcb2/tddft/inq/install/share/pseudopod}" \
-    CUDA_VISIBLE_DEVICES=0 WP_OUT=cap WP_ETA=-0.7 ./run
+    CUDA_VISIBLE_DEVICES=1 WP_OUT=cap WP_ETA=-0.7 ./run
 
 echo "== both runs done =="
 grep -H "launch_z\|cap_z\|clearance\|n_steps\|cell_bohr" results/nocap/run_summary.txt results/cap/run_summary.txt

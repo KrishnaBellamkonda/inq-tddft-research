@@ -26,9 +26,36 @@
 // to the +30 CAP inner edge). The old LZ=60 / launch=-26 put the WP only 4 sigma
 // from the wrapped CAP edge -- superseded.
 //
-// Env: WP_K0(2.711) WP_SIGMA(1.0) WP_ETA(0=no CAP; -0.7=CAP) WP_OUT
-//      WP_LZ(80) WP_LPERP(12) WP_H(0.5) WP_DT(0.02) WP_NSTEPS(1600)
-//      WP_LAUNCH_Z(-30) WP_CAP_L(10) WP_WF_EVERY(20) WP_MOM_EVERY(1)
+// TRUE VACUUM (corrected 2026-07-27): extra_electrons(0) -> the WP is the ONLY
+// electron (no uniform background gas). density_total == density_wp. The earlier
+// extra_electrons(2.0) added a k=0 background that, though kinetically inert in
+// non_interacting theory, polluted density_total plots -- removed.
+//
+// LOW-SPREADING DESIGN (CORRECTED 2026-07-27): the free Gaussian DENSITY width is
+//   sigma_dens(t) = sqrt(sigma0^2/2 + t^2/(2 sigma0^2))   [atomic units, m_e=1]
+// i.e. expansion factor R(t) = sqrt(1 + (t/sigma0^2)^2), spreading time tau =
+// sigma0^2 (NOT 2 sigma0^2 -- an earlier note had a 2x error, verified vs data).
+// Over a travel L = 5 sigma0 (box clearance) at v = k0 = sqrt(2E), the transit
+// expansion is R = sqrt(1 + (5/(k0 sigma0))^2): dispersion is controlled ONLY by the
+// product k0*sigma0. R<=1.05 needs k0*sigma0 >= 16. sigma0=3/100 eV gave k0*sigma0=8.1
+// -> ~17% (too much). PRODUCTION (2026-07-27): sigma0=3, E=400 eV (k0=5.421,
+// k0*sigma0=16.3) -> transit expansion ~5%. Grid h=0.4 so k_max=pi/h=7.85 > k0+4dk
+// (dk=1/(sigma0 sqrt2)=0.236) -- cutoff-aliasing guard PASS. dt=0.01 (finer for the
+// higher energy). Box 30x30x45 [-22.5,22.5], one-sided +z CAP z in [7.5,22.5] (WIDE
+// W=15, eta=-1.0: full absorption exp(-2|eta|W/v)~4e-3, adiabatic => low reflection),
+// launch z=-7.5 (5 sigma0 from CAP inner edge AND the wrapped back wall). The CAP run
+// (NSTEPS=800) is fully absorbed -> NO wrapping remnant; the no-CAP control is run
+// SHORT (NSTEPS~350) so the WP stops in the CAP region BEFORE it can wrap the box.
+// Supersedes sigma0=3/100 eV (17% spread) and sigma0=1 (dispersing) runs.
+//
+// CAP strength (validated 2026-07-27): eta=-3.5 Ha gives survival
+// exp(-|eta|W/v)=exp(-3.5*15/5.421)~6e-5 -> the wrapped remnant is BELOW the log-GIF
+// floor (invisible); reflection stays 0.000 (adiabatic W=15). The no-CAP CONTROL is
+// run SHORT (NSTEPS=350) so its WP stops in the CAP region before it can wrap.
+//
+// Env: WP_K0(5.421) WP_SIGMA(3.0) WP_ETA(0=no CAP; -3.5=CAP) WP_OUT
+//      WP_LZ(45) WP_LPERP(30) WP_H(0.4) WP_DT(0.01) WP_NSTEPS(800 cap / 350 nocap)
+//      WP_LAUNCH_Z(-7.5) WP_CAP_L(15) WP_WF_EVERY(20) WP_MOM_EVERY(1)
 // ============================================================================
 #include <inq/inq.hpp>
 #include <inqkit/fields/density.hpp>
@@ -38,6 +65,7 @@
 #include <inqkit/observables/wp_momentum_stats.hpp>
 #include <inqkit/observables/wp_real_space_stats.hpp>
 #include <inqkit/wavepacket/wavepacket.hpp>
+#include <inqkit/absorbers/mask_absorber.hpp>
 
 #include <cmath>
 #include <cstdlib>
@@ -58,16 +86,16 @@ static std::string env_s(const char* k, const std::string& d){ const char* v=std
 
 int main() {
     const double HA_TO_EV = 27.211386245988;
-    const double K0       = env_d("WP_K0", 2.711);          // E=100 eV, m=1
-    const double SIGMA    = env_d("WP_SIGMA", 1.0);
+    const double K0       = env_d("WP_K0", 5.421);          // E=400 eV, m=1 (k0*sigma0=16.3)
+    const double SIGMA    = env_d("WP_SIGMA", 3.0);        // low-spreading (~5% transit)
     const double ETA      = env_d("WP_ETA", 0.0);           // 0 -> no CAP
-    const double LZ       = env_d("WP_LZ", 80.0);
-    const double LPERP    = env_d("WP_LPERP", 12.0);
-    const double H        = env_d("WP_H", 0.5);
-    const double DT       = env_d("WP_DT", 0.02);
-    const int    N_STEPS  = env_i("WP_NSTEPS", 1600);
-    const double LAUNCH_Z = env_d("WP_LAUNCH_Z", -30.0);
-    const double CAP_L    = env_d("WP_CAP_L", 10.0);        // one-sided, +z end
+    const double LZ       = env_d("WP_LZ", 45.0);
+    const double LPERP    = env_d("WP_LPERP", 30.0);
+    const double H        = env_d("WP_H", 0.4);            // k_max=pi/h=7.85 > k0+4dk (guard)
+    const double DT       = env_d("WP_DT", 0.01);
+    const int    N_STEPS  = env_i("WP_NSTEPS", 800);
+    const double LAUNCH_Z = env_d("WP_LAUNCH_Z", -7.5);
+    const double CAP_L    = env_d("WP_CAP_L", 15.0);        // one-sided, +z end (wide, adiabatic)
     const int    WF_EVERY = env_i("WP_WF_EVERY", 20);
     const int    MOM_EVERY= env_i("WP_MOM_EVERY", 1);
     const std::string OUT = "results/" + env_s("WP_OUT", (ETA==0.0? "nocap":"cap"));
@@ -93,10 +121,15 @@ int main() {
     auto cell = systems::cell::orthorhombic(LPERP*1.0_b, LPERP*1.0_b, LZ*1.0_b).periodic();
     auto ions = systems::ions(cell);
     auto electrons = systems::electrons(
-        ions, options::electrons{}.spacing(H*1.0_b).extra_states(1).extra_electrons(2.0));
-    // Relax the 2 "bath" electrons to their k=0 eigenstate (kinetic ~ 0) so the
-    // reported total energy is the WP's alone (initial_guess would leave the bath
-    // with tens of Ha of spurious kinetic that swamps the ~4 Ha WP signal).
+        ions, options::electrons{}.spacing(H*1.0_b).extra_states(0).extra_electrons(1.0));
+    // TRUE VACUUM: exactly ONE electron and ONE state -- and the WP REPLACES it
+    // (rather than being added on top of a background). INQ needs >=1 electron for
+    // the ground state and validates the count in propagate, so extra_electrons(0)
+    // throws "no electrons". With extra_states(0).extra_electrons(1.0) the single
+    // state holds the one electron; ground_state relaxes it to a uniform k=0 plane
+    // wave (kinetic ~0), and inject_into_last_extra_state OVERWRITES that state (the
+    // last = only state) with the Gaussian, occupation 1.0. The WP thus BECOMES the
+    // sole electron: density_total == density_wp, no uniform background gas.
     ground_state::initial_guess(ions, electrons);
     ground_state::calculate(ions, electrons, options::theory{}.non_interacting(),
                             options::ground_state{}.energy_tolerance(1.0e-8_Ha).max_steps(200));
@@ -108,6 +141,20 @@ int main() {
 
     // one-sided +z sin^2 CAP (inq-study makes its imaginary part reach orbitals)
     perturbations::absorbing cap(ETA*1.0_Ha, mid_frac, width_frac);
+
+    // --- absorber / propagator selection (energy-normalization investigation) ---
+    // WP_ABS = cap (non-Hermitian CAP, default) | mask (spatial sin^2 mask on the WP
+    //          orbital, SAME +z band [z_cap0, LZ/2]).
+    // WP_PROP = etrs (default) | cn (Crank-Nicolson). Decisive test: mask+ETRS loses
+    //          norm (reproduces the artifact); mask+CN renormalises each step -> norm
+    //          held ~1 -> should show NO energy rise if the hypothesis holds.
+    const std::string ABS  = env_s("WP_ABS",  "cap");
+    const std::string PROP = env_s("WP_PROP", "etrs");
+    const bool USE_MASK = (ABS == "mask");
+    const bool USE_CN   = (PROP == "cn");
+    inqkit::absorbers::MaskAbsorber mask(2, z_cap0, CAP_L, wp_idx);  // +z band, WP orbital
+    std::cout << "  absorber=" << ABS << " propagator=" << PROP
+              << (USE_MASK ? " (mask band [" : " (cap band [") << z_cap0 << "," << LZ/2.0 << "])\n";
 
     // ---- energy ledger: ALL components each step ----------------------------
     std::ofstream en(OUT + "/raw/observables/energies.csv");
@@ -130,30 +177,42 @@ int main() {
     wp_wr.write (inqkit::fields::density::orbital(electrons, wp_idx), 0.0, 0);
     tot_wr.write(inqkit::fields::density::total(electrons), 0.0, 0);
 
-    real_time::propagate(
-        ions, electrons,
-        [&](auto const& data) {
-            const int step = data.iter();
-            auto e = data.energy();
-            // WP norm = integral of |psi_wp|^2 (drops when CAP absorbs it)
-            double wpn = std::numeric_limits<double>::quiet_NaN();
-            if (data.root()) {
-                en << step << ',' << data.time() << ',' << e.total() << ',' << e.kinetic()
-                   << ',' << e.hartree() << ',' << e.external() << ',' << e.non_local()
-                   << ',' << e.xc() << ',' << e.exact_exchange() << ',' << e.ion()
-                   << ',' << e.ion_kinetic() << ',' << wpn << '\n';
-            }
-            mom_dist.maybe_accumulate(data);
-            wp_mom.maybe_accumulate(data);
-            wp_rs.maybe_accumulate(data);
-            if (step % WF_EVERY == 0) {
-                wp_wr.write (inqkit::fields::density::orbital(electrons, wp_idx), data.time(), step);
-                tot_wr.write(inqkit::fields::density::total(electrons), data.time(), step);
-            }
-        },
-        options::theory{}.non_interacting(),
-        options::real_time{}.num_steps(N_STEPS).dt(DT*1.0_atomictime),   // ETRS
-        cap);
+    auto step_fn = [&](auto const& data) {
+        const int step = data.iter();
+        auto e = data.energy();
+        // WP norm = integral of |psi_wp|^2 (drops when CAP/mask absorbs it)
+        double wpn = std::numeric_limits<double>::quiet_NaN();
+        if (data.root()) {
+            en << step << ',' << data.time() << ',' << e.total() << ',' << e.kinetic()
+               << ',' << e.hartree() << ',' << e.external() << ',' << e.non_local()
+               << ',' << e.xc() << ',' << e.exact_exchange() << ',' << e.ion()
+               << ',' << e.ion_kinetic() << ',' << wpn << '\n';
+        }
+        mom_dist.maybe_accumulate(data);
+        wp_mom.maybe_accumulate(data);
+        wp_rs.maybe_accumulate(data);
+        if (step % WF_EVERY == 0) {
+            wp_wr.write (inqkit::fields::density::orbital(electrons, wp_idx), data.time(), step);
+            tot_wr.write(inqkit::fields::density::total(electrons), data.time(), step);
+        }
+        // Spatial mask applied AFTER recording (each recorded step is the propagated
+        // state; the mask acts between steps). ETRS keeps the removal -> norm decays;
+        // CN renormalises the density next step -> norm held ~1.
+        if (USE_MASK && step > 0) mask.apply(electrons);
+    };
+
+    auto theory = options::theory{}.non_interacting();
+    if (USE_MASK) {
+        if (USE_CN)
+            real_time::propagate(ions, electrons, step_fn, theory,
+                options::real_time{}.num_steps(N_STEPS).dt(DT*1.0_atomictime).crank_nicolson());
+        else
+            real_time::propagate(ions, electrons, step_fn, theory,
+                options::real_time{}.num_steps(N_STEPS).dt(DT*1.0_atomictime));   // ETRS
+    } else {
+        real_time::propagate(ions, electrons, step_fn, theory,
+            options::real_time{}.num_steps(N_STEPS).dt(DT*1.0_atomictime), cap);  // CAP (ETRS)
+    }
     en.close();
 
     std::ofstream sum(OUT + "/run_summary.txt");

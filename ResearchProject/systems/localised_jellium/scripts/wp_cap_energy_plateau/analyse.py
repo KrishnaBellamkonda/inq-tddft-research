@@ -2,11 +2,13 @@
 """analyse.py — per-run post-processing for the WP-CAP energy-plateau campaign.
 
 Produces (each section independent + non-fatal):
-  1. energy_vs_time.png       total + ALL decomposed KS energy components vs t
-  2. norm_vs_time.png         N_total(t)  (flat=conserved; decays=CAP absorbing)
-  3. momentum_evolution.png   WP |n(k,t)| carpet  (from momentum_distribution.csv)
-  4. density GIF battery       canonical make_density_gif_battery (rule-mandated)
-  5. run_report.ipynb          notebook embedding the GIF (top) + PNGs
+  1. energy_vs_time.png            total + ALL decomposed KS energy components vs t
+  2. energy_delta_components.png   ΔE(t)=E(t)-E(0) for every KS component
+  3. energy_delta_pairwise.png     ΔE(t) for pairwise E_ss/E_ps/E_pp/E_sb/E_pb
+  4. norm_vs_time.png              N_total(t)  (flat=conserved; decays=CAP absorbing)
+  5. momentum_evolution.png        WP |n(k,t)| carpet  (from momentum_distribution.csv)
+  6. density GIF battery            canonical make_density_gif_battery (rule-mandated)
+  7. run_report.ipynb               notebook embedding the GIF (top) + PNGs
 
 Usage:
   analyse.py <results_dir> --label wp --dt 0.02 --slab-face 12.5 --cap-inner 60
@@ -155,6 +157,22 @@ def main() -> int:
                     _log(f"{fn} failed: {e}")
         except Exception as e:
             _log(f"energy load failed: {e}")
+
+        # ΔE component + pairwise electrostatic decomposition (needs density frames)
+        try:
+            import energy_decomposition as ed
+            merged_path = obs / "energies_merged.csv"
+            ed.plot_energy_delta(merged_path, out / "energy_delta_components.png", title)
+            pngs.append(out / "energy_delta_components.png")
+            try:
+                ed.compute_interactions(results)   # writes interactions.csv (closure-gated)
+                ed.plot_pairwise_delta(obs / "interactions.csv",
+                                       out / "energy_delta_pairwise.png", title)
+                pngs.append(out / "energy_delta_pairwise.png")
+            except Exception as e:
+                _log(f"pairwise decomposition failed: {e}")
+        except Exception as e:
+            _log(f"energy-delta plots failed: {e}")
 
     mom = sorted(glob.glob(str(obs / "momentum_distribution*.csv")))
     if mom:
