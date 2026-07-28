@@ -2,18 +2,18 @@
 id: classical-highdensity-sv
 area: localised_jellium
 title: High-density classical S(v) benchmark for the localised jellium slab (z-open, CAP-free)
-status: draft
+status: running
 hypothesis: "A mass-1 classical electron (Gaussian charge, σ_WP=0.5) launched at high velocity through a denser 25-Bohr jellium slab (r_s≈4.2, N=100) transits cleanly under z-open (periodicity 2) boundaries with NO CAP, so E_electronic plateaus after the projectile exits; the deposited energy E_absorbed=E_electronic(plateau)−E_electronic(0) yields a clean stopping-power benchmark S(v)=E_absorbed/L_slab over a 6-point high-velocity grid, with the full pairwise energy ledger (E_PP,E_PS,E_SS,E_SB,E_PB,E_BB,KE,E_xc) recorded so the (still-TBD) energy-decomposition stopping definition is computable post-hoc — establishing the classical baseline a later WP run is compared against."
 handover: docs/handovers/classical-highdensity-sv-benchmark.md
 tasks:
-  - { name: "Phase 0 — GS 35×35×~85, 25-Bohr slab, N=100, r_s≈4.2, periodicity(2); density profile + energy validated (MANUAL GATE)", done: false }
-  - { name: "Phase 1a — vacuum exit test (static): Gaussian charge clipped at z-open face, no wrap (MANUAL GATE)", done: false }
-  - { name: "Phase 1b — vacuum DYNAMIC exit: real propagation, moving perturbation tracks the Projectile per step, φ_proj(t) leaves box >= Lz beyond face (MANUAL GATE)", done: false }
+  - { name: "Phase 0 — GS 35×35×~85, 25-Bohr slab, N=100, r_s≈4.2, periodicity(2); density profile + energy validated (MANUAL GATE)", done: true }
+  - { name: "Phase 1a — vacuum exit test (static): Gaussian charge clipped at z-open face, no wrap (MANUAL GATE)", done: true }
+  - { name: "Phase 1b — vacuum DYNAMIC exit: real propagation, moving perturbation tracks the Projectile per step, φ_proj(t) leaves box >= Lz beyond face (MANUAL GATE)", done: true }
   - { name: "Phase 2 — dynamics/Ehrenfest validation: independent analytic force test (two-Gaussian) + energy-conservation trajectory + perturbation-vs-pseudopotential comparison (one approximates the other) (MANUAL GATE)", done: false }
   - { name: "Code — run.cpp periodicity(2)+mass-1+full pairwise ledger emit; run_notebook_builder reads projectile.csv + step-by-step stopping section (code-test)", done: false }
-  - { name: "Phase 3 — single-transit pilot at v≈2 (transit-floor find): transit + clean plateau + E_absorbed extractable + full ledger + cutoff_guard PASS; ghost-UPF failure contrast (MANUAL GATE = central aim)", done: false }
-  - { name: "Phase 4 — autonomous 6-velocity sweep (floor+5 up); per-run analyse.py + run-notebook (density GIF top, stopping section)", done: false }
-  - { name: "Phase 5 — synthesis phase-notebook: S(v)=E_absorbed/L + full component ledger staged for Def-1; Lindhard/bulk eyeball overlay (NON-gating); WP-overlay-ready", done: false }
+  - { name: "Phase 3 — single-transit pilot at v≈2 (transit-floor find): transit + clean plateau + E_absorbed extractable + full ledger + cutoff_guard PASS; ghost-UPF failure contrast (MANUAL GATE = central aim)", done: true }
+  - { name: "Phase 4 — autonomous 6-velocity sweep (floor+5 up); per-run analyse.py + run-notebook (density GIF top, stopping section)", done: true }
+  - { name: "Phase 5 — synthesis phase-notebook: S(v)=E_absorbed/L + full component ledger staged for Def-1; Lindhard/bulk eyeball overlay (NON-gating); WP-overlay-ready", done: true }
 blocked_reason: ""
 ---
 

@@ -33,6 +33,161 @@ this order".
 vs plasmon vs bound state — `scientific-panel`); E_ss/E_sp pairwise (twin decompose);
 commit the machinery (two-commit split); catalogue the 4 runs.
 
+## 2026-07-27 (RESOLUTION) — the CAP "energy artifact" is INQ reporting per-particle energy
+
+**Root cause found in INQ source.** `inq/src/hamiltonian/energy.hpp:50-55` `occ_sum`
+computes `sum occ*<psi|H|psi>/<psi|psi>` — it DIVIDES each orbital's energy by its
+norm, i.e. reports the INTENSIVE (per-particle mean) energy. Normal calc: norm=1,
+no-op. Under a CAP the WP norm decays -> reported `energy_total` stays ~E0 (even
+climbs) as the packet is absorbed. See [[reference_inq_reports_normalized_energy]].
+
+**Isolation experiments (vacuum, E=400 eV, all this session):**
+- **Wrap is innocent:** longer no-CAP run (t=16, ~2 wraps) conserves energy to
+  0.15 meV -> periodic re-entry is a clean unitary op; disproves "re-entry = new
+  projectile". Plot `wrap_conservation.png` in the nocap notebook.
+- **Not reflection:** cap_better (W=25, eta=-0.7), cap_fulllen (W=30 full +z half,
+  eta=-1.0), and the earlier eta=-3.5 ALL give the same ~400 eV "residual" -> it is
+  independent of CAP strength/width, so NOT leading-edge reflection.
+- **Fix verified:** extensive energy `E_ext = E_reported * norm` decays cleanly with
+  the norm. cap_fulllen: E_ext 402->1.65 eV, captured 400 eV = 99.6% (== norm
+  absorbed); cap_better captured 386 eV (96%, 4% leaked). Energy IS captured
+  correctly once un-normalized. There was never a physical artifact.
+
+**Deliverables:** `energy_diagnostics.py` (decomposed-energy, compounded=extensive
+vs reported energy, wrap-conservation; wrap-time marker t_wrap=(LZ/2-launch)/k0);
+appended to nocap/cap/cap_better/cap_fulllen run notebooks. Runs: `results/nocap_long`
+(t=16), `results/cap_better`, `results/cap_fulllen`. Dispatcher
+`rerun_cap_experiments.sh`.
+
+**Jellium correction — DONE (post-processing, no new run).**
+`wp_kinetic_normalization_fix.py` computes <T_WP> and norm_WP from the saved complex
+`wavefunction_wp` frames (501 each; validated t0 mean KE=120.4 eV=k0^2/2+3/4sigma^2),
+and corrects E_total by `-<T_WP>*(1/norm-1)` (only the CAP run; nocap WP norm=1).
+Result: **reported gap 93.5 eV -> corrected 115.9 eV** — the normalization ADDS ~22 eV
+(peak 44 eV mid-absorption), it does NOT explain away the plateau. WHY only 22 eV: the
+WP slows 120->22 eV in the bath BEFORE the CAP absorbs it (that ~98 eV kinetic is
+deposited into the bath, correctly booked via the density-based terms). So the plateau
+is LARGELY PHYSICAL; the WP-kinetic normalization is a real but sub-dominant systematic.
+Plot `wp/results/comparison/corrected_plateau.png` appended to the jellium comparison
+notebook; CSVs `{nocap,cap}_wp_kinetic.csv`.
+
+## 2026-07-27 (latest) — low-spreading E=400 eV vacuum rerun (fixes self-interference)
+
+- **User:** saw the WP self-interfere in the report GIFs; asked for higher energy /
+  lower spreading. Diagnosis: transverse (x,y) is actually CLEAN (edge frac ~1e-9);
+  the visible "interference" was the Z-WRAP (WP reaching the +z wall and re-entering
+  at -z), amplified by the log-scale GIF panel.
+- **New production run (dual-GPU, ~2-4 min each):** sigma0=3, **E=400 eV**
+  (k0=5.421, k0*sigma0=16.3 -> **~5% transit spread**, down from 17%), grid **h=0.4**
+  (cutoff guard PASS: k_max=7.85 > k0+4dk=6.36, E_cut=839 eV), dt=0.01. Box 30x30x45,
+  one-sided +z CAP z in [7.5,22.5] (W=15). Launch z=-7.5 (5 sigma0 from CAP inner AND
+  wrapped wall). Dispatcher `rerun_lowspread_dualgpu.sh` (build-once, nocap on GPU0 /
+  cap on GPU1, thorough gates, notebooks, email).
+- **CAP absorption tuning (validated):** survival = **exp(-|eta|W/v)** (the sin^2 CAP
+  averages to 1/2, canceling the usual factor of 2 in exp(-2|eta|W/v)). Measured:
+  eta=-1.0 -> 0.063 (6.3% leaked + wrapped), eta=-2.5 -> 0.0010, **eta=-3.5 -> 1e-4**
+  (below the log-GIF floor -> invisible). One-sided CAP outer edge == box wall, so any
+  leak wraps instantly -> must absorb hard. Reflection stayed **0.000** throughout
+  (adiabatic W=15; neg-k/pos-k momentum weight check).
+- **Final gates (all green):** N(t0)=1.0000; spread@transit=+5%; transverse edge
+  ~1e-6 (no x/y wrap); CAP norm(tF)=1e-4 (99.99% absorbed); reflection 0.000; no-CAP
+  control z_wrapped=False (350 steps stops it before the wall). The cap `z_wrapped`
+  flag is a detector artifact on the 1e-4 ghost (negligible).
+- **Notebooks (rebuilt):** `results/{nocap,cap}/report/run_report.ipynb` +
+  `results/comparison/nocap_vs_cap_comparison.ipynb` + setup figure. run.cpp defaults
+  now hold this design (k0=5.421, sigma=3, h=0.4, dt=0.01, LZ=45, CAP_L=15,
+  launch=-7.5, eta=-3.5 via dispatcher). Supersedes sigma3/100eV (17%).
+
+## 2026-07-27 (later) — compact non-dispersing vacuum rerun + WP-dispersion formula correction
+
+- **User goal:** a COMPACT WP that does not expand appreciably over the sim.
+  Physics: a free Gaussian disperses; the design must control it, not the box.
+- **FORMULA CORRECTION (important):** the density width spreads as
+  `sigma_dens(t)=sqrt(sigma0^2/2 + t^2/(2 sigma0^2))`, i.e. expansion factor
+  `R=sqrt(1+(t/sigma0^2)^2)`, spreading time `tau=sigma0^2` — NOT `2 sigma0^2`
+  (my first estimate had a 2x error). Verified against the vacuum runs to 3 dp
+  (minimum-uncertainty, no bug). Now in [[reference_wp_dispersion_formula]] +
+  `.claude/rules`-adjacent memory. Design rule: transit `R=sqrt(1+(5/(k0 sigma0))^2)`
+  -> dispersion controlled ONLY by **k0*sigma0** (>=16 for ~5%, >=11 for ~10%).
+- **Runs done (dual-GPU, GPU0=nocap GPU1=cap, ~5 min each):** sigma0=3, E=100 eV,
+  box 30x30x40, one-sided +z CAP z in [10,20], launch z=-5 (5 sigma0 from CAP inner
+  AND wrapped -z wall), 600 steps. Defaults baked into `run.cpp`. Dispatcher
+  `rerun_compact_dualgpu.sh` (setsid, build-once then concurrent runs + notebooks +
+  verify + email).
+- **Verified:** N(t0)=1.0000 (true vacuum), sigma_wf(t0)=3.00 as designed, CAP
+  norm(tF)=0.077 (92% absorbed), nocap norm conserved. The nocap sigma_z blow-up at
+  t>7 is the CONTROL WP wrapping the periodic box (no absorber) — expected, not a bug.
+- **Transit expansion ~17% (NOT the 5% I first promised)** because k0*sigma0=8.1, not
+  16 — the formula error. Corrected options: sigma3/400eV (5%, same box), sigma6/100eV
+  (5%, box 60x60x70), sigma4/100eV (10%, 40x40x50). **User chose to KEEP the current
+  sigma3/100eV (~17%)** — no rerun. Notebooks stand.
+- **Notebooks (all built + tabulated):** vacuum run+phase under
+  `.../vacuum/scripts/wp_traversal_energy/results/{nocap,cap}/report/run_report.ipynb`
+  and `.../results/comparison/nocap_vs_cap_comparison.ipynb`. Jellium notebooks (GS +
+  2 runs + jellium comparison) unchanged from earlier this day, with the ΔE plots.
+- **NEW builder:** `.../wp_cap_energy_plateau/compare_notebook.py` — the jellium
+  cap-vs-nocap PHASE notebook (was missing; vacuum had one). Produces
+  `.../wp/results/comparison/jellium_nocap_vs_cap_comparison.ipynb`.
+
+## 2026-07-27 — true-vacuum + 30×30 transverse rerun; ΔE decomposition plots; autonomous pipeline
+
+Two user-driven corrections + a new energy-decomposition deliverable. All done
+autonomously on **GPU 1** (GPU 0 was occupied by another user's task; chosen via a
+custom `/tmp/gpuprobe.cu` cudaMemGetInfo probe since `nvidia-smi`/NVML is broken —
+cosmetic). Pipeline: `.../vacuum/scripts/wp_traversal_energy/autorun_pipeline.sh`
+(setsid-detached, survives session; log `autorun_pipeline.log`; ran to COMPLETE
+2026-07-27 01:49).
+
+### Verified problems in the prior vacuum runs (user was right on both)
+1. **Not vacuum — 2 background electrons.** `run.cpp` used
+   `extra_states(1).extra_electrons(2.0)`: the WP was a 3rd electron on top of a
+   uniform k=0 2-electron gas (measured total=3.0, WP=1.0, bg=2.0 uniform). In
+   `non_interacting` this is kinetically inert but pollutes `density_total`.
+2. **Transverse box 12 Bohr far too small.** A free Gaussian disperses to
+   σ_dens≈11 Bohr by t=32 (>> half-box 6). Measured σ_x saturated ~3.5 (vs analytic
+   11.3) and edge-probability hit 0.84 → the WP wrapped x/y and self-interfered
+   (the "interference" the user saw).
+
+### Fixes (run.cpp), user-chosen geometry (30×30, keep long z)
+- **True vacuum:** `extra_states(0).extra_electrons(1.0)` — the WP REPLACES the one
+  base electron (INQ needs ≥1 electron for GS AND validates the count in propagate;
+  `extra_electrons(0)` throws "no electrons" from BOTH initial_guess/calculate AND
+  propagate). GS relaxes the single electron to k=0, then
+  `inject_into_last_extra_state` overwrites that (only) state → WP is the sole
+  electron. **Verified N_total = 1.00000, norm_after=1.**
+- **Transverse box:** `WP_LPERP` 12 → **30** (half-box 15). LZ=80, launch z=−30
+  unchanged. **Verified:** transverse wrap edge-fraction **84% → 10.5%** (residual
+  only in the final frames, after the WP is mostly CAP-absorbed — the compromise the
+  user accepted vs a ~80-Bohr box). CAP run norm→0.229 (77% absorbed); nocap
+  conserved.
+- Old LZ=60/launch=−26 AND the 12-Bohr-transverse runs are both superseded.
+
+### NEW: ΔE energy-decomposition plots (user request) — both jellium runs
+- **`energy_decomposition.py`** (new, in `.../wp_cap_energy_plateau/`): per-run
+  pairwise electrostatic decomposition reconstructed from the saved density VTIs via
+  FFT-Poisson, mirroring `inqkit::jellium::interaction_energies.hpp`
+  (`compute_coulomb_wp`). P=WP, S=slab e⁻ (n_total−n_wp), B=+background
+  (`n0·½erfc((|z|−12.5)/0.5)`, n0=102/15625). Emits `interactions.csv`.
+  **Closure-gated (validation):** reconstructed E_hartree matches INQ to
+  **1.4e-08 eV** (Poisson convention exact) → E_ss/E_ps/E_pp trustworthy; E_external
+  closes to ~14 eV (0.03%, analytic-n+/charged-cell G0), absorbed into the E_sb/E_pb
+  split (their sum exact). E_pb absolute carries the charged-cell G=0 gauge (flagged
+  on plot). E_ss+E_ps+E_pp≡E_hartree, E_sb+E_pb≡E_external enforced.
+- **`analyse.py`** now also emits `energy_delta_components.png` (ΔE(t) per KS
+  component) and `energy_delta_pairwise.png` (ΔE of E_ss/E_ps/E_pp/E_sb/E_pb) and
+  embeds them in `run_report.ipynb`.
+- Headline: nocap ΔE_total≈0 (conserved sanity check); **cap ΔE_total = −93 eV**
+  (electronic energy the CAP removes).
+
+### Caveat carried forward
+- **Jellium transverse box is ALSO undersized** for the dispersing WP: 25 Bohr
+  (half-box 12.5), 100 a.u. propagation → σ_dens→~35 Bohr, worse wrap than the old
+  vacuum. NOT yet re-run. The jellium notebooks/ΔE plots are on the EXISTING runs; if
+  the transverse wrap matters for the physics conclusion, the jellium runs need the
+  same enlargement (expensive — 13.6 h each).
+- Completion email must NOT attach the comparison notebook (~25 MB embedded GIFs >
+  Gmail cap → bounces); pipeline patched to send text-only. Resent text-only OK.
+
 ## 2026-07-24 (later) — vacuum CAP is ONE-SIDED; 5σ-clearance rerun (80-Bohr box)
 
 - **Correction (my earlier setup figure was wrong).** The vacuum CAP is

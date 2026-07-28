@@ -1,0 +1,1 @@
+I want to understand, to which store the localistaion energy is transmitted to in the case where there is electron capture etc. 

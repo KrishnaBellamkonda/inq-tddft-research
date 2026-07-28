@@ -30,7 +30,8 @@ What's the best way to categorise these ideas? Firstly, there might be a lot of 
     - There are three definitions we are working on for stopping power at the moment. These are - 
         - Using energy decomposition, we come up with a formula for stopping power in a medium
         - Stopping power definition using localised jellium simulation
-        - 
+        - KS orbital definition of stopping power
+        - (Fourth using the loss function, we should consider doing this for the localised jellium case. With long simulation runs, we can make a loss function graph, and then also find the stopping power through integration.)
 6. Classical Projectile
     - Verifying Nazarov Gross using a classical projectile
 ## Potential Tasks

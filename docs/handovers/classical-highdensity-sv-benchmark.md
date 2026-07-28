@@ -320,6 +320,77 @@ background (+ transverse images) whose offset lurches as the clipped charge cros
 - Expected: near-field dominates → S ≈ same; far-field transverse-image differences may shift
   slightly; exit transient should vanish (no charge to clip). Decide adoption from the A/B.
 
+## Milestone: 2026-07-27 — AUTONOMOUS execution authorised (user), one GPU
+
+User: "Run everything autonomously on one of the GPUs." Manual-gate cadence
+overridden → full autonomy for the remainder, correctness gates retained.
+
+- **Frontmatter:** Phase 0 + 1a + 1b flipped `done` (validation gates accepted via
+  the autonomy authorisation); `status: running`.
+- **Production binary:** `scripts/classical_highdensity_sv/dyn/run.cpp` = verbatim
+  fork of `classical_slab_stopping/run.cpp` with `extra_states(20)→(24)` (to match
+  the GS checkpoint's 74 states). Env-driven; building on GPU 0.
+- **Orchestrator:** `scripts/classical_highdensity_sv/orchestrate.py` (Python,
+  idempotent resume, per-phase try/except + Gmail, checkpoint-don't-block). Chain:
+  pilot v=2 → **plateau CORRECTNESS gate** (finds transit floor from {2,2.5,3};
+  extends once if still-moving; STOP+email if a mass-1 electron stops inside even
+  at v=3) → 6-velocity sweep (floor+5, ≤4.5) → per-run S=ΔE_absorbed/25 + plateau
+  plot + density GIF + REPORT → synthesis S(v) curve + S_summary.csv. Emails to
+  chiddukanna@gmail.com at pilot/each-run/final + failures. Launch DETACHED
+  (setsid) on GPU 0 so it survives the session.
+- **Scope note (transparent):** the orchestrator runs the CORE S(v) benchmark
+  (Phase 3+4+5). **Test B** (energy conservation) is auto-checked per run via the
+  `E_elec+KE_proj+U_proj_bg` conservation column. **Test C** (perturbation-vs-ghost-
+  UPF contrast) is NOT auto-run — it needs the abandoned ghost-UPF path (r_cut
+  pathological per memory) and is off the S(v) critical path; flagged as a separate
+  targeted run if wanted.
+- cutoff_guard: all 6 velocities PASS at dx=0.5 (E_cut=537 eV > 1.1·E_kin, worst
+  case v=4.5 → 303 eV). Stricter 2v-response bound would flag v>3.1 — logged caveat,
+  not a block.
+- Outputs: runs → `dyn/results/vXpY/`; analysis → `hypotheses/classical_highdensity_sv/sv_sweep/`.
+
+## Milestone: 2026-07-27 — orchestrator LAUNCHED (detached, GPU 0)
+
+- **Smoke PASSED** (5 steps): GS loads (extra_states=24 match), CSVs populate,
+  projectile launches v=2 toward slab, run_completed=true.
+- **CRITICAL S-formula fix (found via smoke):** E_total(0)=198.97 Ha is 8.2 Ha
+  BELOW E_GS=207.18 (the projectile's t=0 contribution = energy_proj_bg_ideal).
+  So `E_absorbed` references the **projectile-free GS** E_GS=207.183 Ha, NOT
+  E_total(0): `E_absorbed = E_total(plateau) − E_GS`; `S = E_absorbed·27.2114/25`.
+  (Referencing E_total(0) would inject ~9 eV/Bohr of pure artifact.) Orchestrator
+  also reports the **projectile-KE-loss cross-check** S_keloss (energy conservation).
+- Launch position moved to **launch_z=−24** (limit t=0 turn-on transient; the
+  projectile potential is 1/r-tailed so some slab contact is unavoidable).
+- **LAUNCHED:** `setsid nohup env CUDA_VISIBLE_DEVICES=0 venv/bin/python3
+  orchestrate.py` (PID 303605 at launch). Pilot v=2 running (2415 steps, ~2 s/step
+  ≈ 80 min). Full chain ~5–6 h. Emails at pilot gate / each run / final / failures.
+- **Monitor:** `tail scripts/classical_highdensity_sv/orchestrate.log`;
+  `grep step scripts/classical_highdensity_sv/dyn/run_v2p0.log | tail`. Results →
+  `dyn/results/vXpY/`; analysis+figures+GIFs → `hypotheses/classical_highdensity_sv/sv_sweep/`.
+- **If it stops at the pilot gate** (email "STOP: no transit floor"): a mass-1
+  electron stops inside even at v=3 → human decision (raise v / thin slab / heavier
+  projectile). Otherwise it proceeds to the sweep automatically.
+
+## Milestone: 2026-07-27 — SWEEP COMPLETE + notebooks + Definition-1 ledger finding
+
+- **S(v) benchmark DONE** (all 6 velocities, pilot v=2 transited). S(eV/Bohr):
+  v2=1.09, v2.5=0.97, v3=0.71, v3.5=0.51, v4=0.37, v4.5=0.28. **Deposit vs
+  KE-loss agree to ~0.1%** (Test B validated in situ); plateau flatness ~1e-4 eV;
+  **S ∝ v^−1.72** (Bethe tail). Electron decelerates (v_final<v_launch) → S at
+  v_mean (see RESULTS_TABLE). Campaign 6/8.
+- **Notebooks (executed, 0 errors)** in `hypotheses/classical_highdensity_sv/sv_sweep/`:
+  6 run notebooks `vXpY/run_vXpY.ipynb` (density GIF top + step-by-step S + ledger
+  + conservation), `phase_notebook.ipynb` (table, S(v), Bethe fit, ledger deltas),
+  `RESULTS_TABLE.md`. Builder: `build_notebooks.py`.
+- **KEY FINDING (Definition-1):** the raw pairwise ledger is gauge/position-
+  contaminated — ΔE_PP/ΔE_PS/ΔE_PB are IDENTICAL across all v (−20.3/+335/−335 eV),
+  dominated by the projectile entering at z=−24 + leaving the box (Gaussian clip),
+  NOT the stopping. Slab terms ΔE_SS+ΔE_SB don't sum to E_absorbed either
+  (v2: +3.7 vs 27.2 eV). Definition-2 (E_total−E_GS) is clean BECAUSE it's
+  gauge-invariant; Definition-1 must isolate the slab's INTERNAL energy change
+  before it can be a closed formula (charged-cell convention, see memory
+  reference_charged_cell_hartree_convention). Flagged for the user's analysis.
+
 ## Resume recipe
 
 Read this handover + the campaign file. The design spine is fully locked; next
