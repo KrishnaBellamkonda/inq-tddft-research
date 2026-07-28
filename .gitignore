@@ -161,6 +161,7 @@ syntax_check
 **/*.log.run*
 *.marker
 *_DONE
+*_DONE.*
 
 # LaTeX build artifacts
 *.aux
