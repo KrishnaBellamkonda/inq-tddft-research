@@ -183,6 +183,9 @@ docs/presentations/
 docs/sources/
 docs/inq-docs/
 
+# Third-party literature / reference material (copyrighted; keep local only)
+ResearchProject/literature/
+
 # Track ONLY authored workflow content under .claude/ (rules + skills).
 # Everything else in .claude/ (credentials, runtime state, history, plugins,
 # project memory, tasks, sessions, caches) stays local-only.
