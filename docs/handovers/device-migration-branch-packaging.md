@@ -53,24 +53,44 @@ Both branch from the current `overnight-gaussian-classical` HEAD; the plain
   `e0b9976` docs(jellium) (qsp5 handover, report-2 catalogue, cap notes). All
   ~1 MB source/docs; run outputs stayed gitignored.
 
-## NOT DONE — gated on GitHub auth (SSH publickey currently failing)
+## DONE — 2026-07-29 (local build of submodule + orphan)
 
-The push to `git@github.com:...` fails `Permission denied (publickey)` — no
-ssh-agent reachable from the tool shell; the user's key `~/.ssh/id_ed25519` is
-passphrase-protected. To proceed, either the user runs the commands, or provides
-`echo "$SSH_AUTH_SOCK"` from their agent so the tool shell can reach the loaded
-key. Then, in order:
+- User pushed `quantum-stopping-power` to origin (at `cf5c677`).
+- Wired `inq-study` submodule into `quantum-stopping-power` (`1e8a674`):
+  un-ignored `inq-study/` + `.gitmodules`, HTTPS URL, gitlink at `8c59be9`,
+  branch master. Set `inq-study` remote to the (not-yet-created) GitHub URL.
+- Built **`report2/submission-package`** as an ORPHAN via plumbing (no
+  working-tree switch — a background run was live): `efdd52f`, 17.1 MB, 1336
+  files. Includes inq-stack, ResearchProject scripts, inq-study submodule,
+  root README.md + setup.sh + inq-local.patch. EXCLUDES `.claude/`, `docs/`,
+  `CONTEXT.md`, `CLAUDE.md`, `ResearchProject/literature/`, all `*.ipynb`.
+- Untracked `ResearchProject/literature/` on `quantum-stopping-power`
+  (`29df188`) + gitignored it (files kept on disk). It held a copyrighted
+  textbook epub.
 
-1. Create public GitHub repo `KrishnaBellamkonda/inq-study`; add remote in
-   `inq-study/` and push commit `8c59be9`.
-2. On `quantum-stopping-power`: `git submodule add
-   https://github.com/KrishnaBellamkonda/inq-study.git inq-study`; commit.
-3. Build **`report2/submission-package`** as an ORPHAN in ONE clean commit:
-   curated file set (see Goal), with the submodule wired. (Deferred to here
-   deliberately — the submodule is intrinsic to it; one clean root commit is the
-   reason orphan was chosen.)
-4. Push `quantum-stopping-power` and `report2/submission-package` to origin.
-5. Delete/ignore the now-superseded `overnight-gaussian-classical`.
+### CAVEAT — copyrighted epub in already-pushed qsp history
+`ResearchProject/literature/tddft/tddft-concept-and-applications.epub` (27.8 MB)
+is in the history pushed to origin (`cf5c677` and ancestors). Removed from the
+tree now, but it REMAINS in history. If the `inq-tddft-research` repo is public,
+scrub it with `git filter-repo --path <epub> --invert-paths` + force-push.
+`report2/submission-package` (orphan) is clean — no epub in its history.
+
+## NOT DONE — pushes (user drives) + inq-study repo creation
+
+No auth in the tool shell (no ssh-agent, no `gh`); the user drives all pushes
+with their passphrase-unlocked key. Remaining, in order:
+
+1. User creates an EMPTY public GitHub repo `KrishnaBellamkonda/inq-study`
+   (no README). Remote already set locally.
+2. User pushes `inq-study`: `git -C inq-study push -u origin master` (commit
+   `8c59be9`). MUST happen before the submodule resolves for anyone.
+3. User re-pushes `quantum-stopping-power` (now ahead of origin by `1e8a674`
+   submodule + `29df188` literature-untrack): `git push origin
+   quantum-stopping-power`.
+4. User pushes the orphan showcase: `git push -u origin
+   report2/submission-package`.
+5. (Optional) delete the superseded `overnight-gaussian-classical`; scrub the
+   epub from qsp history if the repo is public (see CAVEAT).
 
 ## OPEN decisions / caveats
 
