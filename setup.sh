@@ -40,10 +40,13 @@ if [ ! -d "$ROOT/inq/.git" ]; then
   echo "==> [2/4] cloning upstream inq @ ${INQ_COMMIT:0:12}"
   git clone "$INQ_UPSTREAM" "$ROOT/inq"
   git -C "$ROOT/inq" checkout "$INQ_COMMIT"
+  echo "    fetching inq external_libs submodules (multi, libxc, pseudopod, ...)"
+  git -C "$ROOT/inq" submodule update --init --recursive
   echo "    applying inq-local.patch (CUB fix + ham() accessor)"
   git -C "$ROOT/inq" apply "$ROOT/inq-local.patch"
 else
-  echo "==> [2/4] inq/ already present — skipping clone (verify patch manually)"
+  echo "==> [2/4] inq/ already present — ensuring external_libs submodules"
+  git -C "$ROOT/inq" submodule update --init --recursive
 fi
 
 # 3. Build inq
