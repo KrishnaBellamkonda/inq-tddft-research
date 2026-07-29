@@ -8,7 +8,7 @@ ParaView-6.1.0-MPI-Linux-Python3.12-x86_64/
 # Subprojects tracked by their own independent git repositories
 Tutorial/
 QuantumKickExtension/
-inq-study/
+# inq-study/ is a git submodule (project-modified INQ engine) — tracked, not ignored
 
 # Restructure scratch dir
 .restructure-backups/
@@ -115,6 +115,8 @@ nvim
 # but keep the CI workflow tracked (negation must follow the .* rule)
 !.github
 !.github/**
+# .gitmodules must be tracked for the inq-study submodule to resolve
+!.gitmodules
 
 # Remove executales
 run

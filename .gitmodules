@@ -1,0 +1,4 @@
+[submodule "inq-study"]
+	path = inq-study
+	url = https://github.com/KrishnaBellamkonda/inq-study.git
+	branch = master
