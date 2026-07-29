@@ -1,0 +1,262 @@
+/*
+ * Header-only writer that emits one or more output files from an inqkit
+ * RealField3D. Supports two calling conventions: a ground-state overload
+ * that accepts a caller-supplied basename, and a real-time overload that
+ * auto-generates basename = <field_name>_t{step:06d} and records time_au
+ * in the sidecar so Python readers preserve time ordering.
+ *
+ * Output modes (opt-in via RealField3DLayout)
+ * --------------------------------------------
+ *   emit_raw     Writes a single binary file:
+ *
+ *                  <path>/<basename>.raw   double-precision field values
+ *
+ *                Values are stored in the original x-slowest, z-fastest (C)
+ *                index order of the source field:
+ *
+ *                  flat = (ix * ny + iy) * nz + iz
+ *
+ *   include_meta  Writes a plain-text sidecar alongside the raw file:
+ *
+ *                  <path>/<basename>.meta
+ *
+ *                The sidecar records grid dimensions, origin, spacing, dtype,
+ *                the name of the associated raw file, and optionally time_au;
+ *                see write_meta_file_ for the exact key=value schema.
+ *
+ *   emit_vti     Writes a single VTK ImageData file:
+ *
+ *                  <path>/<basename>.vti
+ *
+ *                Contains one DataArray named <field_name>. The index layout
+ *                is transposed to VTK's x-fastest order by VTIImageDataWriter.
+ *                See vti_image_data_writer.hpp for format details
+ *                (ASCII / base64-binary).
+ *
+ * Defaults preserve historical behaviour: raw + meta, no vti. New callers
+ * opt in to vti by setting emit_vti = true and may set emit_raw = false to
+ * suppress the .raw output entirely.
+ *
+ * Usage
+ * -----
+ *   RealField3DLayout layout;
+ *   layout.field_name = "density";
+ *   layout.emit_raw   = true;
+ *   layout.emit_vti   = true;
+ *   layout.vti_format = VTIWriteOptions::Format::binary;
+ *
+ *   RealField3DWriter writer("/output/dir", layout);
+ *   writer.write(field, "density_gs");        // ground-state overload
+ *   writer.write(field, time_au, step);       // real-time overload
+ *
+ * Note: single-rank only, consistent with the existing inqkit writers.
+ */
+
+#pragma once
+
+#include <inqkit/detail/grid_layout.hpp>
+#include <inqkit/fields/real_field_3d.hpp>
+#include <inqkit/io/vti_image_data_writer.hpp>
+
+#include <cstdio>
+#include <filesystem>
+#include <fstream>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <utility>
+
+namespace inqkit::io {
+
+// Layout selects what artefacts the writer emits per call:
+//   emit_raw  - <basename>.raw (flat float64 binary, x-slowest layout)
+//   include_meta - <basename>.meta.txt sidecar (only meaningful with emit_raw)
+//   emit_vti  - <basename>.vti (VTK XML ImageData, ParaView-ready)
+// Defaults preserve the historical behaviour: raw + meta, no vti. New runs
+// opt in to vti by setting emit_vti = true (and may set emit_raw = false to
+// skip the .raw entirely).
+struct RealField3DLayout {
+  std::string field_name = "field";
+  bool include_meta = true;
+  bool emit_raw = true;
+  bool emit_vti = false;
+  VTIWriteOptions::Format vti_format = VTIWriteOptions::Format::ascii;
+};
+
+struct RealField3DWriteOptions {
+  bool overwrite = true;
+};
+
+class RealField3DWriter {
+public:
+  RealField3DWriter(std::string path, RealField3DLayout layout = {},
+                    RealField3DWriteOptions options = {})
+      : path_(std::move(path)), layout_(std::move(layout)), options_(options) {}
+
+  // Ground-state overload: caller supplies the full basename.
+  void write(inqkit::fields::RealField3D const &field,
+             std::string const &basename) const {
+    write_impl_(field, basename, std::nullopt);
+  }
+
+  // Real-time overload: generates basename = field_name + "_t{step:06d}".
+  // Writes time_au into the sidecar metadata so Python readers see time
+  // ordering.
+  void write(inqkit::fields::RealField3D const &field, double time_au,
+             int step) const {
+    auto const basename =
+        layout_.field_name + inqkit::detail::grid_layout::step_suffix(step);
+    write_impl_(field, basename, time_au);
+  }
+
+  void operator()(inqkit::fields::RealField3D const &field,
+                  std::string const &basename) const {
+    write(field, basename);
+  }
+
+private:
+  // This function is called multiple times in this class.
+  // This is an umbrella function that runs both
+  // write_binary_file and write_meta_data for a given configuration
+  void write_impl_(inqkit::fields::RealField3D const &field,
+                   std::string const &basename,
+                   std::optional<double> time_au) const {
+
+    // Sanity checks
+    if (basename.empty()) {
+      throw std::runtime_error(
+          "RealField3DWriter: basename must not be empty.");
+    }
+
+    if (field.nx <= 0 || field.ny <= 0 || field.nz <= 0) {
+      throw std::runtime_error(
+          "RealField3DWriter: field dimensions must be positive.");
+    }
+
+    auto const expected_size =
+        static_cast<std::size_t>(field.nx) * field.ny * field.nz;
+
+    if (field.values.size() != expected_size) {
+      throw std::runtime_error(
+          "RealField3DWriter: field.values size does not match nx * ny * nz.");
+    }
+
+    // Create the directory if not present
+    std::filesystem::create_directories(path_);
+
+    auto const schema = inqkit::detail::grid_layout::real_field_3d_raw_schema();
+    auto const stem = (std::filesystem::path(path_) / basename).string();
+
+    if (layout_.emit_raw) {
+      write_binary_file_(stem + schema.value_suffix, field);
+    }
+
+    if (layout_.emit_raw && layout_.include_meta) {
+      write_meta_file_(stem + schema.meta_suffix, field, basename, schema,
+                       time_au);
+    }
+
+    if (layout_.emit_vti) {
+      VTIWriteOptions vti_opts;
+      vti_opts.format = layout_.vti_format;
+      vti_opts.overwrite = options_.overwrite;
+      VTIImageDataWriter vti_wr(vti_opts);
+      vti_wr.write_real(field, stem + ".vti", layout_.field_name);
+    }
+  }
+
+
+  // Writes the 3D object as a binary file
+  void write_binary_file_(std::string const &filename,
+                          inqkit::fields::RealField3D const &field) const {
+    auto const filepath = std::filesystem::path(filename);
+
+    if (std::filesystem::exists(filepath) && !options_.overwrite) {
+      throw std::runtime_error(
+          "RealField3DWriter: file already exists and overwrite=false: " +
+          filepath.string());
+    }
+
+    // Sets the output stream to binary and writes the
+    // field.values() array as a binary file
+    std::ofstream out(filepath, std::ios::binary);
+    if (!out) {
+      throw std::runtime_error(
+          "RealField3DWriter: could not open file for writing: " +
+          filepath.string());
+    }
+
+    // Writes the field as a flattened array of doubles
+    out.write(
+        reinterpret_cast<char const *>(field.values.data()),
+        static_cast<std::streamsize>(field.values.size() * sizeof(double)));
+
+    if (!out) {
+      throw std::runtime_error(
+          "RealField3DWriter: failed while writing file: " + filepath.string());
+    }
+  }
+
+
+  // This is an important function that writes a meta files using the data
+  // gathered in the RealField3D and schema supplied to it. The meta data
+  // must be sufficient enough to recreate the grid coordinates, the 
+  // layout of the results (how does the flattened array map to the 3D vector)
+  // and information about what it is (orbital density or total density) that 
+  // is being stored in this file.
+  // TODO: In the future, this can be expanded to include
+  // 1. The entire simulation configuration information 
+  //    - ion positions
+  //    - no. of electrons, no. of extra states, no. of extra electrons, temp. etc. 
+  //    - ground state configuration
+  //    - real time propagation information 
+  void write_meta_file_(
+      std::string const &filename, inqkit::fields::RealField3D const &field,
+      std::string const &basename,
+      inqkit::detail::grid_layout::RealField3DRawSchema const &schema,
+      std::optional<double> time_au) const {
+    auto const filepath = std::filesystem::path(filename);
+
+    if (std::filesystem::exists(filepath) && !options_.overwrite) {
+      throw std::runtime_error("RealField3DWriter: metadata file already "
+                               "exists and overwrite=false: " +
+                               filepath.string());
+    }
+
+    std::ofstream out(filepath);
+    if (!out) {
+      throw std::runtime_error(
+          "RealField3DWriter: could not open metadata file: " +
+          filepath.string());
+    }
+
+    out << "type = " << schema.type << "\n";
+    out << "dtype = " << schema.dtype << "\n";
+    out << "field_name = " << layout_.field_name << "\n";
+
+    out << "nx = " << field.nx << "\n";
+    out << "ny = " << field.ny << "\n";
+    out << "nz = " << field.nz << "\n";
+
+    out << "origin_bohr = " << field.origin_x_bohr << " " << field.origin_y_bohr
+        << " " << field.origin_z_bohr << "\n";
+
+    out << "spacing_bohr = " << field.dx_bohr << " " << field.dy_bohr << " "
+        << field.dz_bohr << "\n";
+
+    out << "layout = " << schema.layout << "\n";
+
+    if (time_au.has_value()) {
+      out << "time_au = " << std::fixed << *time_au << "\n";
+    }
+
+    out << "value_file = " << basename << schema.value_suffix << "\n";
+  }
+
+private:
+  std::string path_;
+  RealField3DLayout layout_;
+  RealField3DWriteOptions options_;
+};
+
+} // namespace inqkit::io

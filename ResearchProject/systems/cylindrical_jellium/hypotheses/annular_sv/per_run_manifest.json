@@ -1,0 +1,1075 @@
+{
+ "rs6_v0p15": {
+  "rs": 6,
+  "v0": 0.15,
+  "rtype": "classical",
+  "launch_z": -23.0,
+  "matrix": [
+   [
+    "total",
+    "density",
+    "per_run_figs/rs6_v0p15/rs6_v0p15_total_density.gif",
+    "Total system \u2014 density n(x,z,t)"
+   ],
+   [
+    "total",
+    "delta0",
+    "per_run_figs/rs6_v0p15/rs6_v0p15_total_delta0.gif",
+    "Total system \u2014 \u0394n = n(t) \u2212 n(0)  (induced wake)"
+   ],
+   [
+    "total",
+    "dstep",
+    "per_run_figs/rs6_v0p15/rs6_v0p15_total_dstep.gif",
+    "Total system \u2014 \u0394n = n(t+dt) \u2212 n(t)"
+   ]
+  ],
+  "carpets": [
+   [
+    "total n(z,t)",
+    "per_run_figs/rs6_v0p15/rs6_v0p15_carpet_total.png"
+   ],
+   [
+    "\u0394n = n(t) \u2212 n(0)",
+    "per_run_figs/rs6_v0p15/rs6_v0p15_carpet_delta0.png"
+   ],
+   [
+    "\u0394n = n(t+dt) \u2212 n(t)",
+    "per_run_figs/rs6_v0p15/rs6_v0p15_carpet_dstep.png"
+   ]
+  ],
+  "stopping": {
+   "path": "per_run_figs/rs6_v0p15/rs6_v0p15_stopping.png",
+   "S": 0.002090748647485178,
+   "S_err": 6.744051352999535e-05,
+   "r2": 0.9015088145588566,
+   "S_kinetic": 0.0019832173584485224,
+   "ratio": 1.0542206271937724,
+   "N_drained": 3.341666647097933e-09,
+   "econs_ratio": 1.0714791817024854,
+   "v_mean": 0.14309435610148574,
+   "npts": 107,
+   "window": [
+    0.1349925744955094,
+    1.65222025958197
+   ],
+   "vfrac": 0.85,
+   "flags": []
+  },
+  "fft": [
+   [
+    "FFT pipeline \u2014 current_z (induced axial wall current (hydrovoltaic signal)). Plasmon band \u0127\u03c9_p\u22483.21 eV shaded; resolution \u0394\u03c9=2\u03c0/\u03c4\u22485.7 eV (\u03c4=30 a.u., coarse \u2014 informational, not a gate). fourier-analysis skill standard.",
+    "per_run_figs/rs6_v0p15/rs6_v0p15_fft_current_z.png"
+   ],
+   [
+    "FFT pipeline \u2014 energy_total (electronic total energy). Plasmon band \u0127\u03c9_p\u22483.21 eV shaded; resolution \u0394\u03c9=2\u03c0/\u03c4\u22485.7 eV (\u03c4=30 a.u., coarse \u2014 informational, not a gate). fourier-analysis skill standard.",
+    "per_run_figs/rs6_v0p15/rs6_v0p15_fft_energy_total.png"
+   ]
+  ],
+  "pipeline": {
+   "Energy decomposition": [
+    [
+     "all_energies_vs_time.png",
+     "../../annular_sv/rs6_v0p15/results/rs6_v0p15/analysis/observables/all_energies_vs_time.png"
+    ],
+    [
+     "energy_hartree_vs_time.png",
+     "../../annular_sv/rs6_v0p15/results/rs6_v0p15/analysis/observables/energy_hartree_vs_time.png"
+    ],
+    [
+     "energy_kinetic_vs_time.png",
+     "../../annular_sv/rs6_v0p15/results/rs6_v0p15/analysis/observables/energy_kinetic_vs_time.png"
+    ],
+    [
+     "energy_total_vs_time.png",
+     "../../annular_sv/rs6_v0p15/results/rs6_v0p15/analysis/observables/energy_total_vs_time.png"
+    ],
+    [
+     "energy_xc_vs_time.png",
+     "../../annular_sv/rs6_v0p15/results/rs6_v0p15/analysis/observables/energy_xc_vs_time.png"
+    ]
+   ],
+   "Induced current & dipole (time domain)": [
+    [
+     "current_components_vs_time.png",
+     "../../annular_sv/rs6_v0p15/results/rs6_v0p15/analysis/observables/current_components_vs_time.png"
+    ],
+    [
+     "dipole_components_vs_time.png",
+     "../../annular_sv/rs6_v0p15/results/rs6_v0p15/analysis/observables/dipole_components_vs_time.png"
+    ]
+   ]
+  }
+ },
+ "rs6_v0p30": {
+  "rs": 6,
+  "v0": 0.3,
+  "rtype": "classical",
+  "launch_z": -23.0,
+  "matrix": [
+   [
+    "total",
+    "density",
+    "per_run_figs/rs6_v0p30/rs6_v0p30_total_density.gif",
+    "Total system \u2014 density n(x,z,t)"
+   ],
+   [
+    "total",
+    "delta0",
+    "per_run_figs/rs6_v0p30/rs6_v0p30_total_delta0.gif",
+    "Total system \u2014 \u0394n = n(t) \u2212 n(0)  (induced wake)"
+   ],
+   [
+    "total",
+    "dstep",
+    "per_run_figs/rs6_v0p30/rs6_v0p30_total_dstep.gif",
+    "Total system \u2014 \u0394n = n(t+dt) \u2212 n(t)"
+   ]
+  ],
+  "carpets": [
+   [
+    "total n(z,t)",
+    "per_run_figs/rs6_v0p30/rs6_v0p30_carpet_total.png"
+   ],
+   [
+    "\u0394n = n(t) \u2212 n(0)",
+    "per_run_figs/rs6_v0p30/rs6_v0p30_carpet_delta0.png"
+   ],
+   [
+    "\u0394n = n(t+dt) \u2212 n(t)",
+    "per_run_figs/rs6_v0p30/rs6_v0p30_carpet_dstep.png"
+   ]
+  ],
+  "stopping": {
+   "path": "per_run_figs/rs6_v0p30/rs6_v0p30_stopping.png",
+   "S": 0.00399732683920535,
+   "S_err": 0.00012082892055591734,
+   "r2": 0.9117000762410681,
+   "S_kinetic": 0.0039215207221609495,
+   "ratio": 1.0193307959884061,
+   "N_drained": 4.974999967544136e-09,
+   "econs_ratio": 1.0195526521607317,
+   "v_mean": 0.2861867962900553,
+   "npts": 108,
+   "window": [
+    0.26998517822291035,
+    3.333027280263501
+   ],
+   "vfrac": 0.85,
+   "flags": []
+  },
+  "fft": [
+   [
+    "FFT pipeline \u2014 current_z (induced axial wall current (hydrovoltaic signal)). Plasmon band \u0127\u03c9_p\u22483.21 eV shaded; resolution \u0394\u03c9=2\u03c0/\u03c4\u22485.7 eV (\u03c4=30 a.u., coarse \u2014 informational, not a gate). fourier-analysis skill standard.",
+    "per_run_figs/rs6_v0p30/rs6_v0p30_fft_current_z.png"
+   ],
+   [
+    "FFT pipeline \u2014 energy_total (electronic total energy). Plasmon band \u0127\u03c9_p\u22483.21 eV shaded; resolution \u0394\u03c9=2\u03c0/\u03c4\u22485.7 eV (\u03c4=30 a.u., coarse \u2014 informational, not a gate). fourier-analysis skill standard.",
+    "per_run_figs/rs6_v0p30/rs6_v0p30_fft_energy_total.png"
+   ]
+  ],
+  "pipeline": {
+   "Energy decomposition": [
+    [
+     "all_energies_vs_time.png",
+     "../../annular_sv/rs6_v0p30/results/pilot_rs6_v0p30/analysis/observables/all_energies_vs_time.png"
+    ],
+    [
+     "energy_hartree_vs_time.png",
+     "../../annular_sv/rs6_v0p30/results/pilot_rs6_v0p30/analysis/observables/energy_hartree_vs_time.png"
+    ],
+    [
+     "energy_kinetic_vs_time.png",
+     "../../annular_sv/rs6_v0p30/results/pilot_rs6_v0p30/analysis/observables/energy_kinetic_vs_time.png"
+    ],
+    [
+     "energy_total_vs_time.png",
+     "../../annular_sv/rs6_v0p30/results/pilot_rs6_v0p30/analysis/observables/energy_total_vs_time.png"
+    ],
+    [
+     "energy_xc_vs_time.png",
+     "../../annular_sv/rs6_v0p30/results/pilot_rs6_v0p30/analysis/observables/energy_xc_vs_time.png"
+    ]
+   ],
+   "Induced current & dipole (time domain)": [
+    [
+     "current_components_vs_time.png",
+     "../../annular_sv/rs6_v0p30/results/pilot_rs6_v0p30/analysis/observables/current_components_vs_time.png"
+    ],
+    [
+     "dipole_components_vs_time.png",
+     "../../annular_sv/rs6_v0p30/results/pilot_rs6_v0p30/analysis/observables/dipole_components_vs_time.png"
+    ]
+   ]
+  }
+ },
+ "rs6_v0p45": {
+  "rs": 6,
+  "v0": 0.45,
+  "rtype": "classical",
+  "launch_z": -23.0,
+  "matrix": [
+   [
+    "total",
+    "density",
+    "per_run_figs/rs6_v0p45/rs6_v0p45_total_density.gif",
+    "Total system \u2014 density n(x,z,t)"
+   ],
+   [
+    "total",
+    "delta0",
+    "per_run_figs/rs6_v0p45/rs6_v0p45_total_delta0.gif",
+    "Total system \u2014 \u0394n = n(t) \u2212 n(0)  (induced wake)"
+   ],
+   [
+    "total",
+    "dstep",
+    "per_run_figs/rs6_v0p45/rs6_v0p45_total_dstep.gif",
+    "Total system \u2014 \u0394n = n(t+dt) \u2212 n(t)"
+   ]
+  ],
+  "carpets": [
+   [
+    "total n(z,t)",
+    "per_run_figs/rs6_v0p45/rs6_v0p45_carpet_total.png"
+   ],
+   [
+    "\u0394n = n(t) \u2212 n(0)",
+    "per_run_figs/rs6_v0p45/rs6_v0p45_carpet_delta0.png"
+   ],
+   [
+    "\u0394n = n(t+dt) \u2212 n(t)",
+    "per_run_figs/rs6_v0p45/rs6_v0p45_carpet_dstep.png"
+   ]
+  ],
+  "stopping": {
+   "path": "per_run_figs/rs6_v0p45/rs6_v0p45_stopping.png",
+   "S": 0.006078423705292195,
+   "S_err": 0.00021947874168564685,
+   "r2": 0.9218752740632938,
+   "S_kinetic": 0.0059907640992953,
+   "ratio": 1.014632458321503,
+   "N_drained": 1.135416664392134e-08,
+   "econs_ratio": 1.0166463158405568,
+   "v_mean": 0.4283439633793915,
+   "npts": 67,
+   "window": [
+    0.5759205799746283,
+    5.1010979297360315
+   ],
+   "vfrac": 0.85,
+   "flags": []
+  },
+  "fft": [
+   [
+    "FFT pipeline \u2014 current_z (induced axial wall current (hydrovoltaic signal)). Plasmon band \u0127\u03c9_p\u22483.21 eV shaded; resolution \u0394\u03c9=2\u03c0/\u03c4\u22483.8 eV (\u03c4=45 a.u., coarse \u2014 informational, not a gate). fourier-analysis skill standard.",
+    "per_run_figs/rs6_v0p45/rs6_v0p45_fft_current_z.png"
+   ],
+   [
+    "FFT pipeline \u2014 energy_total (electronic total energy). Plasmon band \u0127\u03c9_p\u22483.21 eV shaded; resolution \u0394\u03c9=2\u03c0/\u03c4\u22483.8 eV (\u03c4=45 a.u., coarse \u2014 informational, not a gate). fourier-analysis skill standard.",
+    "per_run_figs/rs6_v0p45/rs6_v0p45_fft_energy_total.png"
+   ]
+  ],
+  "pipeline": {
+   "Energy decomposition": [
+    [
+     "all_energies_vs_time.png",
+     "../../annular_sv/rs6_v0p45/results/rs6_v0p45/analysis/observables/all_energies_vs_time.png"
+    ],
+    [
+     "energy_hartree_vs_time.png",
+     "../../annular_sv/rs6_v0p45/results/rs6_v0p45/analysis/observables/energy_hartree_vs_time.png"
+    ],
+    [
+     "energy_kinetic_vs_time.png",
+     "../../annular_sv/rs6_v0p45/results/rs6_v0p45/analysis/observables/energy_kinetic_vs_time.png"
+    ],
+    [
+     "energy_total_vs_time.png",
+     "../../annular_sv/rs6_v0p45/results/rs6_v0p45/analysis/observables/energy_total_vs_time.png"
+    ],
+    [
+     "energy_xc_vs_time.png",
+     "../../annular_sv/rs6_v0p45/results/rs6_v0p45/analysis/observables/energy_xc_vs_time.png"
+    ]
+   ],
+   "Induced current & dipole (time domain)": [
+    [
+     "current_components_vs_time.png",
+     "../../annular_sv/rs6_v0p45/results/rs6_v0p45/analysis/observables/current_components_vs_time.png"
+    ],
+    [
+     "dipole_components_vs_time.png",
+     "../../annular_sv/rs6_v0p45/results/rs6_v0p45/analysis/observables/dipole_components_vs_time.png"
+    ]
+   ]
+  }
+ },
+ "rs4_v0p15": {
+  "rs": 4,
+  "v0": 0.15,
+  "rtype": "classical",
+  "launch_z": -13.0,
+  "matrix": [
+   [
+    "total",
+    "density",
+    "per_run_figs/rs4_v0p15/rs4_v0p15_total_density.gif",
+    "Total system \u2014 density n(x,z,t)"
+   ],
+   [
+    "total",
+    "delta0",
+    "per_run_figs/rs4_v0p15/rs4_v0p15_total_delta0.gif",
+    "Total system \u2014 \u0394n = n(t) \u2212 n(0)  (induced wake)"
+   ],
+   [
+    "total",
+    "dstep",
+    "per_run_figs/rs4_v0p15/rs4_v0p15_total_dstep.gif",
+    "Total system \u2014 \u0394n = n(t+dt) \u2212 n(t)"
+   ]
+  ],
+  "carpets": [
+   [
+    "total n(z,t)",
+    "per_run_figs/rs4_v0p15/rs4_v0p15_carpet_total.png"
+   ],
+   [
+    "\u0394n = n(t) \u2212 n(0)",
+    "per_run_figs/rs4_v0p15/rs4_v0p15_carpet_delta0.png"
+   ],
+   [
+    "\u0394n = n(t+dt) \u2212 n(t)",
+    "per_run_figs/rs4_v0p15/rs4_v0p15_carpet_dstep.png"
+   ]
+  ],
+  "stopping": {
+   "path": "per_run_figs/rs4_v0p15/rs4_v0p15_stopping.png",
+   "S": 0.0033011382896493057,
+   "S_err": 0.00017758593776791946,
+   "r2": 0.8255881393348306,
+   "S_kinetic": 0.002957494184382587,
+   "ratio": 1.1161943469175268,
+   "N_drained": 5.489583306446851e-09,
+   "econs_ratio": 1.0978181965846066,
+   "v_mean": 0.14227827653367542,
+   "npts": 75,
+   "window": [
+    0.13497515426007922,
+    1.1881874747741907
+   ],
+   "vfrac": 0.85,
+   "flags": [
+    "channel divergence 12% (dE_total vs \u2212dKE_ion)"
+   ]
+  },
+  "fft": [
+   [
+    "FFT pipeline \u2014 current_z (induced axial wall current (hydrovoltaic signal)). Plasmon band \u0127\u03c9_p\u22485.89 eV shaded; resolution \u0394\u03c9=2\u03c0/\u03c4\u22485.7 eV (\u03c4=30 a.u., coarse \u2014 informational, not a gate). fourier-analysis skill standard.",
+    "per_run_figs/rs4_v0p15/rs4_v0p15_fft_current_z.png"
+   ],
+   [
+    "FFT pipeline \u2014 energy_total (electronic total energy). Plasmon band \u0127\u03c9_p\u22485.89 eV shaded; resolution \u0394\u03c9=2\u03c0/\u03c4\u22485.7 eV (\u03c4=30 a.u., coarse \u2014 informational, not a gate). fourier-analysis skill standard.",
+    "per_run_figs/rs4_v0p15/rs4_v0p15_fft_energy_total.png"
+   ]
+  ],
+  "pipeline": {
+   "Energy decomposition": [
+    [
+     "all_energies_vs_time.png",
+     "../../annular_sv/rs4_v0p15/results/rs4_v0p15/analysis/observables/all_energies_vs_time.png"
+    ],
+    [
+     "energy_hartree_vs_time.png",
+     "../../annular_sv/rs4_v0p15/results/rs4_v0p15/analysis/observables/energy_hartree_vs_time.png"
+    ],
+    [
+     "energy_kinetic_vs_time.png",
+     "../../annular_sv/rs4_v0p15/results/rs4_v0p15/analysis/observables/energy_kinetic_vs_time.png"
+    ],
+    [
+     "energy_total_vs_time.png",
+     "../../annular_sv/rs4_v0p15/results/rs4_v0p15/analysis/observables/energy_total_vs_time.png"
+    ],
+    [
+     "energy_xc_vs_time.png",
+     "../../annular_sv/rs4_v0p15/results/rs4_v0p15/analysis/observables/energy_xc_vs_time.png"
+    ]
+   ],
+   "Induced current & dipole (time domain)": [
+    [
+     "current_components_vs_time.png",
+     "../../annular_sv/rs4_v0p15/results/rs4_v0p15/analysis/observables/current_components_vs_time.png"
+    ],
+    [
+     "dipole_components_vs_time.png",
+     "../../annular_sv/rs4_v0p15/results/rs4_v0p15/analysis/observables/dipole_components_vs_time.png"
+    ]
+   ]
+  }
+ },
+ "rs4_v0p30": {
+  "rs": 4,
+  "v0": 0.3,
+  "rtype": "classical",
+  "launch_z": -13.0,
+  "matrix": [
+   [
+    "total",
+    "density",
+    "per_run_figs/rs4_v0p30/rs4_v0p30_total_density.gif",
+    "Total system \u2014 density n(x,z,t)"
+   ],
+   [
+    "total",
+    "delta0",
+    "per_run_figs/rs4_v0p30/rs4_v0p30_total_delta0.gif",
+    "Total system \u2014 \u0394n = n(t) \u2212 n(0)  (induced wake)"
+   ],
+   [
+    "total",
+    "dstep",
+    "per_run_figs/rs4_v0p30/rs4_v0p30_total_dstep.gif",
+    "Total system \u2014 \u0394n = n(t+dt) \u2212 n(t)"
+   ]
+  ],
+  "carpets": [
+   [
+    "total n(z,t)",
+    "per_run_figs/rs4_v0p30/rs4_v0p30_carpet_total.png"
+   ],
+   [
+    "\u0394n = n(t) \u2212 n(0)",
+    "per_run_figs/rs4_v0p30/rs4_v0p30_carpet_delta0.png"
+   ],
+   [
+    "\u0394n = n(t+dt) \u2212 n(t)",
+    "per_run_figs/rs4_v0p30/rs4_v0p30_carpet_dstep.png"
+   ]
+  ],
+  "stopping": {
+   "path": "per_run_figs/rs4_v0p30/rs4_v0p30_stopping.png",
+   "S": 0.006091303905171375,
+   "S_err": 0.0001897924685334926,
+   "r2": 0.9329746663576812,
+   "S_kinetic": 0.005812617465648896,
+   "ratio": 1.0479450851822687,
+   "N_drained": 8.449999959007451e-09,
+   "econs_ratio": 1.0684974562873346,
+   "v_mean": 0.2845448219442986,
+   "npts": 76,
+   "window": [
+    0.2699507698196193,
+    2.40472741837168
+   ],
+   "vfrac": 0.85,
+   "flags": []
+  },
+  "fft": [
+   [
+    "FFT pipeline \u2014 current_z (induced axial wall current (hydrovoltaic signal)). Plasmon band \u0127\u03c9_p\u22485.89 eV shaded; resolution \u0394\u03c9=2\u03c0/\u03c4\u22485.7 eV (\u03c4=30 a.u., coarse \u2014 informational, not a gate). fourier-analysis skill standard.",
+    "per_run_figs/rs4_v0p30/rs4_v0p30_fft_current_z.png"
+   ],
+   [
+    "FFT pipeline \u2014 energy_total (electronic total energy). Plasmon band \u0127\u03c9_p\u22485.89 eV shaded; resolution \u0394\u03c9=2\u03c0/\u03c4\u22485.7 eV (\u03c4=30 a.u., coarse \u2014 informational, not a gate). fourier-analysis skill standard.",
+    "per_run_figs/rs4_v0p30/rs4_v0p30_fft_energy_total.png"
+   ]
+  ],
+  "pipeline": {
+   "Energy decomposition": [
+    [
+     "all_energies_vs_time.png",
+     "../../annular_sv/rs4_v0p30/results/rs4_v0p30/analysis/observables/all_energies_vs_time.png"
+    ],
+    [
+     "energy_hartree_vs_time.png",
+     "../../annular_sv/rs4_v0p30/results/rs4_v0p30/analysis/observables/energy_hartree_vs_time.png"
+    ],
+    [
+     "energy_kinetic_vs_time.png",
+     "../../annular_sv/rs4_v0p30/results/rs4_v0p30/analysis/observables/energy_kinetic_vs_time.png"
+    ],
+    [
+     "energy_total_vs_time.png",
+     "../../annular_sv/rs4_v0p30/results/rs4_v0p30/analysis/observables/energy_total_vs_time.png"
+    ],
+    [
+     "energy_xc_vs_time.png",
+     "../../annular_sv/rs4_v0p30/results/rs4_v0p30/analysis/observables/energy_xc_vs_time.png"
+    ]
+   ],
+   "Induced current & dipole (time domain)": [
+    [
+     "current_components_vs_time.png",
+     "../../annular_sv/rs4_v0p30/results/rs4_v0p30/analysis/observables/current_components_vs_time.png"
+    ],
+    [
+     "dipole_components_vs_time.png",
+     "../../annular_sv/rs4_v0p30/results/rs4_v0p30/analysis/observables/dipole_components_vs_time.png"
+    ]
+   ]
+  }
+ },
+ "rs4_v0p45": {
+  "rs": 4,
+  "v0": 0.45,
+  "rtype": "classical",
+  "launch_z": -13.0,
+  "matrix": [
+   [
+    "total",
+    "density",
+    "per_run_figs/rs4_v0p45/rs4_v0p45_total_density.gif",
+    "Total system \u2014 density n(x,z,t)"
+   ],
+   [
+    "total",
+    "delta0",
+    "per_run_figs/rs4_v0p45/rs4_v0p45_total_delta0.gif",
+    "Total system \u2014 \u0394n = n(t) \u2212 n(0)  (induced wake)"
+   ],
+   [
+    "total",
+    "dstep",
+    "per_run_figs/rs4_v0p45/rs4_v0p45_total_dstep.gif",
+    "Total system \u2014 \u0394n = n(t+dt) \u2212 n(t)"
+   ]
+  ],
+  "carpets": [
+   [
+    "total n(z,t)",
+    "per_run_figs/rs4_v0p45/rs4_v0p45_carpet_total.png"
+   ],
+   [
+    "\u0394n = n(t) \u2212 n(0)",
+    "per_run_figs/rs4_v0p45/rs4_v0p45_carpet_delta0.png"
+   ],
+   [
+    "\u0394n = n(t+dt) \u2212 n(t)",
+    "per_run_figs/rs4_v0p45/rs4_v0p45_carpet_dstep.png"
+   ]
+  ],
+  "stopping": {
+   "path": "per_run_figs/rs4_v0p45/rs4_v0p45_stopping.png",
+   "S": 0.00914869048385411,
+   "S_err": 0.00030427901908387225,
+   "r2": 0.9525822290710324,
+   "S_kinetic": 0.00890509917941134,
+   "ratio": 1.0273541371673833,
+   "N_drained": 2.0350000055439448e-08,
+   "econs_ratio": 1.0181534149194382,
+   "v_mean": 0.4252215306810555,
+   "npts": 47,
+   "window": [
+    0.5757402257760802,
+    3.7068167595225567
+   ],
+   "vfrac": 0.85,
+   "flags": []
+  },
+  "fft": [
+   [
+    "FFT pipeline \u2014 current_z (induced axial wall current (hydrovoltaic signal)). Plasmon band \u0127\u03c9_p\u22485.89 eV shaded; resolution \u0394\u03c9=2\u03c0/\u03c4\u22483.8 eV (\u03c4=45 a.u., coarse \u2014 informational, not a gate). fourier-analysis skill standard.",
+    "per_run_figs/rs4_v0p45/rs4_v0p45_fft_current_z.png"
+   ],
+   [
+    "FFT pipeline \u2014 energy_total (electronic total energy). Plasmon band \u0127\u03c9_p\u22485.89 eV shaded; resolution \u0394\u03c9=2\u03c0/\u03c4\u22483.8 eV (\u03c4=45 a.u., coarse \u2014 informational, not a gate). fourier-analysis skill standard.",
+    "per_run_figs/rs4_v0p45/rs4_v0p45_fft_energy_total.png"
+   ]
+  ],
+  "pipeline": {
+   "Energy decomposition": [
+    [
+     "all_energies_vs_time.png",
+     "../../annular_sv/rs4_v0p45/results/rs4_v0p45/analysis/observables/all_energies_vs_time.png"
+    ],
+    [
+     "energy_hartree_vs_time.png",
+     "../../annular_sv/rs4_v0p45/results/rs4_v0p45/analysis/observables/energy_hartree_vs_time.png"
+    ],
+    [
+     "energy_kinetic_vs_time.png",
+     "../../annular_sv/rs4_v0p45/results/rs4_v0p45/analysis/observables/energy_kinetic_vs_time.png"
+    ],
+    [
+     "energy_total_vs_time.png",
+     "../../annular_sv/rs4_v0p45/results/rs4_v0p45/analysis/observables/energy_total_vs_time.png"
+    ],
+    [
+     "energy_xc_vs_time.png",
+     "../../annular_sv/rs4_v0p45/results/rs4_v0p45/analysis/observables/energy_xc_vs_time.png"
+    ]
+   ],
+   "Induced current & dipole (time domain)": [
+    [
+     "current_components_vs_time.png",
+     "../../annular_sv/rs4_v0p45/results/rs4_v0p45/analysis/observables/current_components_vs_time.png"
+    ],
+    [
+     "dipole_components_vs_time.png",
+     "../../annular_sv/rs4_v0p45/results/rs4_v0p45/analysis/observables/dipole_components_vs_time.png"
+    ]
+   ]
+  }
+ },
+ "rs2_v0p15": {
+  "rs": 2,
+  "v0": 0.15,
+  "rtype": "classical",
+  "launch_z": -4.0,
+  "matrix": [
+   [
+    "total",
+    "density",
+    "per_run_figs/rs2_v0p15/rs2_v0p15_total_density.gif",
+    "Total system \u2014 density n(x,z,t)"
+   ],
+   [
+    "total",
+    "delta0",
+    "per_run_figs/rs2_v0p15/rs2_v0p15_total_delta0.gif",
+    "Total system \u2014 \u0394n = n(t) \u2212 n(0)  (induced wake)"
+   ],
+   [
+    "total",
+    "dstep",
+    "per_run_figs/rs2_v0p15/rs2_v0p15_total_dstep.gif",
+    "Total system \u2014 \u0394n = n(t+dt) \u2212 n(t)"
+   ]
+  ],
+  "carpets": [
+   [
+    "total n(z,t)",
+    "per_run_figs/rs2_v0p15/rs2_v0p15_carpet_total.png"
+   ],
+   [
+    "\u0394n = n(t) \u2212 n(0)",
+    "per_run_figs/rs2_v0p15/rs2_v0p15_carpet_delta0.png"
+   ],
+   [
+    "\u0394n = n(t+dt) \u2212 n(t)",
+    "per_run_figs/rs2_v0p15/rs2_v0p15_carpet_dstep.png"
+   ]
+  ],
+  "stopping": {
+   "path": "per_run_figs/rs2_v0p15/rs2_v0p15_stopping.png",
+   "S": 0.013622677253514312,
+   "S_err": 0.004500022600527154,
+   "r2": 0.22816876884460968,
+   "S_kinetic": 0.006691543175636869,
+   "ratio": 2.0358050297146546,
+   "N_drained": 1.4514705986143514e-08,
+   "econs_ratio": 2.6472690972867454,
+   "v_mean": 0.1407529207451689,
+   "npts": 33,
+   "window": [
+    0.13482805917663798,
+    0.5854347035096761
+   ],
+   "vfrac": 0.85,
+   "flags": [
+    "channel divergence 104% (dE_total vs \u2212dKE_ion)",
+    "poor linear fit r\u00b2=0.23"
+   ]
+  },
+  "fft": [
+   [
+    "FFT pipeline \u2014 current_z (induced axial wall current (hydrovoltaic signal)). Plasmon band \u0127\u03c9_p\u224816.66 eV shaded; resolution \u0394\u03c9=2\u03c0/\u03c4\u22485.7 eV (\u03c4=30 a.u., coarse \u2014 informational, not a gate). fourier-analysis skill standard.",
+    "per_run_figs/rs2_v0p15/rs2_v0p15_fft_current_z.png"
+   ],
+   [
+    "FFT pipeline \u2014 energy_total (electronic total energy). Plasmon band \u0127\u03c9_p\u224816.66 eV shaded; resolution \u0394\u03c9=2\u03c0/\u03c4\u22485.7 eV (\u03c4=30 a.u., coarse \u2014 informational, not a gate). fourier-analysis skill standard.",
+    "per_run_figs/rs2_v0p15/rs2_v0p15_fft_energy_total.png"
+   ]
+  ],
+  "pipeline": {
+   "Energy decomposition": [
+    [
+     "all_energies_vs_time.png",
+     "../../annular_sv/rs2_v0p15/results/rs2_v0p15/analysis/observables/all_energies_vs_time.png"
+    ],
+    [
+     "energy_hartree_vs_time.png",
+     "../../annular_sv/rs2_v0p15/results/rs2_v0p15/analysis/observables/energy_hartree_vs_time.png"
+    ],
+    [
+     "energy_kinetic_vs_time.png",
+     "../../annular_sv/rs2_v0p15/results/rs2_v0p15/analysis/observables/energy_kinetic_vs_time.png"
+    ],
+    [
+     "energy_total_vs_time.png",
+     "../../annular_sv/rs2_v0p15/results/rs2_v0p15/analysis/observables/energy_total_vs_time.png"
+    ],
+    [
+     "energy_xc_vs_time.png",
+     "../../annular_sv/rs2_v0p15/results/rs2_v0p15/analysis/observables/energy_xc_vs_time.png"
+    ]
+   ],
+   "Induced current & dipole (time domain)": [
+    [
+     "current_components_vs_time.png",
+     "../../annular_sv/rs2_v0p15/results/rs2_v0p15/analysis/observables/current_components_vs_time.png"
+    ],
+    [
+     "dipole_components_vs_time.png",
+     "../../annular_sv/rs2_v0p15/results/rs2_v0p15/analysis/observables/dipole_components_vs_time.png"
+    ]
+   ]
+  }
+ },
+ "rs2_v0p30": {
+  "rs": 2,
+  "v0": 0.3,
+  "rtype": "classical",
+  "launch_z": -4.0,
+  "matrix": [
+   [
+    "total",
+    "density",
+    "per_run_figs/rs2_v0p30/rs2_v0p30_total_density.gif",
+    "Total system \u2014 density n(x,z,t)"
+   ],
+   [
+    "total",
+    "delta0",
+    "per_run_figs/rs2_v0p30/rs2_v0p30_total_delta0.gif",
+    "Total system \u2014 \u0394n = n(t) \u2212 n(0)  (induced wake)"
+   ],
+   [
+    "total",
+    "dstep",
+    "per_run_figs/rs2_v0p30/rs2_v0p30_total_dstep.gif",
+    "Total system \u2014 \u0394n = n(t+dt) \u2212 n(t)"
+   ]
+  ],
+  "carpets": [
+   [
+    "total n(z,t)",
+    "per_run_figs/rs2_v0p30/rs2_v0p30_carpet_total.png"
+   ],
+   [
+    "\u0394n = n(t) \u2212 n(0)",
+    "per_run_figs/rs2_v0p30/rs2_v0p30_carpet_delta0.png"
+   ],
+   [
+    "\u0394n = n(t+dt) \u2212 n(t)",
+    "per_run_figs/rs2_v0p30/rs2_v0p30_carpet_dstep.png"
+   ]
+  ],
+  "stopping": {
+   "path": "per_run_figs/rs2_v0p30/rs2_v0p30_stopping.png",
+   "S": 0.01575890212009385,
+   "S_err": 0.001882221900033663,
+   "r2": 0.6933691059821587,
+   "S_kinetic": 0.013337313777191577,
+   "ratio": 1.1815649225441096,
+   "N_drained": 2.319117656083215e-08,
+   "econs_ratio": 1.273090509436792,
+   "v_mean": 0.2815829484707234,
+   "npts": 33,
+   "window": [
+    0.26964888627433714,
+    1.17111832355614
+   ],
+   "vfrac": 0.85,
+   "flags": [
+    "channel divergence 18% (dE_total vs \u2212dKE_ion)",
+    "poor linear fit r\u00b2=0.69"
+   ]
+  },
+  "fft": [
+   [
+    "FFT pipeline \u2014 current_z (induced axial wall current (hydrovoltaic signal)). Plasmon band \u0127\u03c9_p\u224816.66 eV shaded; resolution \u0394\u03c9=2\u03c0/\u03c4\u22485.7 eV (\u03c4=30 a.u., coarse \u2014 informational, not a gate). fourier-analysis skill standard.",
+    "per_run_figs/rs2_v0p30/rs2_v0p30_fft_current_z.png"
+   ],
+   [
+    "FFT pipeline \u2014 energy_total (electronic total energy). Plasmon band \u0127\u03c9_p\u224816.66 eV shaded; resolution \u0394\u03c9=2\u03c0/\u03c4\u22485.7 eV (\u03c4=30 a.u., coarse \u2014 informational, not a gate). fourier-analysis skill standard.",
+    "per_run_figs/rs2_v0p30/rs2_v0p30_fft_energy_total.png"
+   ]
+  ],
+  "pipeline": {
+   "Energy decomposition": [
+    [
+     "all_energies_vs_time.png",
+     "../../annular_sv/rs2_v0p30/results/rs2_v0p30/analysis/observables/all_energies_vs_time.png"
+    ],
+    [
+     "energy_hartree_vs_time.png",
+     "../../annular_sv/rs2_v0p30/results/rs2_v0p30/analysis/observables/energy_hartree_vs_time.png"
+    ],
+    [
+     "energy_kinetic_vs_time.png",
+     "../../annular_sv/rs2_v0p30/results/rs2_v0p30/analysis/observables/energy_kinetic_vs_time.png"
+    ],
+    [
+     "energy_total_vs_time.png",
+     "../../annular_sv/rs2_v0p30/results/rs2_v0p30/analysis/observables/energy_total_vs_time.png"
+    ],
+    [
+     "energy_xc_vs_time.png",
+     "../../annular_sv/rs2_v0p30/results/rs2_v0p30/analysis/observables/energy_xc_vs_time.png"
+    ]
+   ],
+   "Induced current & dipole (time domain)": [
+    [
+     "current_components_vs_time.png",
+     "../../annular_sv/rs2_v0p30/results/rs2_v0p30/analysis/observables/current_components_vs_time.png"
+    ],
+    [
+     "dipole_components_vs_time.png",
+     "../../annular_sv/rs2_v0p30/results/rs2_v0p30/analysis/observables/dipole_components_vs_time.png"
+    ]
+   ]
+  }
+ },
+ "rs2_v0p45": {
+  "rs": 2,
+  "v0": 0.45,
+  "rtype": "classical",
+  "launch_z": -4.0,
+  "matrix": [
+   [
+    "total",
+    "density",
+    "per_run_figs/rs2_v0p45/rs2_v0p45_total_density.gif",
+    "Total system \u2014 density n(x,z,t)"
+   ],
+   [
+    "total",
+    "delta0",
+    "per_run_figs/rs2_v0p45/rs2_v0p45_total_delta0.gif",
+    "Total system \u2014 \u0394n = n(t) \u2212 n(0)  (induced wake)"
+   ],
+   [
+    "total",
+    "dstep",
+    "per_run_figs/rs2_v0p45/rs2_v0p45_total_dstep.gif",
+    "Total system \u2014 \u0394n = n(t+dt) \u2212 n(t)"
+   ]
+  ],
+  "carpets": [
+   [
+    "total n(z,t)",
+    "per_run_figs/rs2_v0p45/rs2_v0p45_carpet_total.png"
+   ],
+   [
+    "\u0394n = n(t) \u2212 n(0)",
+    "per_run_figs/rs2_v0p45/rs2_v0p45_carpet_delta0.png"
+   ],
+   [
+    "\u0394n = n(t+dt) \u2212 n(t)",
+    "per_run_figs/rs2_v0p45/rs2_v0p45_carpet_dstep.png"
+   ]
+  ],
+  "stopping": {
+   "path": "per_run_figs/rs2_v0p45/rs2_v0p45_stopping.png",
+   "S": 0.025356886633905305,
+   "S_err": 0.0008008393114580303,
+   "r2": 0.9644072851240048,
+   "S_kinetic": 0.022812509647932397,
+   "ratio": 1.111534286461267,
+   "N_drained": 5.294852932573068e-08,
+   "econs_ratio": 1.094800026278521,
+   "v_mean": 0.38158029590179715,
+   "npts": 39,
+   "window": [
+    0.5741858632855368,
+    2.894398851420397
+   ],
+   "vfrac": 0.7,
+   "flags": [
+    "channel divergence 11% (dE_total vs \u2212dKE_ion)"
+   ]
+  },
+  "fft": [
+   [
+    "FFT pipeline \u2014 current_z (induced axial wall current (hydrovoltaic signal)). Plasmon band \u0127\u03c9_p\u224816.66 eV shaded; resolution \u0394\u03c9=2\u03c0/\u03c4\u22483.8 eV (\u03c4=45 a.u., coarse \u2014 informational, not a gate). fourier-analysis skill standard.",
+    "per_run_figs/rs2_v0p45/rs2_v0p45_fft_current_z.png"
+   ],
+   [
+    "FFT pipeline \u2014 energy_total (electronic total energy). Plasmon band \u0127\u03c9_p\u224816.66 eV shaded; resolution \u0394\u03c9=2\u03c0/\u03c4\u22483.8 eV (\u03c4=45 a.u., coarse \u2014 informational, not a gate). fourier-analysis skill standard.",
+    "per_run_figs/rs2_v0p45/rs2_v0p45_fft_energy_total.png"
+   ]
+  ],
+  "pipeline": {
+   "Energy decomposition": [
+    [
+     "all_energies_vs_time.png",
+     "../../annular_sv/rs2_v0p45/results/rs2_v0p45/analysis/observables/all_energies_vs_time.png"
+    ],
+    [
+     "energy_hartree_vs_time.png",
+     "../../annular_sv/rs2_v0p45/results/rs2_v0p45/analysis/observables/energy_hartree_vs_time.png"
+    ],
+    [
+     "energy_kinetic_vs_time.png",
+     "../../annular_sv/rs2_v0p45/results/rs2_v0p45/analysis/observables/energy_kinetic_vs_time.png"
+    ],
+    [
+     "energy_total_vs_time.png",
+     "../../annular_sv/rs2_v0p45/results/rs2_v0p45/analysis/observables/energy_total_vs_time.png"
+    ],
+    [
+     "energy_xc_vs_time.png",
+     "../../annular_sv/rs2_v0p45/results/rs2_v0p45/analysis/observables/energy_xc_vs_time.png"
+    ]
+   ],
+   "Induced current & dipole (time domain)": [
+    [
+     "current_components_vs_time.png",
+     "../../annular_sv/rs2_v0p45/results/rs2_v0p45/analysis/observables/current_components_vs_time.png"
+    ],
+    [
+     "dipole_components_vs_time.png",
+     "../../annular_sv/rs2_v0p45/results/rs2_v0p45/analysis/observables/dipole_components_vs_time.png"
+    ]
+   ]
+  }
+ },
+ "wp_rs6_v0p30": {
+  "rs": 6,
+  "v0": 0.3,
+  "rtype": "wp",
+  "launch_z": -23.0,
+  "matrix": [
+   [
+    "total",
+    "density",
+    "per_run_figs/wp_rs6_v0p30/wp_rs6_v0p30_total_density.gif",
+    "Total system \u2014 density n(x,z,t)"
+   ],
+   [
+    "total",
+    "delta0",
+    "per_run_figs/wp_rs6_v0p30/wp_rs6_v0p30_total_delta0.gif",
+    "Total system \u2014 \u0394n = n(t) \u2212 n(0)"
+   ],
+   [
+    "total",
+    "dstep",
+    "per_run_figs/wp_rs6_v0p30/wp_rs6_v0p30_total_dstep.gif",
+    "Total system \u2014 \u0394n = n(t+dt) \u2212 n(t)"
+   ],
+   [
+    "wp",
+    "density",
+    "per_run_figs/wp_rs6_v0p30/wp_rs6_v0p30_wp_density.gif",
+    "Wavepacket |\u03c8|\u00b2 \u2014 density n(x,z,t)"
+   ],
+   [
+    "wp",
+    "delta0",
+    "per_run_figs/wp_rs6_v0p30/wp_rs6_v0p30_wp_delta0.gif",
+    "Wavepacket |\u03c8|\u00b2 \u2014 \u0394n = n(t) \u2212 n(0)"
+   ],
+   [
+    "wp",
+    "dstep",
+    "per_run_figs/wp_rs6_v0p30/wp_rs6_v0p30_wp_dstep.gif",
+    "Wavepacket |\u03c8|\u00b2 \u2014 \u0394n = n(t+dt) \u2212 n(t)"
+   ],
+   [
+    "bath",
+    "density",
+    "per_run_figs/wp_rs6_v0p30/wp_rs6_v0p30_bath_density.gif",
+    "Bath (wall, total \u2212 WP) \u2014 density n(x,z,t)"
+   ],
+   [
+    "bath",
+    "delta0",
+    "per_run_figs/wp_rs6_v0p30/wp_rs6_v0p30_bath_delta0.gif",
+    "Bath (wall, total \u2212 WP) \u2014 \u0394n = n(t) \u2212 n(0)"
+   ],
+   [
+    "bath",
+    "dstep",
+    "per_run_figs/wp_rs6_v0p30/wp_rs6_v0p30_bath_dstep.gif",
+    "Bath (wall, total \u2212 WP) \u2014 \u0394n = n(t+dt) \u2212 n(t)"
+   ]
+  ],
+  "carpets": [
+   [
+    "total n(z,t)",
+    "per_run_figs/wp_rs6_v0p30/wp_rs6_v0p30_carpet_total.png"
+   ],
+   [
+    "\u0394n = n(t) \u2212 n(0)",
+    "per_run_figs/wp_rs6_v0p30/wp_rs6_v0p30_carpet_delta0.png"
+   ],
+   [
+    "\u0394n = n(t+dt) \u2212 n(t)",
+    "per_run_figs/wp_rs6_v0p30/wp_rs6_v0p30_carpet_dstep.png"
+   ]
+  ],
+  "stopping": null,
+  "fft": [
+   [
+    "FFT pipeline \u2014 current_z (induced axial wall current (hydrovoltaic signal)). Plasmon band \u0127\u03c9_p\u22483.21 eV shaded; resolution \u0394\u03c9=2\u03c0/\u03c4\u22485.7 eV (\u03c4=30 a.u., coarse \u2014 informational, not a gate). fourier-analysis skill standard.",
+    "per_run_figs/wp_rs6_v0p30/wp_rs6_v0p30_fft_current_z.png"
+   ],
+   [
+    "FFT pipeline \u2014 energy_total (electronic total energy). Plasmon band \u0127\u03c9_p\u22483.21 eV shaded; resolution \u0394\u03c9=2\u03c0/\u03c4\u22485.7 eV (\u03c4=30 a.u., coarse \u2014 informational, not a gate). fourier-analysis skill standard.",
+    "per_run_figs/wp_rs6_v0p30/wp_rs6_v0p30_fft_energy_total.png"
+   ]
+  ],
+  "pipeline": {
+   "Energy decomposition": [
+    [
+     "all_energies_vs_time.png",
+     "../../annular_sv/wp_rs6_v0p30/results/wp_rs6_v0p30/analysis/observables/all_energies_vs_time.png"
+    ],
+    [
+     "energy_hartree_vs_time.png",
+     "../../annular_sv/wp_rs6_v0p30/results/wp_rs6_v0p30/analysis/observables/energy_hartree_vs_time.png"
+    ],
+    [
+     "energy_kinetic_vs_time.png",
+     "../../annular_sv/wp_rs6_v0p30/results/wp_rs6_v0p30/analysis/observables/energy_kinetic_vs_time.png"
+    ],
+    [
+     "energy_total_vs_time.png",
+     "../../annular_sv/wp_rs6_v0p30/results/wp_rs6_v0p30/analysis/observables/energy_total_vs_time.png"
+    ],
+    [
+     "energy_xc_vs_time.png",
+     "../../annular_sv/wp_rs6_v0p30/results/wp_rs6_v0p30/analysis/observables/energy_xc_vs_time.png"
+    ]
+   ],
+   "Induced current & dipole (time domain)": [
+    [
+     "current_components_vs_time.png",
+     "../../annular_sv/wp_rs6_v0p30/results/wp_rs6_v0p30/analysis/observables/current_components_vs_time.png"
+    ],
+    [
+     "dipole_components_vs_time.png",
+     "../../annular_sv/wp_rs6_v0p30/results/wp_rs6_v0p30/analysis/observables/dipole_components_vs_time.png"
+    ]
+   ],
+   "Momentum (1D n(k), incl/excl WP)": [
+    [
+     "momentum_heatmap.png",
+     "../../annular_sv/wp_rs6_v0p30/results/wp_rs6_v0p30/analysis/observables/momentum_heatmap.png"
+    ],
+    [
+     "momentum_heatmap_no_wp.png",
+     "../../annular_sv/wp_rs6_v0p30/results/wp_rs6_v0p30/analysis/observables/momentum_heatmap_no_wp.png"
+    ],
+    [
+     "momentum_distribution.gif",
+     "../../annular_sv/wp_rs6_v0p30/results/wp_rs6_v0p30/analysis/observables/momentum_distribution.gif"
+    ],
+    [
+     "momentum_distribution_no_wp.gif",
+     "../../annular_sv/wp_rs6_v0p30/results/wp_rs6_v0p30/analysis/observables/momentum_distribution_no_wp.gif"
+    ]
+   ],
+   "KL metric (WP momentum drift)": [
+    [
+     "kl_divergence_vs_t.png",
+     "../../annular_sv/wp_rs6_v0p30/results/wp_rs6_v0p30/analysis/observables/kl_divergence_vs_t.png"
+    ]
+   ]
+  }
+ }
+}

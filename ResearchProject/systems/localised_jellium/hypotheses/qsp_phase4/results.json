@@ -1,0 +1,201 @@
+{
+  "notes": [
+    "point-Lindhard S(54eV, r_s5.67) = 0.448 eV/Bohr",
+    "WP: \u0394E_total=-80.9 eV, late slope=-0.05 eV/au, N_final=82.091",
+    "energy-method: deposited(E_total(t_f)\u2212E_GS)=59.8 eV \u21d2 S=2.39 eV/Bohr [NOT converged \u2014 UPPER/LOWER bound]",
+    "  convergence triple: norm_f=0.094 (gate<0.02), late dE/dt=-0.05 eV/au, plateau=19.5 a.u.",
+    "  t=0 sanity: \u27e8T_WP\u27e9 analytic=136.1 eV (run 135.9); E_total(0)\u2212\u27e8T_WP\u27e9\u2212E_GS=4.64 eV (cross+SIE); E_system(0)\u2212E_GS=+0.24 eV (\u22480 \u21d2 bookkeeping OK)",
+    "  CAP ledger: total removed=81 eV, WP-carried\u2248123, bath/collective\u2248-42 eV (leakage diagnostic; approximate split)",
+    "classical: KE 0.0\u21920.0 eV over 25.0 Bohr \u21d2 S=0.000 eV/Bohr",
+    "classical transport: KE min 0.0 eV at z=-36.9; face-window S=0.000 eV/Bohr",
+    "classical energy-method: deposited=6.2 eV \u21d2 S=0.25 eV/Bohr [ok; park=yes t=25.0]",
+    "flux: transmit(+z)=+0.849  reflect(\u2212z)=+0.061  (reflectivity for the SEAM-free two-sided CAP)",
+    "momentum n(k_z) at anchors written",
+    "energetics written",
+    "KS excitation off-diagonal weight (final) = 0.014",
+    "E-field map written",
+    "norm/absorption figure written",
+    "heuristics: kF=0.339 vF=0.339 \u03c9_p=3.49 eV T_plasmon=48.9 au (\u03c4=100 \u21d2 ~2.0 plasmon periods); t_exit=18.12 au",
+    "density GIF battery: 9 WP + 3 classical"
+  ],
+  "TAG": "p4",
+  "S_lindhard_point_54eV_eVbohr": 0.448219271193043,
+  "wp_dEtot_eV": -80.92443382276336,
+  "wp_late_slope_eV_au": -0.04613304530524062,
+  "wp_Ntot_final": 82.0914830614,
+  "t_final": 99.84,
+  "E_total_0_Ha": -65.0551534640877,
+  "T_WP_analytic_Ha": 5.0,
+  "T_WP_run_Ha": 4.995757377224621,
+  "t0_cross_plus_sie_eV": 4.640322391934804,
+  "E_system0_minus_EGS_eV": 0.24032239193481403,
+  "wp_deposited_EminusEGS_eV": 59.772818569171456,
+  "wp_S_eVbohr": 2.3909127427668584,
+  "wp_norm_final": 0.0937500324009,
+  "wp_plateau_width_au": 19.52000000000001,
+  "wp_converged": false,
+  "cap_removed_total_eV": 80.92443382276336,
+  "cap_wp_carried_eV": 123.30158840413303,
+  "cap_bath_carried_eV": -42.377154581369666,
+  "classical_S_eVbohr": 0.0,
+  "classical_ke0_eV": 54.42277199197599,
+  "classical_kef_eV": 0.0,
+  "classical_ke_min_eV": 0.0,
+  "classical_ke_min_z": -36.93725403932348,
+  "classical_S_facewindow_eVbohr": 0.0,
+  "classical_park_triggered": true,
+  "classical_park_t_au": 25.04,
+  "classical_deposited_eV": 6.230709753040316,
+  "classical_S_energy_eVbohr": 0.24922839012161602,
+  "classical_S_energy_converged": true,
+  "classical_S_energy_status": "ok",
+  "classical_Nconserved": true,
+  "classical_drained_frac": 0.0024277130743931953,
+  "anchor_table": {
+    "A1_lead_near": 1.747756328453731,
+    "A2_cen_near": 5.631226826618593,
+    "A4_lead_far": 5.706201271482694,
+    "A5_cen_max": 31.68,
+    "t_final": 99.84
+  },
+  "sigma_z_growth": 66.70138628574206,
+  "zc_max": 8.60418923287,
+  "transmit_cum": 0.8494492702434244,
+  "reflect_cum": 0.060722482630625844,
+  "ks_offdiag_final": 0.01378580999999457,
+  "heuristics": {
+    "wp": {
+      "eg_scales.rs": 5.666,
+      "eg_scales.n0": 0.0013124467148578653,
+      "eg_scales.kF": 0.3387148416303411,
+      "eg_scales.vF": 0.3387148416303411,
+      "eg_scales.EF_ha": 0.057363871970333526,
+      "eg_scales.EF_ev": 1.56095047675015,
+      "eg_scales.lambda_F_friedel": 9.275036896725043,
+      "eg_scales.omega_p_ha": 0.1284238756248312,
+      "eg_scales.omega_p_ev": 3.4945916828340056,
+      "eg_scales.T_plasmon_au": 48.92536747243836,
+      "eg_scales.k_TF": 0.6567077970851711,
+      "eg_scales.t_heg_ha_per_e": 0.03441843015770589,
+      "timescales.v": 2.0,
+      "timescales.t_enter_slab_au": 5.625,
+      "timescales.t_exit_slab_au": 18.125,
+      "timescales.t_cross_au": 12.5,
+      "timescales.t_reach_box_edge_au": 34.375,
+      "wp_kinetics.sigma_wp": 0.5,
+      "wp_kinetics.sigma_charge": 0.35355339059327373,
+      "wp_kinetics.zero_point_ke_ha": 3.0,
+      "wp_kinetics.zero_point_ke_ev": 81.634158737964,
+      "norms.N_total_0": 82.9999999999,
+      "norms.N_total_f": 82.0914830614,
+      "norms.total_absorbed": 0.9085169385,
+      "norms.N_wp_0": 1.0,
+      "norms.N_wp_f": 0.0937500324009,
+      "norms.wp_orbital_absorbed": 0.9062499675991,
+      "norms.wp_fraction_absorbed": 0.9062499675991,
+      "norms.bath_overflow_absorbed": 0.0022669709009000005,
+      "spreading.sigma_z_0": 0.3541402677711192,
+      "spreading.sigma_z_f": 23.62164679993755,
+      "spreading.spread_factor": 66.70138628574206,
+      "spreading.sigma_z_max": 23.62164679993755,
+      "stopping_refs.S_point_ha_per_bohr": 0.0164717545513133,
+      "stopping_refs.S_point_ev_per_bohr": 0.4482192752448969,
+      "extra.wp_zmean_max": 8.60418923287
+    },
+    "classical": {
+      "eg_scales.rs": 5.666,
+      "eg_scales.n0": 0.0013124467148578653,
+      "eg_scales.kF": 0.3387148416303411,
+      "eg_scales.vF": 0.3387148416303411,
+      "eg_scales.EF_ha": 0.057363871970333526,
+      "eg_scales.EF_ev": 1.56095047675015,
+      "eg_scales.lambda_F_friedel": 9.275036896725043,
+      "eg_scales.omega_p_ha": 0.1284238756248312,
+      "eg_scales.omega_p_ev": 3.4945916828340056,
+      "eg_scales.T_plasmon_au": 48.92536747243836,
+      "eg_scales.k_TF": 0.6567077970851711,
+      "eg_scales.t_heg_ha_per_e": 0.03441843015770589,
+      "timescales.v": 2.0,
+      "timescales.t_enter_slab_au": 5.625,
+      "timescales.t_exit_slab_au": 18.125,
+      "timescales.t_cross_au": 12.5,
+      "timescales.t_reach_box_edge_au": 34.375,
+      "norms.N_total_0": 81.9999999999,
+      "norms.N_total_f": 81.8009275278,
+      "norms.total_absorbed": 0.19907247209999923,
+      "stopping_refs.S_point_ha_per_bohr": 0.0164717545513133,
+      "stopping_refs.S_point_ev_per_bohr": 0.4482192752448969
+    }
+  },
+  "T_exit_au": 18.125,
+  "T_enter_au": 5.625,
+  "gif_density_vmax": 0.0015652503806811845,
+  "gifs": {
+    "wp": [
+      [
+        "total",
+        "density",
+        "wp_total_density.gif"
+      ],
+      [
+        "total",
+        "delta0",
+        "wp_total_delta0.gif"
+      ],
+      [
+        "total",
+        "dstep",
+        "wp_total_dstep.gif"
+      ],
+      [
+        "wp",
+        "density",
+        "wp_wp_density.gif"
+      ],
+      [
+        "wp",
+        "delta0",
+        "wp_wp_delta0.gif"
+      ],
+      [
+        "wp",
+        "dstep",
+        "wp_wp_dstep.gif"
+      ],
+      [
+        "bath",
+        "density",
+        "wp_bath_density.gif"
+      ],
+      [
+        "bath",
+        "delta0",
+        "wp_bath_delta0.gif"
+      ],
+      [
+        "bath",
+        "dstep",
+        "wp_bath_dstep.gif"
+      ]
+    ],
+    "classical": [
+      [
+        "total",
+        "density",
+        "classical_total_density.gif"
+      ],
+      [
+        "total",
+        "delta0",
+        "classical_total_delta0.gif"
+      ],
+      [
+        "total",
+        "dstep",
+        "classical_total_dstep.gif"
+      ]
+    ]
+  },
+  "wp_wall_s": 18264.944337,
+  "classical_wall_s": 15665.9879384
+}

@@ -1,0 +1,7 @@
+last_step=4
+time_au=0.04
+dt=0.01
+proj_z=-24.500001972
+proj_vz=-6.31031158103e-05
+proj_mass=1
+proj_charge=-1

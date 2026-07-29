@@ -1,0 +1,80 @@
+{
+  "name": "capon_weak_partial",
+  "aim": "Witness the unphysical \u0394E>0 excursion in the WEAK/partial-absorption regime (phase-0's regime) under a fresh control. CAP ON at weak \u03b7=\u22120.2, 700 steps (t=28), full decomposition. PASS(a) if \u0394E(vs RT0) rises above 0 while the component ledger stays exact.",
+  "method": "identical ablation binary; CAP ON \u03b7=\u22120.2; 700 steps t=28; same cell/GS/WP; full energy decomposition + density_l2.",
+  "run_dir": "ablation",
+  "observables_csv": "ablation/results/capon_weak_partial/raw/observables/observables.csv",
+  "plot_png": "/local/data/public/skcb2/tddft/ResearchProject/systems/localised_jellium/hypotheses/energy_oscillation_diagnosis/probes/capon_weak_partial/capon_weak_partial_energy.png",
+  "columns": [
+    "step",
+    "time_au",
+    "energy_total",
+    "energy_kinetic",
+    "energy_hartree",
+    "energy_xc",
+    "energy_external",
+    "energy_nonlocal",
+    "energy_ion",
+    "energy_ion_kinetic",
+    "energy_exact_exchange",
+    "energy_nvxc",
+    "energy_eigenvalues",
+    "current_x",
+    "current_y",
+    "current_z",
+    "density_l2"
+  ],
+  "component_gap": [],
+  "summary": {
+    "n_steps": 141,
+    "t_final_au": 28.0,
+    "dE_total_vs_rt0_final": 0.10978919926038698,
+    "dE_total_vs_rt0_max": 0.10978919926038698,
+    "dE_total_vs_gs_final": 221.21813713297277,
+    "dE_total_vs_gs_max": 221.21813713297277,
+    "crosses_zero_above": true,
+    "N_initial": null,
+    "N_final": null,
+    "eig_tracks_total": false
+  },
+  "advisor_verdict": {
+    "probe_reading": "CAP ON \u03b7=\u22120.2, 700 steps (t=28): \u0394E(vs RT0) drains to MIN \u221223.38 eV (t=21.6) then RISES +23.5 eV and CROSSES ABOVE 0 to +0.11 eV at step 700. Ledger EXACT (\u03a38==E_total to 1.39e-13 Ha) throughout including the rise; density_l2\u21920.0001 (absorbed continuously even as E_total rises). Reproduces the phase-0 unphysical excursion under a fresh control.",
+    "verdict": "confirmed",
+    "confidence": 0.9,
+    "confirmed_cause": "a",
+    "decisive_control": "capon_weak_partial vs capoff_floor: identical run except CAP strength. OFF => conserved never >0; weak ON => drains then rises +23.5 eV crossing >0, CAP the sole non-conservative term, ledger exact.",
+    "refuted": [
+      "c",
+      "d",
+      "e"
+    ],
+    "synthesis": "The unphysical \u0394E_total>0 excursion is a METHOD artifact of the non-Hermitian CAP, not physics. In the partial-absorption regime the CAP's contribution to the reported KS total-energy functional is sign-changing: after an initial drain it adds energy back into the reported E_total, driving it above the reference even while density is still being removed. Turning the CAP off restores strict conservation; the component sum stays exact to solver precision, ruling out reference (c), propagator/grid (d), and double-counting (e).",
+    "ledger": [
+      {
+        "id": "a",
+        "status": "CONFIRMED",
+        "evidence": "capoff_floor conserves never >0; capon_weak_partial (CAP ON \u03b7=\u22120.2) drains then rises +23.5 eV crossing >0 to +0.11 eV, CAP the sole non-conservative term, ledger exact to 1.39e-13 Ha."
+      },
+      {
+        "id": "b",
+        "status": "WEAKENED",
+        "evidence": "v_bg on in all probes, no independent drift; not causal. +v_bg-only control not run."
+      },
+      {
+        "id": "c",
+        "status": "REFUTED",
+        "evidence": "component sum==E_total to 1e-13 Ha; capoff conserves vs RT0; +221 eV vs E_GS is flat WP offset."
+      },
+      {
+        "id": "d",
+        "status": "REFUTED",
+        "evidence": "same ETRS/grid/dt conserve CAP-off; CAP-on drift fully accounted by CAP term."
+      },
+      {
+        "id": "e",
+        "status": "REFUTED",
+        "evidence": "component sum==E_total to 1e-13 Ha through full absorption incl. rise; \u03a3\u03b5_i band\u2260total, benign."
+      }
+    ]
+  }
+}

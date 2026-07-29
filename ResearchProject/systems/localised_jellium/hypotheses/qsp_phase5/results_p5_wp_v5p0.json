@@ -1,0 +1,17 @@
+{
+  "tag": "p5_wp_v5p0",
+  "v": 5.0,
+  "E_eV": 340.142328125,
+  "S_eVbohr": 9.781861658415307,
+  "deposited_eV": 244.54654146038268,
+  "converged": false,
+  "norm_f": 0.0568723629237,
+  "late_slope_eV_au": -6.06428422915145,
+  "bound": "upper",
+  "N_drain_frac": 0.011362986130134211,
+  "N_guard_ok": true,
+  "t_final_au": 28.0,
+  "wall_s": 55763.0788759,
+  "E_GS_Ha": -71.85697499994046,
+  "L_slab_bohr": 25.0
+}

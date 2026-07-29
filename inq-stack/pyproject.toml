@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "inqview"
+version = "0.1.0"
+description = "Lightweight post-processing and visualisation tools for INQ / inqkit outputs."
+readme = "README.md"
+requires-python = ">=3.10"
+# Core dependency only. The dependency-layering invariant (ADR 0003): importing
+# inqview.io / inqview.analysis must pull in NO matplotlib and NO VTK — those
+# live exclusively under inqview.visualisation. Layer-specific deps are extras.
+dependencies = [
+    "numpy>=1.24",
+]
+
+[project.optional-dependencies]
+# numeric post-processing kernels (inqview.analysis): numpy + scipy/pandas only
+analysis = ["scipy>=1.10", "pandas>=2.0"]
+# rendering layer (inqview.visualisation): the ONLY place plotting/VTK deps live
+viz = ["matplotlib>=3.7", "imageio>=2.30", "vtk>=9.2"]
+# test suite: pure-Python, no GPU/INQ (ADR 0005). Needs the analysis deps.
+test = ["pytest>=7", "scipy>=1.10", "pandas>=2.0"]
+
+[tool.setuptools]
+package-dir = {"" = "python"}
+
+[tool.setuptools.packages.find]
+where = ["python"]
+include = ["inqview", "inqview.*"]
+
+[tool.pytest.ini_options]
+# Portable pure-Python suite (ADR 0005): no GPU, no INQ engine, fixtures < 5 MB.
+testpaths = ["tests/python"]
+python_files = ["test_*.py"]
+addopts = "-ra"
+markers = [
+    "analysis: pure numeric-kernel test (numpy/scipy only)",
+    "io: loader/parsing test on a committed fixture",
+    "integration: post-processes a committed run-output fixture end-to-end",
+    "theme: visualisation theme-config (numeric constants only; no rendering)",
+]

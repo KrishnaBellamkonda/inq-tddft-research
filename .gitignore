@@ -1,0 +1,203 @@
+# INQ source and local heavy dependencies
+inq/
+angelo-jellium/
+venv/
+ParaView-6.1.0-MPI-Linux-Python3.12-x86_64.tar.gz
+ParaView-6.1.0-MPI-Linux-Python3.12-x86_64/
+
+# Subprojects tracked by their own independent git repositories
+Tutorial/
+QuantumKickExtension/
+# inq-study/ is a git submodule (project-modified INQ engine) — tracked, not ignored
+
+# Restructure scratch dir
+.restructure-backups/
+
+# Build folders
+build/
+**/build/
+cmake-build-*/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Compiled outputs
+*.o
+*.obj
+*.so
+*.a
+*.out
+*.exe
+
+# Simulation outputs
+results/
+**/results/
+results_*/
+**/results_*/
+# raw field/screen/observable dumps written next to a run
+raw/
+**/raw/
+*.raw
+*.vti
+*.vtk
+*.vtu
+*.vtp
+*.npy
+*.npz
+*.h5
+*.hdf5
+
+# electrons.save() / electrons.load() checkpoint + ground-state save directories
+# (INQ writes each KS orbital as a ~100+ MB binary state file — never track these)
+checkpoints/
+**/checkpoints/
+checkpoint/
+**/checkpoint/
+states/
+**/states/
+grid_scratch/
+**/grid_scratch/
+gs/
+**/gs/
+shared_gs/
+**/shared_gs/
+save_gs/
+**/save_gs/
+rt_ckpt/
+**/rt_ckpt/
+spin_density/
+**/spin_density/
+
+# Large rendered/media
+*.png
+*.pdf
+*.gif
+*.mp4
+
+# Executed analysis notebooks carry base64-embedded density GIFs (tens of MB
+# each) — the builders (build_*.py / *_notebook_builder.py) stay tracked, so the
+# notebooks are regenerable. Track a specific one with `git add -f` if needed.
+*.ipynb
+
+# Generated run-database dump (absolute local paths); runs_catalogue.csv is the
+# tracked source-of-truth catalogue.
+docs/run_database.json
+docs/run_database.csv
+docs/run_database_columns.json
+
+# Incomplete/stray note files (truncated names, no extension) — do not track
+docs/notes/classical-stopping-power-baselines-for-l
+docs/notes/gaussian-pertubation-for-classical-simul
+ResearchProject/systems/localised_jellium/hypotheses/perturbation_method/classical-gaussian-pertubation-constant-
+
+# Per-run runtime logs (dispatcher / postprocess / inq-run)
+*.log
+**/run.log
+**/build_run.log
+**/dispatch.log
+**/dispatch.stdout
+**/auto_postprocess.log
+**/auto_postprocess.stdout
+**/auto_postprocess_done.txt
+profile.dat
+**/profile.dat
+
+# Editor/system noise
+.DS_Store
+*.swp
+*.swo
+
+# nvim and other
+nvim
+.*
+# but keep the CI workflow tracked (negation must follow the .* rule)
+!.github
+!.github/**
+# .gitmodules must be tracked for the inq-study submodule to resolve
+!.gitmodules
+
+# Remove executales
+run
+run_cl
+run_wp
+run_b1_full
+run_pilot_validated
+self_hartree
+gpu_probe
+run_convergence
+gaussian_wave_packet
+n2
+unit-cells
+HF-laser-pertubation
+HF-toy-model
+HF
+h2
+ions
+li_bcc
+Si
+
+# Per-run stdout/stderr + runtime artifacts (logs above; keep provenance lean)
+*.stdout
+*.stderr
+run.startup
+*.log.mpi
+
+# Compiled smoke-test / proxy binaries (sources kept; binaries are not)
+smoke_C1
+smoke_C2
+smoke_C3
+dryrun
+syntax_check
+
+# Office/binary/archive docs — keep tracked history pure text
+*.pptx
+*.xlsx
+*.docx
+*.zip
+*.epub
+*.html
+
+# Rotated dispatcher/orchestrator logs and run-state markers
+**/*.log.run*
+*.marker
+*_DONE
+*_DONE.*
+
+# LaTeX build artifacts
+*.aux
+*.toc
+*.spl
+*.wcdetail
+
+# Scratch, backups, machine-local tooling
+Misc/
+CLAUDE-backup.md
+todo.txt
+scripts/sync_to_laptop.sh
+
+# Large doc bodies kept local (not tracked this pass)
+docs/reports/
+docs/presentations/
+docs/sources/
+docs/inq-docs/
+
+# Track ONLY authored workflow content under .claude/ (rules + skills).
+# Everything else in .claude/ (credentials, runtime state, history, plugins,
+# project memory, tasks, sessions, caches) stays local-only.
+# Re-include the dir first (it is excluded by the .* rule above), then
+# re-exclude all its contents except the authored subfolders.
+!.claude/
+.claude/*
+!.claude/rules/
+!.claude/skills/
+!.claude/evals/
+!.claude/hooks/
+!.claude/agents/
+# shared ecosystem config (hooks + plugins) is tracked; personal prefs +
+# machine permissions stay in the gitignored settings.local.json
+!.claude/settings.json
+
+build_pure/
+**/build_pure/

@@ -1,0 +1,16 @@
+# coronene-fft-fixed-rerun queue: re-run the 9 propagations other than
+# run_base with the Phase-3 FFT-ordering fixes + WP_ENVELOPE_SIGMAS=2.
+# `dispatch_runs.py --clear-results` wipes each run's results/{raw,analysis}
+# before inq-run so the new windows / IFFT outputs / FFT-natural screens
+# fully replace the old artefacts.
+#
+# (run_base was re-run on Branch 2 already and is excluded.)
+/local/data/public/skcb2/tddft/ResearchProject/systems/coronene/run_E30
+/local/data/public/skcb2/tddft/ResearchProject/systems/coronene/run_E800
+/local/data/public/skcb2/tddft/ResearchProject/systems/coronene/run_s0p33
+/local/data/public/skcb2/tddft/ResearchProject/systems/coronene/run_s3
+/local/data/public/skcb2/tddft/ResearchProject/systems/coronene/run_E800_s0p33
+/local/data/public/skcb2/tddft/ResearchProject/systems/coronene/run_E30_s3
+/local/data/public/skcb2/tddft/ResearchProject/systems/coronene/run_b18_35x35x80
+/local/data/public/skcb2/tddft/ResearchProject/systems/coronene/run_b6_35x35x80
+/local/data/public/skcb2/tddft/ResearchProject/systems/coronene/run_35x35x40

@@ -1,0 +1,8 @@
+run_completed = true
+epsilon = 1.15789e-05
+norm_after = 0.716928
+N0 = 0.513985
+E_eV = 489.805
+L_abs = 5
+k0 = 6
+N_STEPS = 261

@@ -1,0 +1,26 @@
+{
+  "wp_dir": "/local/data/public/skcb2/tddft/ResearchProject/systems/localised_jellium/scripts/localised_jellium_dynamics/runs/twin_ec_r12_p2/wp",
+  "classical_dir": "/local/data/public/skcb2/tddft/ResearchProject/systems/localised_jellium/scripts/localised_jellium_dynamics/runs/twin_ec_r12_p2/classical",
+  "representation": "perturbation",
+  "dynamic": false,
+  "parity_fields_checked": [
+    "periodicity",
+    "lz",
+    "sigma_wp",
+    "launch_z",
+    "gs_dir"
+  ],
+  "shared_config": {
+    "periodicity": 2.0,
+    "lz": 120.0,
+    "spacing": 0.5,
+    "n": 82.0,
+    "sigma_wp": 0.5,
+    "launch_z": -24.5,
+    "gs_dir": "/local/data/public/skcb2/tddft/ResearchProject/systems/localised_jellium/scripts/campaign_autorun/runs/h2/gs_p2_lz120/checkpoint"
+  },
+  "wp_projectile": "wavepacket",
+  "classical_projectile": "moving",
+  "u_proj_bg_source": "column",
+  "valid": true
+}

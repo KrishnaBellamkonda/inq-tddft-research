@@ -1,0 +1,9 @@
+run_completed = true
+epsilon = 0.112566
+absorbed_fraction = 0.884404
+N0 = 0.0555612
+E_eV = 13.6057
+L_abs = 5
+eta_Ha = -0.5
+k0 = 1
+N_STEPS = 4394

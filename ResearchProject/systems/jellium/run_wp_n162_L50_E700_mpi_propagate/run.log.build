@@ -1,0 +1,1079 @@
+───────────────────────────────────────
+ inq-run
+   target : run
+   source : /local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E700_mpi_propagate/run.cpp
+   gpu    : ON
+───────────────────────────────────────
+==> Configuring (this takes ~1 min on first run)...
+-- The CXX compiler identification is GNU 13.3.0
+-- The Fortran compiler identification is GNU 13.3.0
+-- The CUDA compiler identification is NVIDIA 12.6.77
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Detecting Fortran compiler ABI info
+-- Detecting Fortran compiler ABI info - done
+-- Check for working Fortran compiler: /usr/bin/gfortran - skipped
+-- Detecting CUDA compiler ABI info
+-- Detecting CUDA compiler ABI info - done
+-- Check for working CUDA compiler: /lsc/opt/cuda-12.6.2/bin/nvcc - skipped
+-- Detecting CUDA compile features
+-- Detecting CUDA compile features - done
+CMake version 3.28.3
+-- The C compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+CMake build type: 
+-- Found CUDAToolkit: /lsc/opt/cuda-12.6.2/targets/x86_64-linux/include (found suitable version "12.6.77", minimum required is "11.5") 
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE  
+-- Detecting Fortran/C Interface
+-- Detecting Fortran/C Interface - Found GLOBAL and MODULE mangling
+-- Verifying Fortran/CXX Compiler Compatibility
+-- Verifying Fortran/CXX Compiler Compatibility - Success
+-- Found MPI_CXX: /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi_cxx.so (found version "3.1") 
+-- Found MPI: TRUE (found version "3.1") found components: CXX 
+-- MPI Executable for running programs:/usr/bin/mpiexec
+-- MPI number of processors detected on the host system: 32
+-- 
+ Properties for TARGET MPI::MPI_CXX:
+   MPI::MPI_CXX.INTERFACE_LINK_LIBRARIES = "/usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi_cxx.so;/usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi.so"
+   MPI::MPI_CXX.INTERFACE_INCLUDE_DIRECTORIES = "/usr/lib/x86_64-linux-gnu/openmpi/include;/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi"
+
+-- Looking for MPI_Isendrecv_replace
+-- Looking for MPI_Isendrecv_replace - not found
+-- Found PkgConfig: /usr/bin/pkg-config (found version "1.8.1") 
+-- Checking for one of the modules 'fftw3'
+current binary directory: /local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E700_mpi_propagate/build/inq/external_libs/multi
+-- Boost.Multi: standalone mode ON
+-- Looking for Fortran sgemm
+-- Looking for Fortran sgemm - not found
+-- Looking for Fortran sgemm
+-- Looking for Fortran sgemm - found
+-- Found BLAS: /usr/lib/x86_64-linux-gnu/libopenblas.so  
+Some BLAS found: linker flags: , libs: /usr/lib/x86_64-linux-gnu/libopenblas.so, libs95: 
+-- Looking for Fortran cheev
+-- Looking for Fortran cheev - found
+-- Found LAPACK: /usr/lib/x86_64-linux-gnu/libopenblas.so;-lm;-ldl  
+-- Downloading Catch2 v3p3p2 for gpurun
+-- Populating catch2
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E700_mpi_propagate/build/_deps/catch2-subbuild
+[ 11%] Creating directories for 'catch2-populate'
+[ 22%] Performing download step (git clone) for 'catch2-populate'
+Cloning into 'catch2-src'...
+remote: Enumerating objects: 9376, done.        
+remote: Counting objects:   0% (1/9376)        remote: Counting objects:   1% (94/9376)        remote: Counting objects:   2% (188/9376)        remote: Counting objects:   3% (282/9376)        remote: Counting objects:   4% (376/9376)        remote: Counting objects:   5% (469/9376)        remote: Counting objects:   6% (563/9376)        remote: Counting objects:   7% (657/9376)        remote: Counting objects:   8% (751/9376)        remote: Counting objects:   9% (844/9376)        remote: Counting objects:  10% (938/9376)        remote: Counting objects:  11% (1032/9376)        remote: Counting objects:  12% (1126/9376)        remote: Counting objects:  13% (1219/9376)        remote: Counting objects:  14% (1313/9376)        remote: Counting objects:  15% (1407/9376)        remote: Counting objects:  16% (1501/9376)        remote: Counting objects:  17% (1594/9376)        remote: Counting objects:  18% (1688/9376)        remote: Counting objects:  19% (1782/9376)        remote: Counting objects:  20% (1876/9376)        remote: Counting objects:  21% (1969/9376)        remote: Counting objects:  22% (2063/9376)        remote: Counting objects:  23% (2157/9376)        remote: Counting objects:  24% (2251/9376)        remote: Counting objects:  25% (2344/9376)        remote: Counting objects:  26% (2438/9376)        remote: Counting objects:  27% (2532/9376)        remote: Counting objects:  28% (2626/9376)        remote: Counting objects:  29% (2720/9376)        remote: Counting objects:  30% (2813/9376)        remote: Counting objects:  31% (2907/9376)        remote: Counting objects:  32% (3001/9376)        remote: Counting objects:  33% (3095/9376)        remote: Counting objects:  34% (3188/9376)        remote: Counting objects:  35% (3282/9376)        remote: Counting objects:  36% (3376/9376)        remote: Counting objects:  37% (3470/9376)        remote: Counting objects:  38% (3563/9376)        remote: Counting objects:  39% (3657/9376)        remote: Counting objects:  40% (3751/9376)        remote: Counting objects:  41% (3845/9376)        remote: Counting objects:  42% (3938/9376)        remote: Counting objects:  43% (4032/9376)        remote: Counting objects:  44% (4126/9376)        remote: Counting objects:  45% (4220/9376)        remote: Counting objects:  46% (4313/9376)        remote: Counting objects:  47% (4407/9376)        remote: Counting objects:  48% (4501/9376)        remote: Counting objects:  49% (4595/9376)        remote: Counting objects:  50% (4688/9376)        remote: Counting objects:  51% (4782/9376)        remote: Counting objects:  52% (4876/9376)        remote: Counting objects:  53% (4970/9376)        remote: Counting objects:  54% (5064/9376)        remote: Counting objects:  55% (5157/9376)        remote: Counting objects:  56% (5251/9376)        remote: Counting objects:  57% (5345/9376)        remote: Counting objects:  58% (5439/9376)        remote: Counting objects:  59% (5532/9376)        remote: Counting objects:  60% (5626/9376)        remote: Counting objects:  61% (5720/9376)        remote: Counting objects:  62% (5814/9376)        remote: Counting objects:  63% (5907/9376)        remote: Counting objects:  64% (6001/9376)        remote: Counting objects:  65% (6095/9376)        remote: Counting objects:  66% (6189/9376)        remote: Counting objects:  67% (6282/9376)        remote: Counting objects:  68% (6376/9376)        remote: Counting objects:  69% (6470/9376)        remote: Counting objects:  70% (6564/9376)        remote: Counting objects:  71% (6657/9376)        remote: Counting objects:  72% (6751/9376)        remote: Counting objects:  73% (6845/9376)        remote: Counting objects:  74% (6939/9376)        remote: Counting objects:  75% (7032/9376)        remote: Counting objects:  76% (7126/9376)        remote: Counting objects:  77% (7220/9376)        remote: Counting objects:  78% (7314/9376)        remote: Counting objects:  79% (7408/9376)        remote: Counting objects:  80% (7501/9376)        remote: Counting objects:  81% (7595/9376)        remote: Counting objects:  82% (7689/9376)        remote: Counting objects:  83% (7783/9376)        remote: Counting objects:  84% (7876/9376)        remote: Counting objects:  85% (7970/9376)        remote: Counting objects:  86% (8064/9376)        remote: Counting objects:  87% (8158/9376)        remote: Counting objects:  88% (8251/9376)        remote: Counting objects:  89% (8345/9376)        remote: Counting objects:  90% (8439/9376)        remote: Counting objects:  91% (8533/9376)        remote: Counting objects:  92% (8626/9376)        remote: Counting objects:  93% (8720/9376)        remote: Counting objects:  94% (8814/9376)        remote: Counting objects:  95% (8908/9376)        remote: Counting objects:  96% (9001/9376)        remote: Counting objects:  97% (9095/9376)        remote: Counting objects:  98% (9189/9376)        remote: Counting objects:  99% (9283/9376)        remote: Counting objects: 100% (9376/9376)        remote: Counting objects: 100% (9376/9376), done.        
+remote: Compressing objects:   0% (1/5554)        remote: Compressing objects:   1% (56/5554)        remote: Compressing objects:   2% (112/5554)        remote: Compressing objects:   3% (167/5554)        remote: Compressing objects:   4% (223/5554)        remote: Compressing objects:   5% (278/5554)        remote: Compressing objects:   6% (334/5554)        remote: Compressing objects:   7% (389/5554)        remote: Compressing objects:   8% (445/5554)        remote: Compressing objects:   8% (465/5554)        remote: Compressing objects:   9% (500/5554)        remote: Compressing objects:  10% (556/5554)        remote: Compressing objects:  11% (611/5554)        remote: Compressing objects:  12% (667/5554)        remote: Compressing objects:  13% (723/5554)        remote: Compressing objects:  14% (778/5554)        remote: Compressing objects:  15% (834/5554)        remote: Compressing objects:  16% (889/5554)        remote: Compressing objects:  17% (945/5554)        remote: Compressing objects:  18% (1000/5554)        remote: Compressing objects:  19% (1056/5554)        remote: Compressing objects:  20% (1111/5554)        remote: Compressing objects:  21% (1167/5554)        remote: Compressing objects:  22% (1222/5554)        remote: Compressing objects:  23% (1278/5554)        remote: Compressing objects:  24% (1333/5554)        remote: Compressing objects:  25% (1389/5554)        remote: Compressing objects:  26% (1445/5554)        remote: Compressing objects:  27% (1500/5554)        remote: Compressing objects:  28% (1556/5554)        remote: Compressing objects:  29% (1611/5554)        remote: Compressing objects:  30% (1667/5554)        remote: Compressing objects:  31% (1722/5554)        remote: Compressing objects:  32% (1778/5554)        remote: Compressing objects:  33% (1833/5554)        remote: Compressing objects:  34% (1889/5554)        remote: Compressing objects:  35% (1944/5554)        remote: Compressing objects:  36% (2000/5554)        remote: Compressing objects:  37% (2055/5554)        remote: Compressing objects:  38% (2111/5554)        remote: Compressing objects:  39% (2167/5554)        remote: Compressing objects:  40% (2222/5554)        remote: Compressing objects:  41% (2278/5554)        remote: Compressing objects:  42% (2333/5554)        remote: Compressing objects:  43% (2389/5554)        remote: Compressing objects:  44% (2444/5554)        remote: Compressing objects:  45% (2500/5554)        remote: Compressing objects:  46% (2555/5554)        remote: Compressing objects:  47% (2611/5554)        remote: Compressing objects:  48% (2666/5554)        remote: Compressing objects:  49% (2722/5554)        remote: Compressing objects:  50% (2777/5554)        remote: Compressing objects:  51% (2833/5554)        remote: Compressing objects:  52% (2889/5554)        remote: Compressing objects:  53% (2944/5554)        remote: Compressing objects:  54% (3000/5554)        remote: Compressing objects:  55% (3055/5554)        remote: Compressing objects:  56% (3111/5554)        remote: Compressing objects:  57% (3166/5554)        remote: Compressing objects:  58% (3222/5554)        remote: Compressing objects:  59% (3277/5554)        remote: Compressing objects:  60% (3333/5554)        remote: Compressing objects:  61% (3388/5554)        remote: Compressing objects:  62% (3444/5554)        remote: Compressing objects:  63% (3500/5554)        remote: Compressing objects:  64% (3555/5554)        remote: Compressing objects:  65% (3611/5554)        remote: Compressing objects:  66% (3666/5554)        remote: Compressing objects:  67% (3722/5554)        remote: Compressing objects:  68% (3777/5554)        remote: Compressing objects:  69% (3833/5554)        remote: Compressing objects:  70% (3888/5554)        remote: Compressing objects:  71% (3944/5554)        remote: Compressing objects:  72% (3999/5554)        remote: Compressing objects:  73% (4055/5554)        remote: Compressing objects:  74% (4110/5554)        remote: Compressing objects:  75% (4166/5554)        remote: Compressing objects:  76% (4222/5554)        remote: Compressing objects:  77% (4277/5554)        remote: Compressing objects:  78% (4333/5554)        remote: Compressing objects:  79% (4388/5554)        remote: Compressing objects:  80% (4444/5554)        remote: Compressing objects:  81% (4499/5554)        remote: Compressing objects:  82% (4555/5554)        remote: Compressing objects:  83% (4610/5554)        remote: Compressing objects:  84% (4666/5554)        remote: Compressing objects:  85% (4721/5554)        remote: Compressing objects:  86% (4777/5554)        remote: Compressing objects:  87% (4832/5554)        remote: Compressing objects:  88% (4888/5554)        remote: Compressing objects:  89% (4944/5554)        remote: Compressing objects:  90% (4999/5554)        remote: Compressing objects:  91% (5055/5554)        remote: Compressing objects:  92% (5110/5554)        remote: Compressing objects:  93% (5166/5554)        remote: Compressing objects:  94% (5221/5554)        remote: Compressing objects:  95% (5277/5554)        remote: Compressing objects:  96% (5332/5554)        remote: Compressing objects:  97% (5388/5554)        remote: Compressing objects:  98% (5443/5554)        remote: Compressing objects:  99% (5499/5554)        remote: Compressing objects: 100% (5554/5554)        remote: Compressing objects: 100% (5554/5554), done.        
+Receiving objects:   0% (1/9376)Receiving objects:   1% (94/9376)Receiving objects:   2% (188/9376)Receiving objects:   3% (282/9376)Receiving objects:   4% (376/9376)Receiving objects:   5% (469/9376)Receiving objects:   6% (563/9376)Receiving objects:   7% (657/9376)Receiving objects:   8% (751/9376)Receiving objects:   9% (844/9376)Receiving objects:  10% (938/9376)Receiving objects:  11% (1032/9376)Receiving objects:  12% (1126/9376)Receiving objects:  13% (1219/9376)Receiving objects:  14% (1313/9376)Receiving objects:  15% (1407/9376)Receiving objects:  16% (1501/9376)Receiving objects:  17% (1594/9376)Receiving objects:  18% (1688/9376)Receiving objects:  19% (1782/9376)Receiving objects:  20% (1876/9376)Receiving objects:  21% (1969/9376)Receiving objects:  22% (2063/9376)Receiving objects:  23% (2157/9376)Receiving objects:  24% (2251/9376)Receiving objects:  25% (2344/9376)Receiving objects:  26% (2438/9376)Receiving objects:  27% (2532/9376)Receiving objects:  28% (2626/9376)Receiving objects:  29% (2720/9376)Receiving objects:  30% (2813/9376)Receiving objects:  31% (2907/9376)Receiving objects:  32% (3001/9376)Receiving objects:  33% (3095/9376)Receiving objects:  34% (3188/9376)Receiving objects:  35% (3282/9376)Receiving objects:  36% (3376/9376)Receiving objects:  37% (3470/9376)Receiving objects:  38% (3563/9376)Receiving objects:  39% (3657/9376)Receiving objects:  40% (3751/9376)Receiving objects:  41% (3845/9376)Receiving objects:  42% (3938/9376)Receiving objects:  43% (4032/9376)Receiving objects:  44% (4126/9376)Receiving objects:  45% (4220/9376)Receiving objects:  46% (4313/9376)Receiving objects:  47% (4407/9376)Receiving objects:  48% (4501/9376)Receiving objects:  49% (4595/9376)Receiving objects:  50% (4688/9376)Receiving objects:  51% (4782/9376)Receiving objects:  52% (4876/9376)Receiving objects:  53% (4970/9376)Receiving objects:  54% (5064/9376)Receiving objects:  55% (5157/9376)Receiving objects:  56% (5251/9376)Receiving objects:  57% (5345/9376)Receiving objects:  58% (5439/9376)Receiving objects:  59% (5532/9376)Receiving objects:  60% (5626/9376)Receiving objects:  61% (5720/9376)Receiving objects:  62% (5814/9376)Receiving objects:  63% (5907/9376)Receiving objects:  64% (6001/9376)Receiving objects:  65% (6095/9376)Receiving objects:  66% (6189/9376)Receiving objects:  67% (6282/9376)Receiving objects:  68% (6376/9376)Receiving objects:  69% (6470/9376)Receiving objects:  70% (6564/9376)Receiving objects:  71% (6657/9376)Receiving objects:  72% (6751/9376)Receiving objects:  73% (6845/9376)Receiving objects:  74% (6939/9376)Receiving objects:  75% (7032/9376)Receiving objects:  76% (7126/9376)Receiving objects:  77% (7220/9376)Receiving objects:  78% (7314/9376)Receiving objects:  79% (7408/9376)Receiving objects:  80% (7501/9376)Receiving objects:  81% (7595/9376)Receiving objects:  82% (7689/9376)Receiving objects:  83% (7783/9376)Receiving objects:  84% (7876/9376)Receiving objects:  85% (7970/9376)Receiving objects:  86% (8064/9376)Receiving objects:  87% (8158/9376)Receiving objects:  88% (8251/9376)Receiving objects:  89% (8345/9376)Receiving objects:  90% (8439/9376)Receiving objects:  91% (8533/9376)Receiving objects:  92% (8626/9376)Receiving objects:  93% (8720/9376)Receiving objects:  94% (8814/9376)Receiving objects:  95% (8908/9376)Receiving objects:  96% (9001/9376)Receiving objects:  97% (9095/9376)remote: Total 9376 (delta 7183), reused 5194 (delta 3653), pack-reused 0 (from 0)        
+Receiving objects:  98% (9189/9376)Receiving objects:  99% (9283/9376)Receiving objects: 100% (9376/9376)Receiving objects: 100% (9376/9376), 8.21 MiB | 18.00 MiB/s, done.
+Resolving deltas:   0% (0/7183)Resolving deltas:   1% (72/7183)Resolving deltas:   2% (144/7183)Resolving deltas:   3% (216/7183)Resolving deltas:   4% (288/7183)Resolving deltas:   5% (360/7183)Resolving deltas:   6% (431/7183)Resolving deltas:   7% (503/7183)Resolving deltas:   8% (575/7183)Resolving deltas:   9% (647/7183)Resolving deltas:  10% (720/7183)Resolving deltas:  11% (791/7183)Resolving deltas:  12% (862/7183)Resolving deltas:  13% (934/7183)Resolving deltas:  14% (1006/7183)Resolving deltas:  15% (1078/7183)Resolving deltas:  16% (1150/7183)Resolving deltas:  17% (1222/7183)Resolving deltas:  18% (1293/7183)Resolving deltas:  19% (1365/7183)Resolving deltas:  20% (1437/7183)Resolving deltas:  21% (1510/7183)Resolving deltas:  22% (1582/7183)Resolving deltas:  23% (1653/7183)Resolving deltas:  24% (1724/7183)Resolving deltas:  25% (1796/7183)Resolving deltas:  26% (1869/7183)Resolving deltas:  27% (1941/7183)Resolving deltas:  28% (2012/7183)Resolving deltas:  29% (2084/7183)Resolving deltas:  30% (2155/7183)Resolving deltas:  31% (2228/7183)Resolving deltas:  32% (2299/7183)Resolving deltas:  33% (2371/7183)Resolving deltas:  34% (2443/7183)Resolving deltas:  35% (2515/7183)Resolving deltas:  36% (2587/7183)Resolving deltas:  37% (2658/7183)Resolving deltas:  38% (2730/7183)Resolving deltas:  39% (2804/7183)Resolving deltas:  40% (2875/7183)Resolving deltas:  41% (2946/7183)Resolving deltas:  42% (3018/7183)Resolving deltas:  43% (3089/7183)Resolving deltas:  44% (3161/7183)Resolving deltas:  45% (3233/7183)Resolving deltas:  46% (3305/7183)Resolving deltas:  47% (3378/7183)Resolving deltas:  48% (3452/7183)Resolving deltas:  49% (3520/7183)Resolving deltas:  50% (3592/7183)Resolving deltas:  51% (3664/7183)Resolving deltas:  52% (3736/7183)Resolving deltas:  53% (3807/7183)Resolving deltas:  54% (3879/7183)Resolving deltas:  55% (3956/7183)Resolving deltas:  56% (4023/7183)Resolving deltas:  57% (4096/7183)Resolving deltas:  58% (4178/7183)Resolving deltas:  59% (4238/7183)Resolving deltas:  60% (4310/7183)Resolving deltas:  61% (4382/7183)Resolving deltas:  62% (4454/7183)Resolving deltas:  63% (4526/7183)Resolving deltas:  64% (4605/7183)Resolving deltas:  65% (4669/7183)Resolving deltas:  66% (4741/7183)Resolving deltas:  67% (4818/7183)Resolving deltas:  68% (4885/7183)Resolving deltas:  69% (4957/7183)Resolving deltas:  70% (5030/7183)Resolving deltas:  71% (5102/7183)Resolving deltas:  72% (5172/7183)Resolving deltas:  73% (5246/7183)Resolving deltas:  74% (5316/7183)Resolving deltas:  75% (5388/7183)Resolving deltas:  76% (5460/7183)Resolving deltas:  77% (5532/7183)Resolving deltas:  78% (5603/7183)Resolving deltas:  79% (5675/7183)Resolving deltas:  80% (5749/7183)Resolving deltas:  81% (5819/7183)Resolving deltas:  82% (5891/7183)Resolving deltas:  83% (5962/7183)Resolving deltas:  84% (6035/7183)Resolving deltas:  85% (6106/7183)Resolving deltas:  86% (6179/7183)Resolving deltas:  87% (6250/7183)Resolving deltas:  88% (6322/7183)Resolving deltas:  89% (6394/7183)Resolving deltas:  90% (6466/7183)Resolving deltas:  91% (6537/7183)Resolving deltas:  92% (6610/7183)Resolving deltas:  93% (6685/7183)Resolving deltas:  94% (6753/7183)Resolving deltas:  95% (6824/7183)Resolving deltas:  96% (6897/7183)Resolving deltas:  97% (6969/7183)Resolving deltas:  98% (7040/7183)Resolving deltas:  99% (7113/7183)Resolving deltas: 100% (7183/7183)Resolving deltas: 100% (7183/7183), done.
+HEAD is now at 3f0283d v3.3.2
+[ 33%] Performing disconnected update step for 'catch2-populate'
+[ 44%] No patch_disconnected step for 'catch2-populate'
+[ 55%] No configure step for 'catch2-populate'
+[ 66%] No build step for 'catch2-populate'
+[ 77%] No install step for 'catch2-populate'
+[ 88%] No test step for 'catch2-populate'
+[100%] Completed 'catch2-populate'
+[100%] Built target catch2-populate
+-- Performing Test HAVE_FLAG__ffile_prefix_map__local_data_public_skcb2_tddft_ResearchProject_systems_jellium_run_wp_n162_L50_E700_mpi_propagate_build__deps_catch2_src__
+-- Performing Test HAVE_FLAG__ffile_prefix_map__local_data_public_skcb2_tddft_ResearchProject_systems_jellium_run_wp_n162_L50_E700_mpi_propagate_build__deps_catch2_src__ - Success
+
+CONFIGURING SHARMONIC
+
+-- Performing Test HAVE_SPH_LEGENDRE
+-- Performing Test HAVE_SPH_LEGENDRE - Success
+-- Looking for std::sph_legendre - found
+-- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.83.0/BoostConfig.cmake (found version "1.83.0")  
+-- Boost actual version found 1.83.0
+-- Found GSL: /usr/include (found version "2.7.1") 
+-- Downloading Catch2 v3p3p2
+
+DONE CONFIGURING SHARMONIC
+
+
+CONFIGURING LIBXC
+
+CMake Deprecation Warning at /local/data/public/skcb2/tddft/inq/external_libs/libxc/CMakeLists.txt:10 (cmake_minimum_required):
+  Compatibility with CMake < 3.5 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+
+
+CMake Deprecation Warning at /local/data/public/skcb2/tddft/inq/external_libs/libxc/CMakeLists.txt:20 (cmake_policy):
+  The OLD behavior for policy CMP0104 will be removed from a future version
+  of CMake.
+
+  The cmake-policies(7) manual explains that the OLD behaviors of all
+  policies are deprecated and that a policy should be set to OLD only under
+  specific short-term circumstances.  Projects should be ported to the NEW
+  behavior and not rely on setting a policy to OLD.
+
+
+-- Setting (unspecified) option CMAKE_BUILD_TYPE: Release
+-- Setting (unspecified) option BUILD_SHARED_LIBS: OFF
+-- Setting option BUILD_TESTING: OFF
+-- Setting (unspecified) option BUILD_FPIC: ON
+-- Setting (unspecified) option NAMESPACE_INSTALL_INCLUDEDIR: /
+-- Setting (unspecified) option ENABLE_GENERIC: OFF
+-- Setting (unspecified) option ENABLE_FORTRAN: OFF
+-- Setting (unspecified) option ENABLE_PYTHON: OFF
+-- Setting (unspecified) option ENABLE_XHOST: OFF
+-- Setting (unspecified) option DISABLE_VXC: OFF
+-- Setting option DISABLE_FXC: ON
+CMake Warning (dev) at /local/data/public/skcb2/tddft/inq/external_libs/libxc/cmake/psi4OptionsTools.cmake:24 (option):
+  Policy CMP0077 is not set: option() honors normal variables.  Run "cmake
+  --help-policy CMP0077" for policy details.  Use the cmake_policy command to
+  set the policy and suppress this warning.
+
+  For compatibility with older versions of CMake, option is clearing the
+  normal variable 'DISABLE_FXC'.
+Call Stack (most recent call first):
+  /local/data/public/skcb2/tddft/inq/external_libs/libxc/CMakeLists.txt:57 (option_with_print)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+-- Setting (unspecified) option DISABLE_KXC: ON
+-- Setting (unspecified) option DISABLE_LXC: ON
+-- Setting (unspecified) option DISABLE_FHC: OFF
+-- Performing Test c_standard_math_library_linked_to_automatically
+-- Performing Test c_standard_math_library_linked_to_automatically - Failed
+-- Performing Test c_standard_math_library_linked_to_as_m
+-- Performing Test c_standard_math_library_linked_to_as_m - Success
+Test program linked with -m
+-- Performing Test HAVE_CBRT
+-- Performing Test HAVE_CBRT - Success
+-- Version: Full 7.0.0
+-- SO Version: Full 15:0:0 Major 15
+
+DONE CONFIGURING LIBXC
+
+
+CONFIGURING LIBPAW INTERFACE
+
+-- Downloading Catch2 v3p3p2 for gpurun
+
+DONE CONFIGURING LIBPAW INTERFACE
+
+-- Downloading Catch2 v3p3p2
+-- Found ZLIB: /usr/lib/x86_64-linux-gnu/libz.so (found version "1.3")  
+
+Configuring libPAW interface for pseudopod
+
+
+DONE CONFIGURING LIBPAW INTERFACE
+
+-- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.83.0/BoostConfig.cmake (found version "1.83.0") found components: serialization 
+-- Downloading spdlog
+-- Populating spdlog
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E700_mpi_propagate/build/_deps/spdlog-subbuild
+[ 11%] Creating directories for 'spdlog-populate'
+[ 22%] Performing download step (git clone) for 'spdlog-populate'
+Cloning into 'spdlog-src'...
+remote: Enumerating objects: 2961, done.        
+remote: Counting objects:   0% (1/2961)        remote: Counting objects:   1% (30/2961)        remote: Counting objects:   2% (60/2961)        remote: Counting objects:   3% (89/2961)        remote: Counting objects:   4% (119/2961)        remote: Counting objects:   5% (149/2961)        remote: Counting objects:   6% (178/2961)        remote: Counting objects:   7% (208/2961)        remote: Counting objects:   8% (237/2961)        remote: Counting objects:   9% (267/2961)        remote: Counting objects:  10% (297/2961)        remote: Counting objects:  11% (326/2961)        remote: Counting objects:  12% (356/2961)        remote: Counting objects:  13% (385/2961)        remote: Counting objects:  14% (415/2961)        remote: Counting objects:  15% (445/2961)        remote: Counting objects:  16% (474/2961)        remote: Counting objects:  17% (504/2961)        remote: Counting objects:  18% (533/2961)        remote: Counting objects:  19% (563/2961)        remote: Counting objects:  20% (593/2961)        remote: Counting objects:  21% (622/2961)        remote: Counting objects:  22% (652/2961)        remote: Counting objects:  23% (682/2961)        remote: Counting objects:  24% (711/2961)        remote: Counting objects:  25% (741/2961)        remote: Counting objects:  26% (770/2961)        remote: Counting objects:  27% (800/2961)        remote: Counting objects:  28% (830/2961)        remote: Counting objects:  29% (859/2961)        remote: Counting objects:  30% (889/2961)        remote: Counting objects:  31% (918/2961)        remote: Counting objects:  32% (948/2961)        remote: Counting objects:  33% (978/2961)        remote: Counting objects:  34% (1007/2961)        remote: Counting objects:  35% (1037/2961)        remote: Counting objects:  36% (1066/2961)        remote: Counting objects:  37% (1096/2961)        remote: Counting objects:  38% (1126/2961)        remote: Counting objects:  39% (1155/2961)        remote: Counting objects:  40% (1185/2961)        remote: Counting objects:  41% (1215/2961)        remote: Counting objects:  42% (1244/2961)        remote: Counting objects:  43% (1274/2961)        remote: Counting objects:  44% (1303/2961)        remote: Counting objects:  45% (1333/2961)        remote: Counting objects:  46% (1363/2961)        remote: Counting objects:  47% (1392/2961)        remote: Counting objects:  48% (1422/2961)        remote: Counting objects:  49% (1451/2961)        remote: Counting objects:  50% (1481/2961)        remote: Counting objects:  51% (1511/2961)        remote: Counting objects:  52% (1540/2961)        remote: Counting objects:  53% (1570/2961)        remote: Counting objects:  54% (1599/2961)        remote: Counting objects:  55% (1629/2961)        remote: Counting objects:  56% (1659/2961)        remote: Counting objects:  57% (1688/2961)        remote: Counting objects:  58% (1718/2961)        remote: Counting objects:  59% (1747/2961)        remote: Counting objects:  60% (1777/2961)        remote: Counting objects:  61% (1807/2961)        remote: Counting objects:  62% (1836/2961)        remote: Counting objects:  63% (1866/2961)        remote: Counting objects:  64% (1896/2961)        remote: Counting objects:  65% (1925/2961)        remote: Counting objects:  66% (1955/2961)        remote: Counting objects:  67% (1984/2961)        remote: Counting objects:  68% (2014/2961)        remote: Counting objects:  69% (2044/2961)        remote: Counting objects:  70% (2073/2961)        remote: Counting objects:  71% (2103/2961)        remote: Counting objects:  72% (2132/2961)        remote: Counting objects:  73% (2162/2961)        remote: Counting objects:  74% (2192/2961)        remote: Counting objects:  75% (2221/2961)        remote: Counting objects:  76% (2251/2961)        remote: Counting objects:  77% (2280/2961)        remote: Counting objects:  78% (2310/2961)        remote: Counting objects:  79% (2340/2961)        remote: Counting objects:  80% (2369/2961)        remote: Counting objects:  81% (2399/2961)        remote: Counting objects:  82% (2429/2961)        remote: Counting objects:  83% (2458/2961)        remote: Counting objects:  84% (2488/2961)        remote: Counting objects:  85% (2517/2961)        remote: Counting objects:  86% (2547/2961)        remote: Counting objects:  87% (2577/2961)        remote: Counting objects:  88% (2606/2961)        remote: Counting objects:  89% (2636/2961)        remote: Counting objects:  90% (2665/2961)        remote: Counting objects:  91% (2695/2961)        remote: Counting objects:  92% (2725/2961)        remote: Counting objects:  93% (2754/2961)        remote: Counting objects:  94% (2784/2961)        remote: Counting objects:  95% (2813/2961)        remote: Counting objects:  96% (2843/2961)        remote: Counting objects:  97% (2873/2961)        remote: Counting objects:  98% (2902/2961)        remote: Counting objects:  99% (2932/2961)        remote: Counting objects: 100% (2961/2961)        remote: Counting objects: 100% (2961/2961), done.        
+remote: Compressing objects:   0% (1/1804)        remote: Compressing objects:   1% (19/1804)        remote: Compressing objects:   2% (37/1804)        remote: Compressing objects:   3% (55/1804)        remote: Compressing objects:   4% (73/1804)        remote: Compressing objects:   5% (91/1804)        remote: Compressing objects:   6% (109/1804)        remote: Compressing objects:   7% (127/1804)        remote: Compressing objects:   8% (145/1804)        remote: Compressing objects:   9% (163/1804)        remote: Compressing objects:  10% (181/1804)        remote: Compressing objects:  11% (199/1804)        remote: Compressing objects:  12% (217/1804)        remote: Compressing objects:  13% (235/1804)        remote: Compressing objects:  14% (253/1804)        remote: Compressing objects:  15% (271/1804)        remote: Compressing objects:  16% (289/1804)        remote: Compressing objects:  17% (307/1804)        remote: Compressing objects:  18% (325/1804)        remote: Compressing objects:  19% (343/1804)        remote: Compressing objects:  20% (361/1804)        remote: Compressing objects:  21% (379/1804)        remote: Compressing objects:  22% (397/1804)        remote: Compressing objects:  23% (415/1804)        remote: Compressing objects:  24% (433/1804)        remote: Compressing objects:  25% (451/1804)        remote: Compressing objects:  26% (470/1804)        remote: Compressing objects:  27% (488/1804)        remote: Compressing objects:  28% (506/1804)        remote: Compressing objects:  29% (524/1804)        remote: Compressing objects:  30% (542/1804)        remote: Compressing objects:  31% (560/1804)        remote: Compressing objects:  32% (578/1804)        remote: Compressing objects:  33% (596/1804)        remote: Compressing objects:  34% (614/1804)        remote: Compressing objects:  35% (632/1804)        remote: Compressing objects:  36% (650/1804)        remote: Compressing objects:  37% (668/1804)        remote: Compressing objects:  38% (686/1804)        remote: Compressing objects:  39% (704/1804)        remote: Compressing objects:  40% (722/1804)        remote: Compressing objects:  41% (740/1804)        remote: Compressing objects:  42% (758/1804)        remote: Compressing objects:  43% (776/1804)        remote: Compressing objects:  44% (794/1804)        remote: Compressing objects:  45% (812/1804)        remote: Compressing objects:  46% (830/1804)        remote: Compressing objects:  47% (848/1804)        remote: Compressing objects:  48% (866/1804)        remote: Compressing objects:  49% (884/1804)        remote: Compressing objects:  50% (902/1804)        remote: Compressing objects:  51% (921/1804)        remote: Compressing objects:  52% (939/1804)        remote: Compressing objects:  53% (957/1804)        remote: Compressing objects:  54% (975/1804)        remote: Compressing objects:  55% (993/1804)        remote: Compressing objects:  56% (1011/1804)        remote: Compressing objects:  57% (1029/1804)        remote: Compressing objects:  58% (1047/1804)        remote: Compressing objects:  59% (1065/1804)        remote: Compressing objects:  60% (1083/1804)        remote: Compressing objects:  61% (1101/1804)        remote: Compressing objects:  62% (1119/1804)        remote: Compressing objects:  63% (1137/1804)        remote: Compressing objects:  64% (1155/1804)        remote: Compressing objects:  65% (1173/1804)        remote: Compressing objects:  66% (1191/1804)        remote: Compressing objects:  67% (1209/1804)        remote: Compressing objects:  68% (1227/1804)        remote: Compressing objects:  69% (1245/1804)        remote: Compressing objects:  70% (1263/1804)        remote: Compressing objects:  71% (1281/1804)        remote: Compressing objects:  72% (1299/1804)        remote: Compressing objects:  73% (1317/1804)        remote: Compressing objects:  74% (1335/1804)        remote: Compressing objects:  75% (1353/1804)        remote: Compressing objects:  76% (1372/1804)        remote: Compressing objects:  77% (1390/1804)        remote: Compressing objects:  78% (1408/1804)        remote: Compressing objects:  79% (1426/1804)        remote: Compressing objects:  80% (1444/1804)        remote: Compressing objects:  81% (1462/1804)        remote: Compressing objects:  82% (1480/1804)        remote: Compressing objects:  83% (1498/1804)        remote: Compressing objects:  84% (1516/1804)        remote: Compressing objects:  85% (1534/1804)        remote: Compressing objects:  86% (1552/1804)        remote: Compressing objects:  87% (1570/1804)        remote: Compressing objects:  88% (1588/1804)        remote: Compressing objects:  89% (1606/1804)        remote: Compressing objects:  90% (1624/1804)        remote: Compressing objects:  91% (1642/1804)        remote: Compressing objects:  92% (1660/1804)        remote: Compressing objects:  93% (1678/1804)        remote: Compressing objects:  94% (1696/1804)        remote: Compressing objects:  95% (1714/1804)        remote: Compressing objects:  96% (1732/1804)        remote: Compressing objects:  97% (1750/1804)        remote: Compressing objects:  98% (1768/1804)        remote: Compressing objects:  99% (1786/1804)        remote: Compressing objects: 100% (1804/1804)        remote: Compressing objects: 100% (1804/1804), done.        
+Receiving objects:   0% (1/2961)Receiving objects:   1% (30/2961)Receiving objects:   2% (60/2961)Receiving objects:   3% (89/2961)Receiving objects:   4% (119/2961)Receiving objects:   5% (149/2961)Receiving objects:   6% (178/2961)Receiving objects:   7% (208/2961)Receiving objects:   8% (237/2961)Receiving objects:   9% (267/2961)Receiving objects:  10% (297/2961)Receiving objects:  11% (326/2961)Receiving objects:  12% (356/2961)Receiving objects:  13% (385/2961)Receiving objects:  14% (415/2961)Receiving objects:  15% (445/2961)Receiving objects:  16% (474/2961)Receiving objects:  17% (504/2961)Receiving objects:  18% (533/2961)Receiving objects:  19% (563/2961)Receiving objects:  20% (593/2961)Receiving objects:  21% (622/2961)Receiving objects:  22% (652/2961)Receiving objects:  23% (682/2961)Receiving objects:  24% (711/2961)Receiving objects:  25% (741/2961)Receiving objects:  26% (770/2961)Receiving objects:  27% (800/2961)Receiving objects:  28% (830/2961)Receiving objects:  29% (859/2961)Receiving objects:  30% (889/2961)Receiving objects:  31% (918/2961)Receiving objects:  32% (948/2961)Receiving objects:  33% (978/2961)Receiving objects:  34% (1007/2961)Receiving objects:  35% (1037/2961)Receiving objects:  36% (1066/2961)Receiving objects:  37% (1096/2961)Receiving objects:  38% (1126/2961)Receiving objects:  39% (1155/2961)Receiving objects:  40% (1185/2961)Receiving objects:  41% (1215/2961)Receiving objects:  42% (1244/2961)Receiving objects:  43% (1274/2961)Receiving objects:  44% (1303/2961)Receiving objects:  45% (1333/2961)Receiving objects:  46% (1363/2961)Receiving objects:  47% (1392/2961)Receiving objects:  48% (1422/2961)Receiving objects:  49% (1451/2961)Receiving objects:  50% (1481/2961)Receiving objects:  51% (1511/2961)Receiving objects:  52% (1540/2961)Receiving objects:  53% (1570/2961)Receiving objects:  54% (1599/2961)Receiving objects:  55% (1629/2961)Receiving objects:  56% (1659/2961)Receiving objects:  57% (1688/2961)Receiving objects:  58% (1718/2961)Receiving objects:  59% (1747/2961)Receiving objects:  60% (1777/2961)Receiving objects:  61% (1807/2961)Receiving objects:  62% (1836/2961)Receiving objects:  63% (1866/2961)Receiving objects:  64% (1896/2961)Receiving objects:  65% (1925/2961)Receiving objects:  66% (1955/2961)Receiving objects:  67% (1984/2961)Receiving objects:  68% (2014/2961)Receiving objects:  69% (2044/2961)Receiving objects:  70% (2073/2961)Receiving objects:  71% (2103/2961)Receiving objects:  72% (2132/2961)Receiving objects:  73% (2162/2961)Receiving objects:  74% (2192/2961)Receiving objects:  75% (2221/2961)Receiving objects:  76% (2251/2961)Receiving objects:  77% (2280/2961)Receiving objects:  78% (2310/2961)Receiving objects:  79% (2340/2961)Receiving objects:  80% (2369/2961)Receiving objects:  81% (2399/2961)Receiving objects:  82% (2429/2961)Receiving objects:  83% (2458/2961)Receiving objects:  84% (2488/2961)Receiving objects:  85% (2517/2961)Receiving objects:  86% (2547/2961)Receiving objects:  87% (2577/2961)Receiving objects:  88% (2606/2961)Receiving objects:  89% (2636/2961)Receiving objects:  90% (2665/2961)Receiving objects:  91% (2695/2961)Receiving objects:  92% (2725/2961)Receiving objects:  93% (2754/2961)Receiving objects:  94% (2784/2961)Receiving objects:  95% (2813/2961)Receiving objects:  96% (2843/2961)Receiving objects:  97% (2873/2961)Receiving objects:  98% (2902/2961)Receiving objects:  99% (2932/2961)remote: Total 2961 (delta 2132), reused 1597 (delta 1072), pack-reused 0 (from 0)        
+Receiving objects: 100% (2961/2961)Receiving objects: 100% (2961/2961), 2.41 MiB | 16.87 MiB/s, done.
+Resolving deltas:   0% (0/2132)Resolving deltas:   1% (23/2132)Resolving deltas:   2% (43/2132)Resolving deltas:   3% (64/2132)Resolving deltas:   4% (86/2132)Resolving deltas:   5% (107/2132)Resolving deltas:   6% (130/2132)Resolving deltas:   7% (151/2132)Resolving deltas:   8% (171/2132)Resolving deltas:   9% (192/2132)Resolving deltas:  10% (214/2132)Resolving deltas:  11% (235/2132)Resolving deltas:  12% (256/2132)Resolving deltas:  13% (279/2132)Resolving deltas:  14% (300/2132)Resolving deltas:  15% (320/2132)Resolving deltas:  16% (342/2132)Resolving deltas:  17% (364/2132)Resolving deltas:  18% (385/2132)Resolving deltas:  19% (407/2132)Resolving deltas:  20% (427/2132)Resolving deltas:  21% (448/2132)Resolving deltas:  22% (470/2132)Resolving deltas:  23% (491/2132)Resolving deltas:  24% (514/2132)Resolving deltas:  25% (533/2132)Resolving deltas:  26% (556/2132)Resolving deltas:  27% (577/2132)Resolving deltas:  28% (597/2132)Resolving deltas:  29% (623/2132)Resolving deltas:  30% (641/2132)Resolving deltas:  31% (662/2132)Resolving deltas:  32% (683/2132)Resolving deltas:  33% (704/2132)Resolving deltas:  34% (726/2132)Resolving deltas:  35% (747/2132)Resolving deltas:  36% (771/2132)Resolving deltas:  37% (789/2132)Resolving deltas:  38% (811/2132)Resolving deltas:  39% (832/2132)Resolving deltas:  40% (853/2132)Resolving deltas:  41% (875/2132)Resolving deltas:  42% (896/2132)Resolving deltas:  43% (917/2132)Resolving deltas:  44% (939/2132)Resolving deltas:  45% (962/2132)Resolving deltas:  46% (982/2132)Resolving deltas:  47% (1003/2132)Resolving deltas:  48% (1024/2132)Resolving deltas:  49% (1045/2132)Resolving deltas:  50% (1066/2132)Resolving deltas:  51% (1088/2132)Resolving deltas:  52% (1109/2132)Resolving deltas:  53% (1130/2132)Resolving deltas:  54% (1152/2132)Resolving deltas:  55% (1173/2132)Resolving deltas:  56% (1196/2132)Resolving deltas:  57% (1216/2132)Resolving deltas:  58% (1237/2132)Resolving deltas:  59% (1258/2132)Resolving deltas:  60% (1280/2132)Resolving deltas:  61% (1301/2132)Resolving deltas:  62% (1322/2132)Resolving deltas:  63% (1344/2132)Resolving deltas:  64% (1366/2132)Resolving deltas:  65% (1386/2132)Resolving deltas:  66% (1408/2132)Resolving deltas:  67% (1429/2132)Resolving deltas:  68% (1450/2132)Resolving deltas:  69% (1473/2132)Resolving deltas:  70% (1493/2132)Resolving deltas:  71% (1516/2132)Resolving deltas:  72% (1536/2132)Resolving deltas:  73% (1557/2132)Resolving deltas:  74% (1578/2132)Resolving deltas:  75% (1599/2132)Resolving deltas:  76% (1623/2132)Resolving deltas:  77% (1644/2132)Resolving deltas:  78% (1665/2132)Resolving deltas:  79% (1685/2132)Resolving deltas:  80% (1706/2132)Resolving deltas:  81% (1727/2132)Resolving deltas:  82% (1749/2132)Resolving deltas:  83% (1770/2132)Resolving deltas:  84% (1791/2132)Resolving deltas:  85% (1813/2132)Resolving deltas:  86% (1834/2132)Resolving deltas:  87% (1856/2132)Resolving deltas:  88% (1878/2132)Resolving deltas:  89% (1898/2132)Resolving deltas:  90% (1919/2132)Resolving deltas:  91% (1942/2132)Resolving deltas:  92% (1962/2132)Resolving deltas:  93% (1983/2132)Resolving deltas:  94% (2005/2132)Resolving deltas:  95% (2026/2132)Resolving deltas:  96% (2049/2132)Resolving deltas:  97% (2069/2132)Resolving deltas:  98% (2090/2132)Resolving deltas:  99% (2112/2132)Resolving deltas: 100% (2132/2132)Resolving deltas: 100% (2132/2132), done.
+HEAD is now at ad0e89c Version 1.11.0
+[ 33%] Performing disconnected update step for 'spdlog-populate'
+[ 44%] No patch_disconnected step for 'spdlog-populate'
+[ 55%] No configure step for 'spdlog-populate'
+[ 66%] No build step for 'spdlog-populate'
+[ 77%] No install step for 'spdlog-populate'
+[ 88%] No test step for 'spdlog-populate'
+[100%] Completed 'spdlog-populate'
+[100%] Built target spdlog-populate
+-- Build spdlog: 1.11.0
+-- Build type: Release
+-- Downloading spglib
+-- Populating spglib
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E700_mpi_propagate/build/_deps/spglib-subbuild
+[ 11%] Creating directories for 'spglib-populate'
+[ 22%] Performing download step (git clone) for 'spglib-populate'
+Cloning into 'spglib-src'...
+remote: Enumerating objects: 4362, done.        
+remote: Counting objects:   0% (1/4362)        remote: Counting objects:   1% (44/4362)        remote: Counting objects:   2% (88/4362)        remote: Counting objects:   3% (131/4362)        remote: Counting objects:   4% (175/4362)        remote: Counting objects:   5% (219/4362)        remote: Counting objects:   6% (262/4362)        remote: Counting objects:   7% (306/4362)        remote: Counting objects:   8% (349/4362)        remote: Counting objects:   9% (393/4362)        remote: Counting objects:  10% (437/4362)        remote: Counting objects:  11% (480/4362)        remote: Counting objects:  12% (524/4362)        remote: Counting objects:  13% (568/4362)        remote: Counting objects:  14% (611/4362)        remote: Counting objects:  15% (655/4362)        remote: Counting objects:  16% (698/4362)        remote: Counting objects:  17% (742/4362)        remote: Counting objects:  18% (786/4362)        remote: Counting objects:  19% (829/4362)        remote: Counting objects:  20% (873/4362)        remote: Counting objects:  21% (917/4362)        remote: Counting objects:  22% (960/4362)        remote: Counting objects:  23% (1004/4362)        remote: Counting objects:  24% (1047/4362)        remote: Counting objects:  25% (1091/4362)        remote: Counting objects:  26% (1135/4362)        remote: Counting objects:  27% (1178/4362)        remote: Counting objects:  28% (1222/4362)        remote: Counting objects:  29% (1265/4362)        remote: Counting objects:  30% (1309/4362)        remote: Counting objects:  31% (1353/4362)        remote: Counting objects:  32% (1396/4362)        remote: Counting objects:  33% (1440/4362)        remote: Counting objects:  34% (1484/4362)        remote: Counting objects:  35% (1527/4362)        remote: Counting objects:  36% (1571/4362)        remote: Counting objects:  37% (1614/4362)        remote: Counting objects:  38% (1658/4362)        remote: Counting objects:  39% (1702/4362)        remote: Counting objects:  40% (1745/4362)        remote: Counting objects:  41% (1789/4362)        remote: Counting objects:  42% (1833/4362)        remote: Counting objects:  43% (1876/4362)        remote: Counting objects:  44% (1920/4362)        remote: Counting objects:  45% (1963/4362)        remote: Counting objects:  46% (2007/4362)        remote: Counting objects:  47% (2051/4362)        remote: Counting objects:  48% (2094/4362)        remote: Counting objects:  49% (2138/4362)        remote: Counting objects:  50% (2181/4362)        remote: Counting objects:  51% (2225/4362)        remote: Counting objects:  52% (2269/4362)        remote: Counting objects:  53% (2312/4362)        remote: Counting objects:  54% (2356/4362)        remote: Counting objects:  55% (2400/4362)        remote: Counting objects:  56% (2443/4362)        remote: Counting objects:  57% (2487/4362)        remote: Counting objects:  58% (2530/4362)        remote: Counting objects:  59% (2574/4362)        remote: Counting objects:  60% (2618/4362)        remote: Counting objects:  61% (2661/4362)        remote: Counting objects:  62% (2705/4362)        remote: Counting objects:  63% (2749/4362)        remote: Counting objects:  64% (2792/4362)        remote: Counting objects:  65% (2836/4362)        remote: Counting objects:  66% (2879/4362)        remote: Counting objects:  67% (2923/4362)        remote: Counting objects:  68% (2967/4362)        remote: Counting objects:  69% (3010/4362)        remote: Counting objects:  70% (3054/4362)        remote: Counting objects:  71% (3098/4362)        remote: Counting objects:  72% (3141/4362)        remote: Counting objects:  73% (3185/4362)        remote: Counting objects:  74% (3228/4362)        remote: Counting objects:  75% (3272/4362)        remote: Counting objects:  76% (3316/4362)        remote: Counting objects:  77% (3359/4362)        remote: Counting objects:  78% (3403/4362)        remote: Counting objects:  79% (3446/4362)        remote: Counting objects:  80% (3490/4362)        remote: Counting objects:  81% (3534/4362)        remote: Counting objects:  82% (3577/4362)        remote: Counting objects:  83% (3621/4362)        remote: Counting objects:  84% (3665/4362)        remote: Counting objects:  85% (3708/4362)        remote: Counting objects:  86% (3752/4362)        remote: Counting objects:  87% (3795/4362)        remote: Counting objects:  88% (3839/4362)        remote: Counting objects:  89% (3883/4362)        remote: Counting objects:  90% (3926/4362)        remote: Counting objects:  91% (3970/4362)        remote: Counting objects:  92% (4014/4362)        remote: Counting objects:  93% (4057/4362)        remote: Counting objects:  94% (4101/4362)        remote: Counting objects:  95% (4144/4362)        remote: Counting objects:  96% (4188/4362)        remote: Counting objects:  97% (4232/4362)        remote: Counting objects:  98% (4275/4362)        remote: Counting objects:  99% (4319/4362)        remote: Counting objects: 100% (4362/4362)        remote: Counting objects: 100% (4362/4362), done.        
+remote: Compressing objects:   0% (1/2331)        remote: Compressing objects:   1% (24/2331)        remote: Compressing objects:   2% (47/2331)        remote: Compressing objects:   3% (70/2331)        remote: Compressing objects:   4% (94/2331)        remote: Compressing objects:   5% (117/2331)        remote: Compressing objects:   6% (140/2331)        remote: Compressing objects:   7% (164/2331)        remote: Compressing objects:   8% (187/2331)        remote: Compressing objects:   9% (210/2331)        remote: Compressing objects:  10% (234/2331)        remote: Compressing objects:  11% (257/2331)        remote: Compressing objects:  12% (280/2331)        remote: Compressing objects:  13% (304/2331)        remote: Compressing objects:  14% (327/2331)        remote: Compressing objects:  15% (350/2331)        remote: Compressing objects:  16% (373/2331)        remote: Compressing objects:  17% (397/2331)        remote: Compressing objects:  18% (420/2331)        remote: Compressing objects:  19% (443/2331)        remote: Compressing objects:  20% (467/2331)        remote: Compressing objects:  21% (490/2331)        remote: Compressing objects:  22% (513/2331)        remote: Compressing objects:  23% (537/2331)        remote: Compressing objects:  24% (560/2331)        remote: Compressing objects:  25% (583/2331)        remote: Compressing objects:  26% (607/2331)        remote: Compressing objects:  27% (630/2331)        remote: Compressing objects:  28% (653/2331)        remote: Compressing objects:  29% (676/2331)        remote: Compressing objects:  30% (700/2331)        remote: Compressing objects:  31% (723/2331)        remote: Compressing objects:  32% (746/2331)        remote: Compressing objects:  33% (770/2331)        remote: Compressing objects:  34% (793/2331)        remote: Compressing objects:  35% (816/2331)        remote: Compressing objects:  36% (840/2331)        remote: Compressing objects:  37% (863/2331)        remote: Compressing objects:  38% (886/2331)        remote: Compressing objects:  39% (910/2331)        remote: Compressing objects:  40% (933/2331)        remote: Compressing objects:  41% (956/2331)        remote: Compressing objects:  42% (980/2331)        remote: Compressing objects:  43% (1003/2331)        remote: Compressing objects:  44% (1026/2331)        remote: Compressing objects:  45% (1049/2331)        remote: Compressing objects:  46% (1073/2331)        remote: Compressing objects:  47% (1096/2331)        remote: Compressing objects:  48% (1119/2331)        remote: Compressing objects:  49% (1143/2331)        remote: Compressing objects:  50% (1166/2331)        remote: Compressing objects:  51% (1189/2331)        remote: Compressing objects:  52% (1213/2331)        remote: Compressing objects:  53% (1236/2331)        remote: Compressing objects:  54% (1259/2331)        remote: Compressing objects:  55% (1283/2331)        remote: Compressing objects:  56% (1306/2331)        remote: Compressing objects:  57% (1329/2331)        remote: Compressing objects:  58% (1352/2331)        remote: Compressing objects:  59% (1376/2331)        remote: Compressing objects:  60% (1399/2331)        remote: Compressing objects:  61% (1422/2331)        remote: Compressing objects:  62% (1446/2331)        remote: Compressing objects:  63% (1469/2331)        remote: Compressing objects:  64% (1492/2331)        remote: Compressing objects:  65% (1516/2331)        remote: Compressing objects:  66% (1539/2331)        remote: Compressing objects:  67% (1562/2331)        remote: Compressing objects:  68% (1586/2331)        remote: Compressing objects:  69% (1609/2331)        remote: Compressing objects:  70% (1632/2331)        remote: Compressing objects:  71% (1656/2331)        remote: Compressing objects:  72% (1679/2331)        remote: Compressing objects:  73% (1702/2331)        remote: Compressing objects:  74% (1725/2331)        remote: Compressing objects:  75% (1749/2331)        remote: Compressing objects:  76% (1772/2331)        remote: Compressing objects:  77% (1795/2331)        remote: Compressing objects:  78% (1819/2331)        remote: Compressing objects:  79% (1842/2331)        remote: Compressing objects:  80% (1865/2331)        remote: Compressing objects:  81% (1889/2331)        remote: Compressing objects:  82% (1912/2331)        remote: Compressing objects:  83% (1935/2331)        remote: Compressing objects:  84% (1959/2331)        remote: Compressing objects:  85% (1982/2331)        remote: Compressing objects:  86% (2005/2331)        remote: Compressing objects:  87% (2028/2331)        remote: Compressing objects:  88% (2052/2331)        remote: Compressing objects:  89% (2075/2331)        remote: Compressing objects:  90% (2098/2331)        remote: Compressing objects:  91% (2122/2331)        remote: Compressing objects:  92% (2145/2331)        remote: Compressing objects:  93% (2168/2331)        remote: Compressing objects:  94% (2192/2331)        remote: Compressing objects:  95% (2215/2331)        remote: Compressing objects:  96% (2238/2331)        remote: Compressing objects:  97% (2262/2331)        remote: Compressing objects:  98% (2285/2331)        remote: Compressing objects:  99% (2308/2331)        remote: Compressing objects: 100% (2331/2331)        remote: Compressing objects: 100% (2331/2331), done.        
+Receiving objects:   0% (1/4362)Receiving objects:   1% (44/4362)Receiving objects:   2% (88/4362)Receiving objects:   3% (131/4362)Receiving objects:   4% (175/4362)Receiving objects:   5% (219/4362)Receiving objects:   6% (262/4362)Receiving objects:   7% (306/4362)Receiving objects:   8% (349/4362)Receiving objects:   9% (393/4362)Receiving objects:  10% (437/4362)Receiving objects:  11% (480/4362)Receiving objects:  12% (524/4362)Receiving objects:  13% (568/4362)Receiving objects:  14% (611/4362)Receiving objects:  15% (655/4362)Receiving objects:  16% (698/4362)Receiving objects:  17% (742/4362)Receiving objects:  18% (786/4362)Receiving objects:  19% (829/4362)Receiving objects:  20% (873/4362)Receiving objects:  21% (917/4362)Receiving objects:  22% (960/4362)Receiving objects:  23% (1004/4362)Receiving objects:  24% (1047/4362)Receiving objects:  25% (1091/4362)Receiving objects:  26% (1135/4362)Receiving objects:  27% (1178/4362)Receiving objects:  28% (1222/4362)Receiving objects:  29% (1265/4362)Receiving objects:  30% (1309/4362)Receiving objects:  31% (1353/4362)Receiving objects:  32% (1396/4362)Receiving objects:  33% (1440/4362)Receiving objects:  34% (1484/4362)Receiving objects:  35% (1527/4362)Receiving objects:  36% (1571/4362)Receiving objects:  37% (1614/4362)Receiving objects:  38% (1658/4362)Receiving objects:  39% (1702/4362)Receiving objects:  40% (1745/4362)Receiving objects:  41% (1789/4362)Receiving objects:  42% (1833/4362)Receiving objects:  43% (1876/4362)Receiving objects:  44% (1920/4362)Receiving objects:  45% (1963/4362)Receiving objects:  46% (2007/4362)Receiving objects:  47% (2051/4362)Receiving objects:  48% (2094/4362)Receiving objects:  49% (2138/4362)Receiving objects:  50% (2181/4362)Receiving objects:  51% (2225/4362)Receiving objects:  52% (2269/4362)Receiving objects:  53% (2312/4362)Receiving objects:  54% (2356/4362)Receiving objects:  55% (2400/4362)Receiving objects:  56% (2443/4362)Receiving objects:  57% (2487/4362)Receiving objects:  58% (2530/4362)Receiving objects:  59% (2574/4362)Receiving objects:  60% (2618/4362)Receiving objects:  61% (2661/4362)Receiving objects:  62% (2705/4362)Receiving objects:  63% (2749/4362)Receiving objects:  64% (2792/4362)Receiving objects:  65% (2836/4362)Receiving objects:  66% (2879/4362)Receiving objects:  67% (2923/4362)Receiving objects:  68% (2967/4362)Receiving objects:  69% (3010/4362)Receiving objects:  70% (3054/4362)Receiving objects:  71% (3098/4362)Receiving objects:  72% (3141/4362)Receiving objects:  73% (3185/4362)Receiving objects:  74% (3228/4362)Receiving objects:  75% (3272/4362)Receiving objects:  76% (3316/4362)Receiving objects:  77% (3359/4362)Receiving objects:  78% (3403/4362)Receiving objects:  79% (3446/4362)Receiving objects:  80% (3490/4362)Receiving objects:  81% (3534/4362)Receiving objects:  82% (3577/4362)Receiving objects:  83% (3621/4362)Receiving objects:  84% (3665/4362)Receiving objects:  85% (3708/4362)Receiving objects:  86% (3752/4362)Receiving objects:  87% (3795/4362)Receiving objects:  88% (3839/4362)Receiving objects:  89% (3883/4362)Receiving objects:  90% (3926/4362)Receiving objects:  91% (3970/4362)Receiving objects:  92% (4014/4362)Receiving objects:  93% (4057/4362)Receiving objects:  94% (4101/4362)remote: Total 4362 (delta 2677), reused 3338 (delta 1931), pack-reused 0 (from 0)        
+Receiving objects:  95% (4144/4362)Receiving objects:  96% (4188/4362)Receiving objects:  97% (4232/4362)Receiving objects:  98% (4275/4362)Receiving objects:  99% (4319/4362)Receiving objects: 100% (4362/4362)Receiving objects: 100% (4362/4362), 4.92 MiB | 15.70 MiB/s, done.
+Resolving deltas:   0% (0/2677)Resolving deltas:   1% (28/2677)Resolving deltas:   2% (54/2677)Resolving deltas:   3% (81/2677)Resolving deltas:   4% (109/2677)Resolving deltas:   5% (134/2677)Resolving deltas:   6% (161/2677)Resolving deltas:   7% (188/2677)Resolving deltas:   8% (216/2677)Resolving deltas:   9% (241/2677)Resolving deltas:  10% (268/2677)Resolving deltas:  11% (296/2677)Resolving deltas:  12% (322/2677)Resolving deltas:  13% (349/2677)Resolving deltas:  14% (375/2677)Resolving deltas:  15% (402/2677)Resolving deltas:  16% (429/2677)Resolving deltas:  17% (458/2677)Resolving deltas:  18% (482/2677)Resolving deltas:  19% (509/2677)Resolving deltas:  20% (537/2677)Resolving deltas:  21% (563/2677)Resolving deltas:  22% (589/2677)Resolving deltas:  23% (616/2677)Resolving deltas:  24% (645/2677)Resolving deltas:  25% (670/2677)Resolving deltas:  26% (697/2677)Resolving deltas:  27% (723/2677)Resolving deltas:  28% (750/2677)Resolving deltas:  29% (777/2677)Resolving deltas:  30% (804/2677)Resolving deltas:  31% (831/2677)Resolving deltas:  32% (858/2677)Resolving deltas:  33% (886/2677)Resolving deltas:  34% (911/2677)Resolving deltas:  35% (937/2677)Resolving deltas:  36% (966/2677)Resolving deltas:  37% (993/2677)Resolving deltas:  38% (1018/2677)Resolving deltas:  39% (1045/2677)Resolving deltas:  40% (1071/2677)Resolving deltas:  41% (1098/2677)Resolving deltas:  42% (1125/2677)Resolving deltas:  43% (1152/2677)Resolving deltas:  44% (1178/2677)Resolving deltas:  45% (1206/2677)Resolving deltas:  46% (1232/2677)Resolving deltas:  47% (1259/2677)Resolving deltas:  48% (1285/2677)Resolving deltas:  49% (1314/2677)Resolving deltas:  50% (1339/2677)Resolving deltas:  51% (1366/2677)Resolving deltas:  52% (1393/2677)Resolving deltas:  53% (1419/2677)Resolving deltas:  54% (1448/2677)Resolving deltas:  55% (1475/2677)Resolving deltas:  56% (1500/2677)Resolving deltas:  57% (1526/2677)Resolving deltas:  58% (1553/2677)Resolving deltas:  59% (1580/2677)Resolving deltas:  60% (1607/2677)Resolving deltas:  61% (1633/2677)Resolving deltas:  62% (1661/2677)Resolving deltas:  63% (1688/2677)Resolving deltas:  64% (1714/2677)Resolving deltas:  65% (1741/2677)Resolving deltas:  66% (1767/2677)Resolving deltas:  67% (1794/2677)Resolving deltas:  68% (1821/2677)Resolving deltas:  69% (1848/2677)Resolving deltas:  70% (1874/2677)Resolving deltas:  71% (1901/2677)Resolving deltas:  72% (1929/2677)Resolving deltas:  73% (1955/2677)Resolving deltas:  74% (1982/2677)Resolving deltas:  75% (2008/2677)Resolving deltas:  76% (2035/2677)Resolving deltas:  77% (2063/2677)Resolving deltas:  78% (2089/2677)Resolving deltas:  79% (2116/2677)Resolving deltas:  80% (2143/2677)Resolving deltas:  81% (2169/2677)Resolving deltas:  82% (2196/2677)Resolving deltas:  83% (2223/2677)Resolving deltas:  84% (2251/2677)Resolving deltas:  85% (2277/2677)Resolving deltas:  86% (2304/2677)Resolving deltas:  87% (2330/2677)Resolving deltas:  88% (2357/2677)Resolving deltas:  89% (2385/2677)Resolving deltas:  90% (2411/2677)Resolving deltas:  91% (2440/2677)Resolving deltas:  92% (2464/2677)Resolving deltas:  93% (2490/2677)Resolving deltas:  94% (2521/2677)Resolving deltas:  95% (2544/2677)Resolving deltas:  96% (2570/2677)Resolving deltas:  97% (2597/2677)Resolving deltas:  98% (2625/2677)Resolving deltas:  99% (2651/2677)Resolving deltas: 100% (2677/2677)Resolving deltas: 100% (2677/2677), done.
+HEAD is now at f04dadd Added code to compile the tests of spglib when running ctest or make test.
+[ 33%] Performing disconnected update step for 'spglib-populate'
+[ 44%] No patch_disconnected step for 'spglib-populate'
+[ 55%] No configure step for 'spglib-populate'
+[ 66%] No build step for 'spglib-populate'
+[ 77%] No install step for 'spglib-populate'
+[ 88%] No test step for 'spglib-populate'
+[100%] Completed 'spglib-populate'
+[100%] Built target spglib-populate
+CMake Deprecation Warning at _deps/spglib-src/CMakeLists.txt:2 (cmake_minimum_required):
+  Compatibility with CMake < 3.5 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+
+
+CMake Warning (dev) at _deps/spglib-src/CMakeLists.txt:4 (project):
+  Policy CMP0048 is not set: project() command manages VERSION variables.
+  Run "cmake --help-policy CMP0048" for policy details.  Use the cmake_policy
+  command to set the policy and suppress this warning.
+
+  The following variable(s) would be set to empty:
+
+    PROJECT_VERSION
+    PROJECT_VERSION_MAJOR
+    PROJECT_VERSION_MINOR
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+-- Build type: Release
+-- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.83.0/BoostConfig.cmake (found version "1.83.0") found components: serialization system 
+-- Boost actual version found 1.83.0
+-- Found Python: /local/data/public/skcb2/tddft/venv/bin/python3 (found version "3.10.19") found components: Interpreter Development Development.Module Development.Embed 
+-- Populating pybind11
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E700_mpi_propagate/build/_deps/pybind11-subbuild
+[ 11%] Creating directories for 'pybind11-populate'
+[ 22%] Performing download step (git clone) for 'pybind11-populate'
+Cloning into 'pybind11-src'...
+remote: Enumerating objects: 4889, done.        
+remote: Counting objects:   0% (1/4889)        remote: Counting objects:   1% (49/4889)        remote: Counting objects:   2% (98/4889)        remote: Counting objects:   3% (147/4889)        remote: Counting objects:   4% (196/4889)        remote: Counting objects:   5% (245/4889)        remote: Counting objects:   6% (294/4889)        remote: Counting objects:   7% (343/4889)        remote: Counting objects:   8% (392/4889)        remote: Counting objects:   9% (441/4889)        remote: Counting objects:  10% (489/4889)        remote: Counting objects:  11% (538/4889)        remote: Counting objects:  12% (587/4889)        remote: Counting objects:  13% (636/4889)        remote: Counting objects:  14% (685/4889)        remote: Counting objects:  15% (734/4889)        remote: Counting objects:  16% (783/4889)        remote: Counting objects:  17% (832/4889)        remote: Counting objects:  18% (881/4889)        remote: Counting objects:  19% (929/4889)        remote: Counting objects:  20% (978/4889)        remote: Counting objects:  21% (1027/4889)        remote: Counting objects:  22% (1076/4889)        remote: Counting objects:  23% (1125/4889)        remote: Counting objects:  24% (1174/4889)        remote: Counting objects:  25% (1223/4889)        remote: Counting objects:  26% (1272/4889)        remote: Counting objects:  27% (1321/4889)        remote: Counting objects:  28% (1369/4889)        remote: Counting objects:  29% (1418/4889)        remote: Counting objects:  30% (1467/4889)        remote: Counting objects:  31% (1516/4889)        remote: Counting objects:  32% (1565/4889)        remote: Counting objects:  33% (1614/4889)        remote: Counting objects:  34% (1663/4889)        remote: Counting objects:  35% (1712/4889)        remote: Counting objects:  36% (1761/4889)        remote: Counting objects:  37% (1809/4889)        remote: Counting objects:  38% (1858/4889)        remote: Counting objects:  39% (1907/4889)        remote: Counting objects:  40% (1956/4889)        remote: Counting objects:  41% (2005/4889)        remote: Counting objects:  42% (2054/4889)        remote: Counting objects:  43% (2103/4889)        remote: Counting objects:  44% (2152/4889)        remote: Counting objects:  45% (2201/4889)        remote: Counting objects:  46% (2249/4889)        remote: Counting objects:  47% (2298/4889)        remote: Counting objects:  48% (2347/4889)        remote: Counting objects:  49% (2396/4889)        remote: Counting objects:  50% (2445/4889)        remote: Counting objects:  51% (2494/4889)        remote: Counting objects:  52% (2543/4889)        remote: Counting objects:  53% (2592/4889)        remote: Counting objects:  54% (2641/4889)        remote: Counting objects:  55% (2689/4889)        remote: Counting objects:  56% (2738/4889)        remote: Counting objects:  57% (2787/4889)        remote: Counting objects:  58% (2836/4889)        remote: Counting objects:  59% (2885/4889)        remote: Counting objects:  60% (2934/4889)        remote: Counting objects:  61% (2983/4889)        remote: Counting objects:  62% (3032/4889)        remote: Counting objects:  63% (3081/4889)        remote: Counting objects:  64% (3129/4889)        remote: Counting objects:  65% (3178/4889)        remote: Counting objects:  66% (3227/4889)        remote: Counting objects:  67% (3276/4889)        remote: Counting objects:  68% (3325/4889)        remote: Counting objects:  69% (3374/4889)        remote: Counting objects:  70% (3423/4889)        remote: Counting objects:  71% (3472/4889)        remote: Counting objects:  72% (3521/4889)        remote: Counting objects:  73% (3569/4889)        remote: Counting objects:  74% (3618/4889)        remote: Counting objects:  75% (3667/4889)        remote: Counting objects:  76% (3716/4889)        remote: Counting objects:  77% (3765/4889)        remote: Counting objects:  78% (3814/4889)        remote: Counting objects:  79% (3863/4889)        remote: Counting objects:  80% (3912/4889)        remote: Counting objects:  81% (3961/4889)        remote: Counting objects:  82% (4009/4889)        remote: Counting objects:  83% (4058/4889)        remote: Counting objects:  84% (4107/4889)        remote: Counting objects:  85% (4156/4889)        remote: Counting objects:  86% (4205/4889)        remote: Counting objects:  87% (4254/4889)        remote: Counting objects:  88% (4303/4889)        remote: Counting objects:  89% (4352/4889)        remote: Counting objects:  90% (4401/4889)        remote: Counting objects:  91% (4449/4889)        remote: Counting objects:  92% (4498/4889)        remote: Counting objects:  93% (4547/4889)        remote: Counting objects:  94% (4596/4889)        remote: Counting objects:  95% (4645/4889)        remote: Counting objects:  96% (4694/4889)        remote: Counting objects:  97% (4743/4889)        remote: Counting objects:  98% (4792/4889)        remote: Counting objects:  99% (4841/4889)        remote: Counting objects: 100% (4889/4889)        remote: Counting objects: 100% (4889/4889), done.        
+remote: Compressing objects:   0% (1/3045)        remote: Compressing objects:   1% (31/3045)        remote: Compressing objects:   2% (61/3045)        remote: Compressing objects:   3% (92/3045)        remote: Compressing objects:   4% (122/3045)        remote: Compressing objects:   5% (153/3045)        remote: Compressing objects:   6% (183/3045)        remote: Compressing objects:   7% (214/3045)        remote: Compressing objects:   8% (244/3045)        remote: Compressing objects:   9% (275/3045)        remote: Compressing objects:  10% (305/3045)        remote: Compressing objects:  11% (335/3045)        remote: Compressing objects:  12% (366/3045)        remote: Compressing objects:  13% (396/3045)        remote: Compressing objects:  14% (427/3045)        remote: Compressing objects:  15% (457/3045)        remote: Compressing objects:  16% (488/3045)        remote: Compressing objects:  17% (518/3045)        remote: Compressing objects:  18% (549/3045)        remote: Compressing objects:  19% (579/3045)        remote: Compressing objects:  20% (609/3045)        remote: Compressing objects:  21% (640/3045)        remote: Compressing objects:  22% (670/3045)        remote: Compressing objects:  23% (701/3045)        remote: Compressing objects:  24% (731/3045)        remote: Compressing objects:  25% (762/3045)        remote: Compressing objects:  26% (792/3045)        remote: Compressing objects:  27% (823/3045)        remote: Compressing objects:  28% (853/3045)        remote: Compressing objects:  29% (884/3045)        remote: Compressing objects:  30% (914/3045)        remote: Compressing objects:  31% (944/3045)        remote: Compressing objects:  32% (975/3045)        remote: Compressing objects:  33% (1005/3045)        remote: Compressing objects:  34% (1036/3045)        remote: Compressing objects:  35% (1066/3045)        remote: Compressing objects:  36% (1097/3045)        remote: Compressing objects:  37% (1127/3045)        remote: Compressing objects:  38% (1158/3045)        remote: Compressing objects:  39% (1188/3045)        remote: Compressing objects:  40% (1218/3045)        remote: Compressing objects:  41% (1249/3045)        remote: Compressing objects:  42% (1279/3045)        remote: Compressing objects:  43% (1310/3045)        remote: Compressing objects:  44% (1340/3045)        remote: Compressing objects:  45% (1371/3045)        remote: Compressing objects:  46% (1401/3045)        remote: Compressing objects:  47% (1432/3045)        remote: Compressing objects:  48% (1462/3045)        remote: Compressing objects:  49% (1493/3045)        remote: Compressing objects:  50% (1523/3045)        remote: Compressing objects:  51% (1553/3045)        remote: Compressing objects:  52% (1584/3045)        remote: Compressing objects:  53% (1614/3045)        remote: Compressing objects:  54% (1645/3045)        remote: Compressing objects:  55% (1675/3045)        remote: Compressing objects:  56% (1706/3045)        remote: Compressing objects:  57% (1736/3045)        remote: Compressing objects:  58% (1767/3045)        remote: Compressing objects:  59% (1797/3045)        remote: Compressing objects:  60% (1827/3045)        remote: Compressing objects:  61% (1858/3045)        remote: Compressing objects:  62% (1888/3045)        remote: Compressing objects:  63% (1919/3045)        remote: Compressing objects:  64% (1949/3045)        remote: Compressing objects:  65% (1980/3045)        remote: Compressing objects:  66% (2010/3045)        remote: Compressing objects:  67% (2041/3045)        remote: Compressing objects:  68% (2071/3045)        remote: Compressing objects:  69% (2102/3045)        remote: Compressing objects:  70% (2132/3045)        remote: Compressing objects:  71% (2162/3045)        remote: Compressing objects:  72% (2193/3045)        remote: Compressing objects:  73% (2223/3045)        remote: Compressing objects:  74% (2254/3045)        remote: Compressing objects:  75% (2284/3045)        remote: Compressing objects:  76% (2315/3045)        remote: Compressing objects:  77% (2345/3045)        remote: Compressing objects:  78% (2376/3045)        remote: Compressing objects:  79% (2406/3045)        remote: Compressing objects:  80% (2436/3045)        remote: Compressing objects:  81% (2467/3045)        remote: Compressing objects:  82% (2497/3045)        remote: Compressing objects:  83% (2528/3045)        remote: Compressing objects:  84% (2558/3045)        remote: Compressing objects:  85% (2589/3045)        remote: Compressing objects:  86% (2619/3045)        remote: Compressing objects:  87% (2650/3045)        remote: Compressing objects:  88% (2680/3045)        remote: Compressing objects:  89% (2711/3045)        remote: Compressing objects:  90% (2741/3045)        remote: Compressing objects:  91% (2771/3045)        remote: Compressing objects:  92% (2802/3045)        remote: Compressing objects:  93% (2832/3045)        remote: Compressing objects:  94% (2863/3045)        remote: Compressing objects:  95% (2893/3045)        remote: Compressing objects:  96% (2924/3045)        remote: Compressing objects:  97% (2954/3045)        remote: Compressing objects:  98% (2985/3045)        remote: Compressing objects:  99% (3015/3045)        remote: Compressing objects: 100% (3045/3045)        remote: Compressing objects: 100% (3045/3045), done.        
+Receiving objects:   0% (1/4889)Receiving objects:   1% (49/4889)Receiving objects:   2% (98/4889)Receiving objects:   3% (147/4889)Receiving objects:   4% (196/4889)Receiving objects:   5% (245/4889)Receiving objects:   6% (294/4889)Receiving objects:   7% (343/4889)Receiving objects:   8% (392/4889)Receiving objects:   9% (441/4889)Receiving objects:  10% (489/4889)Receiving objects:  11% (538/4889)Receiving objects:  12% (587/4889)Receiving objects:  13% (636/4889)Receiving objects:  14% (685/4889)Receiving objects:  15% (734/4889)Receiving objects:  16% (783/4889)Receiving objects:  17% (832/4889)Receiving objects:  18% (881/4889)Receiving objects:  19% (929/4889)Receiving objects:  20% (978/4889)Receiving objects:  21% (1027/4889)Receiving objects:  22% (1076/4889)Receiving objects:  23% (1125/4889)Receiving objects:  24% (1174/4889)Receiving objects:  25% (1223/4889)Receiving objects:  26% (1272/4889)Receiving objects:  27% (1321/4889)Receiving objects:  28% (1369/4889)Receiving objects:  29% (1418/4889)Receiving objects:  30% (1467/4889)Receiving objects:  31% (1516/4889)Receiving objects:  32% (1565/4889)Receiving objects:  33% (1614/4889)Receiving objects:  34% (1663/4889)Receiving objects:  35% (1712/4889)Receiving objects:  36% (1761/4889)Receiving objects:  37% (1809/4889)Receiving objects:  38% (1858/4889)Receiving objects:  39% (1907/4889)Receiving objects:  40% (1956/4889)Receiving objects:  41% (2005/4889)Receiving objects:  42% (2054/4889)Receiving objects:  43% (2103/4889)Receiving objects:  44% (2152/4889)Receiving objects:  45% (2201/4889)Receiving objects:  46% (2249/4889)Receiving objects:  47% (2298/4889)Receiving objects:  48% (2347/4889)Receiving objects:  49% (2396/4889)Receiving objects:  50% (2445/4889)Receiving objects:  51% (2494/4889)Receiving objects:  52% (2543/4889)Receiving objects:  53% (2592/4889)Receiving objects:  54% (2641/4889)Receiving objects:  55% (2689/4889)Receiving objects:  56% (2738/4889)Receiving objects:  57% (2787/4889)Receiving objects:  58% (2836/4889)Receiving objects:  59% (2885/4889)Receiving objects:  60% (2934/4889)Receiving objects:  61% (2983/4889)Receiving objects:  62% (3032/4889)Receiving objects:  63% (3081/4889)Receiving objects:  64% (3129/4889)Receiving objects:  65% (3178/4889)Receiving objects:  66% (3227/4889)Receiving objects:  67% (3276/4889)Receiving objects:  68% (3325/4889)Receiving objects:  69% (3374/4889)Receiving objects:  70% (3423/4889)Receiving objects:  71% (3472/4889)Receiving objects:  72% (3521/4889)Receiving objects:  73% (3569/4889)Receiving objects:  74% (3618/4889)Receiving objects:  75% (3667/4889)Receiving objects:  76% (3716/4889)Receiving objects:  77% (3765/4889)Receiving objects:  78% (3814/4889)Receiving objects:  79% (3863/4889)Receiving objects:  80% (3912/4889)Receiving objects:  81% (3961/4889)Receiving objects:  82% (4009/4889)Receiving objects:  83% (4058/4889)Receiving objects:  84% (4107/4889)Receiving objects:  85% (4156/4889)Receiving objects:  86% (4205/4889)Receiving objects:  87% (4254/4889)Receiving objects:  88% (4303/4889)Receiving objects:  89% (4352/4889)Receiving objects:  90% (4401/4889)Receiving objects:  91% (4449/4889)Receiving objects:  92% (4498/4889)Receiving objects:  93% (4547/4889)Receiving objects:  94% (4596/4889)Receiving objects:  95% (4645/4889)Receiving objects:  96% (4694/4889)Receiving objects:  97% (4743/4889)Receiving objects:  98% (4792/4889)Receiving objects:  99% (4841/4889)remote: Total 4889 (delta 3535), reused 2668 (delta 1672), pack-reused 0 (from 0)        
+Receiving objects: 100% (4889/4889)Receiving objects: 100% (4889/4889), 3.35 MiB | 21.45 MiB/s, done.
+Resolving deltas:   0% (0/3535)Resolving deltas:   1% (36/3535)Resolving deltas:   2% (71/3535)Resolving deltas:   3% (107/3535)Resolving deltas:   4% (142/3535)Resolving deltas:   5% (177/3535)Resolving deltas:   6% (213/3535)Resolving deltas:   7% (248/3535)Resolving deltas:   8% (283/3535)Resolving deltas:   9% (319/3535)Resolving deltas:  10% (354/3535)Resolving deltas:  11% (389/3535)Resolving deltas:  12% (426/3535)Resolving deltas:  13% (462/3535)Resolving deltas:  14% (495/3535)Resolving deltas:  15% (531/3535)Resolving deltas:  16% (569/3535)Resolving deltas:  17% (602/3535)Resolving deltas:  18% (637/3535)Resolving deltas:  19% (672/3535)Resolving deltas:  20% (707/3535)Resolving deltas:  21% (743/3535)Resolving deltas:  22% (778/3535)Resolving deltas:  23% (815/3535)Resolving deltas:  24% (849/3535)Resolving deltas:  25% (884/3535)Resolving deltas:  26% (920/3535)Resolving deltas:  27% (960/3535)Resolving deltas:  28% (990/3535)Resolving deltas:  29% (1026/3535)Resolving deltas:  30% (1061/3535)Resolving deltas:  31% (1098/3535)Resolving deltas:  32% (1133/3535)Resolving deltas:  33% (1168/3535)Resolving deltas:  34% (1202/3535)Resolving deltas:  35% (1238/3535)Resolving deltas:  36% (1274/3535)Resolving deltas:  37% (1308/3535)Resolving deltas:  38% (1344/3535)Resolving deltas:  39% (1380/3535)Resolving deltas:  40% (1414/3535)Resolving deltas:  41% (1450/3535)Resolving deltas:  42% (1486/3535)Resolving deltas:  43% (1521/3535)Resolving deltas:  44% (1557/3535)Resolving deltas:  45% (1591/3535)Resolving deltas:  46% (1628/3535)Resolving deltas:  47% (1662/3535)Resolving deltas:  48% (1700/3535)Resolving deltas:  49% (1733/3535)Resolving deltas:  50% (1768/3535)Resolving deltas:  51% (1805/3535)Resolving deltas:  52% (1839/3535)Resolving deltas:  53% (1874/3535)Resolving deltas:  54% (1909/3535)Resolving deltas:  55% (1945/3535)Resolving deltas:  56% (1981/3535)Resolving deltas:  57% (2017/3535)Resolving deltas:  58% (2052/3535)Resolving deltas:  59% (2088/3535)Resolving deltas:  60% (2121/3535)Resolving deltas:  61% (2157/3535)Resolving deltas:  62% (2192/3535)Resolving deltas:  63% (2228/3535)Resolving deltas:  64% (2263/3535)Resolving deltas:  65% (2298/3535)Resolving deltas:  66% (2334/3535)Resolving deltas:  67% (2369/3535)Resolving deltas:  68% (2404/3535)Resolving deltas:  69% (2440/3535)Resolving deltas:  70% (2475/3535)Resolving deltas:  71% (2510/3535)Resolving deltas:  72% (2554/3535)Resolving deltas:  73% (2581/3535)Resolving deltas:  74% (2619/3535)Resolving deltas:  75% (2653/3535)Resolving deltas:  76% (2687/3535)Resolving deltas:  77% (2722/3535)Resolving deltas:  78% (2758/3535)Resolving deltas:  79% (2795/3535)Resolving deltas:  80% (2830/3535)Resolving deltas:  81% (2864/3535)Resolving deltas:  82% (2899/3535)Resolving deltas:  83% (2940/3535)Resolving deltas:  84% (2970/3535)Resolving deltas:  85% (3005/3535)Resolving deltas:  86% (3042/3535)Resolving deltas:  87% (3076/3535)Resolving deltas:  88% (3114/3535)Resolving deltas:  89% (3147/3535)Resolving deltas:  90% (3183/3535)Resolving deltas:  91% (3217/3535)Resolving deltas:  92% (3254/3535)Resolving deltas:  93% (3288/3535)Resolving deltas:  94% (3323/3535)Resolving deltas:  95% (3359/3535)Resolving deltas:  96% (3394/3535)Resolving deltas:  97% (3430/3535)Resolving deltas:  98% (3465/3535)Resolving deltas:  99% (3500/3535)Resolving deltas: 100% (3535/3535)Resolving deltas: 100% (3535/3535), done.
+HEAD is now at 3e9dfa2 docs: a few missed changes for 2.12 (#5074)
+[ 33%] Performing disconnected update step for 'pybind11-populate'
+[ 44%] No patch_disconnected step for 'pybind11-populate'
+[ 55%] No configure step for 'pybind11-populate'
+[ 66%] No build step for 'pybind11-populate'
+[ 77%] No install step for 'pybind11-populate'
+[ 88%] No test step for 'pybind11-populate'
+[100%] Completed 'pybind11-populate'
+[100%] Built target pybind11-populate
+-- pybind11 v2.12.0 
+-- Found PythonInterp: /local/data/public/skcb2/DeepQMC/venv-deepqmc/bin/python (found suitable version "3.10.19", minimum required is "3.10.19") 
+-- Found PythonLibs: /local/data/public/skcb2/pyenv/versions/3.10.19/lib/libpython3.10.so
+-- Configuring done (24.2s)
+-- Generating done (0.2s)
+-- Build files have been written to: /local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E700_mpi_propagate/build
+==> Building run...
+[  0%] Building Fortran object inq/external_libs/libpaw_interface/CMakeFiles/paw_defs.dir/m_libpaw_defs.F90.o
+[  1%] Building CXX object _deps/spdlog-build/CMakeFiles/spdlog.dir/src/spdlog.cpp.o
+[  2%] Building C object _deps/spglib-build/CMakeFiles/symspg_static.dir/src/determination.o
+[  2%] Building C object inq/external_libs/libpaw_interface/CMakeFiles/paw_libxc_c.dir/libpaw_libxc.c.o
+[  2%] Building C object _deps/spglib-build/CMakeFiles/symspg_static.dir/src/hall_symbol.o
+[  2%] Building C object _deps/spglib-build/CMakeFiles/symspg_static.dir/src/delaunay.o
+[  2%] Building CXX object _deps/spdlog-build/CMakeFiles/spdlog.dir/src/stdout_sinks.cpp.o
+[  2%] Building C object _deps/spglib-build/CMakeFiles/symspg_static.dir/src/debug.o
+[  2%] Building CXX object _deps/spdlog-build/CMakeFiles/spdlog.dir/src/cfg.cpp.o
+[  2%] Building C object _deps/spglib-build/CMakeFiles/symspg_static.dir/src/cell.o
+[  2%] Building C object _deps/spglib-build/CMakeFiles/symspg_static.dir/src/arithmetic.o
+[  2%] Building C object _deps/spglib-build/CMakeFiles/symspg_static.dir/src/primitive.o
+[  2%] Building C object _deps/spglib-build/CMakeFiles/symspg_static.dir/src/pointgroup.o
+[  2%] Building C object _deps/spglib-build/CMakeFiles/symspg_static.dir/src/kgrid.o
+[  2%] Building C object _deps/spglib-build/CMakeFiles/symspg_static.dir/src/niggli.o
+[  2%] Building CXX object _deps/spdlog-build/CMakeFiles/spdlog.dir/src/color_sinks.cpp.o
+[  2%] Building C object _deps/spglib-build/CMakeFiles/symspg_static.dir/src/kpoint.o
+[  2%] Building CXX object _deps/spdlog-build/CMakeFiles/spdlog.dir/src/async.cpp.o
+[  2%] Building CXX object _deps/spdlog-build/CMakeFiles/spdlog.dir/src/file_sinks.cpp.o
+[  2%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/benchmark/detail/catch_run_for_at_least.cpp.o
+[  2%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/benchmark/detail/catch_benchmark_function.cpp.o
+[  2%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/benchmark/detail/catch_stats.cpp.o
+[  2%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/benchmark/catch_chronometer.cpp.o
+[  3%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/generators/catch_generator_exception.cpp.o
+[  3%] Building C object _deps/spglib-build/CMakeFiles/symspg_static.dir/src/mathfunc.o
+[  3%] Building C object _deps/spglib-build/CMakeFiles/symspg_static.dir/src/overlap.o
+[  4%] Building CXX object _deps/spdlog-build/CMakeFiles/spdlog.dir/src/bundled_fmtlib_format.cpp.o
+[  4%] Building C object _deps/spglib-build/CMakeFiles/symspg_static.dir/src/site_symmetry.o
+[  4%] Building C object _deps/spglib-build/CMakeFiles/symspg_static.dir/src/spacegroup.o
+[  4%] Building C object _deps/spglib-build/CMakeFiles/symspg_static.dir/src/sitesym_database.o
+[  4%] Building C object _deps/spglib-build/CMakeFiles/symspg_static.dir/src/refinement.o
+[  4%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_cumulative_base.cpp.o
+[  4%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_automake.cpp.o
+[  5%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_compact.cpp.o
+[  5%] Building C object _deps/spglib-build/CMakeFiles/symspg_static.dir/src/spin.o
+[  5%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/generators/catch_generators_random.cpp.o
+[  5%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_common_base.cpp.o
+[  5%] Building C object _deps/spglib-build/CMakeFiles/symspg_static.dir/src/spglib.o
+[  7%] Building C object _deps/spglib-build/CMakeFiles/symspg_static.dir/src/spg_database.o
+[  7%] Building C object _deps/spglib-build/CMakeFiles/symspg_static.dir/src/symmetry.o
+[  7%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/generators/catch_generators.cpp.o
+[  8%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_event_listener.cpp.o
+[  8%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_console.cpp.o
+[  8%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_junit.cpp.o
+[  8%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_registrars.cpp.o
+[  8%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_sonarqube.cpp.o
+[  8%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_helpers.cpp.o
+[  8%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_multi.cpp.o
+[  8%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_streaming_base.cpp.o
+[  8%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_teamcity.cpp.o
+[  9%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_tap.cpp.o
+[  9%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_xml.cpp.o
+[  9%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/interfaces/catch_interfaces_capture.cpp.o
+[  9%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/interfaces/catch_interfaces_config.cpp.o
+[ 10%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/interfaces/catch_interfaces_exception.cpp.o
+[ 10%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/interfaces/catch_interfaces_generatortracker.cpp.o
+[ 10%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/interfaces/catch_interfaces_reporter.cpp.o
+[ 10%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/interfaces/catch_interfaces_registry_hub.cpp.o
+[ 10%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/interfaces/catch_interfaces_reporter_factory.cpp.o
+[ 10%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/interfaces/catch_interfaces_testcase.cpp.o
+[ 10%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/interfaces/catch_interfaces_reporter_registry.cpp.o
+[ 11%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_approx.cpp.o
+[ 11%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_assertion_result.cpp.o
+[ 11%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/bessel.c.o
+[ 12%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/expint_e1.c.o
+/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E700_mpi_propagate/build/_deps/spglib-src/src/kpoint.c: In function ‘get_dense_ir_reciprocal_mesh_normal’:
+/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E700_mpi_propagate/build/_deps/spglib-src/src/kpoint.c:651: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+  651 | #pragma omp parallel for private(j, grid_point_rot, address_double, address_double_rot)
+      | 
+/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E700_mpi_propagate/build/_deps/spglib-src/src/kpoint.c: In function ‘get_dense_ir_reciprocal_mesh_distortion’:
+/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E700_mpi_propagate/build/_deps/spglib-src/src/kpoint.c:698: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+  698 | #pragma omp parallel for private(j, k, grid_point_rot, address_double, address_double_rot, long_address_double, long_address_double_rot)
+      | 
+/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E700_mpi_propagate/build/_deps/spglib-src/src/kpoint.c: In function ‘get_dense_num_ir’:
+/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E700_mpi_propagate/build/_deps/spglib-src/src/kpoint.c:751: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+  751 | #pragma omp parallel for reduction(+:num_ir)
+      | 
+[ 12%] Built target paw_libxc_c
+[ 12%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/faddeeva.c.o
+[ 12%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_config.cpp.o
+[ 12%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/func_info.c.o
+[ 12%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/func_reference.c.o
+[ 12%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/functionals.c.o
+[ 12%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_get_random_seed.cpp.o
+In function ‘get_operations’,
+    inlined from ‘spn_get_operations_with_site_tensors’ at /local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E700_mpi_propagate/build/_deps/spglib-src/src/spin.c:92:19:
+/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E700_mpi_propagate/build/_deps/spglib-src/src/spin.c:207:8: warning: ‘is_found’ may be used uninitialized [-Wmaybe-uninitialized]
+  207 |     if (is_found) {
+      |        ^
+/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E700_mpi_propagate/build/_deps/spglib-src/src/spin.c: In function ‘spn_get_operations_with_site_tensors’:
+/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E700_mpi_propagate/build/_deps/spglib-src/src/spin.c:158:31: note: ‘is_found’ was declared here
+  158 |   int i, j, k, sign, num_sym, is_found;
+      |                               ^~~~~~~~
+In function ‘set_dataset’,
+    inlined from ‘get_dataset’ at /local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E700_mpi_propagate/build/_deps/spglib-src/src/spglib.c:1245:9:
+[ 12%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_message.cpp.o
+/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E700_mpi_propagate/build/_deps/spglib-src/src/spglib.c:1452:3: warning: ‘mat_copy_matrix_d3’ accessing 72 bytes in a region of size 24 [-Wstringop-overflow=]
+ 1452 |   mat_copy_matrix_d3(dataset->std_rotation_matrix, exstr->rotation);
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E700_mpi_propagate/build/_deps/spglib-src/src/spglib.c:1452:3: note: referencing argument 1 of type ‘double[3][3]’
+/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E700_mpi_propagate/build/_deps/spglib-src/src/spglib.c:1452:3: note: referencing argument 2 of type ‘double[3][3]’
+In file included from /local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E700_mpi_propagate/build/_deps/spglib-src/src/cell.h:38,
+                 from /local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E700_mpi_propagate/build/_deps/spglib-src/src/spglib.c:40:
+/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E700_mpi_propagate/build/_deps/spglib-src/src/mathfunc.h: In function ‘get_dataset’:
+/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E700_mpi_propagate/build/_deps/spglib-src/src/mathfunc.h:55:6: note: in a call to function ‘mat_copy_matrix_d3’
+   55 | void mat_copy_matrix_d3(double a[3][3], SPGCONST double b[3][3]);
+      |      ^~~~~~~~~~~~~~~~~~
+[ 12%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga.c.o
+[ 12%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hybrids.c.o
+[ 12%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_registry_hub.cpp.o
+[ 12%] Built target paw_defs
+[ 14%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_acgga.c.o
+[ 14%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_acggap.c.o
+[ 14%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_session.cpp.o
+[ 15%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_am05.c.o
+[ 15%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_tag_alias_autoregistrar.cpp.o
+[ 15%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_test_case_info.cpp.o
+[ 15%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_test_spec.cpp.o
+[ 15%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_bmk.c.o
+[ 15%] Building Fortran object inq/external_libs/libpaw_interface/CMakeFiles/paw_mpi.dir/m_libpaw_mpi.F90.o
+[ 15%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_chachiyo.c.o
+[ 15%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_timer.cpp.o
+[ 15%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_tostring.cpp.o
+[ 15%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_cs1.c.o
+[ 16%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_ft97.c.o
+[ 16%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_totals.cpp.o
+[ 17%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_version.cpp.o
+[ 17%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_assertion_handler.cpp.o
+[ 17%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_case_insensitive_comparisons.cpp.o
+[ 17%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_clara.cpp.o
+[ 17%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_gapc.c.o
+[ 17%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_gaploc.c.o
+[ 17%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_hcth_a.c.o
+[ 17%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_lm.c.o
+[ 17%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_commandline.cpp.o
+[ 17%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_lyp.c.o
+[ 18%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_lypr.c.o
+[ 18%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_console_colour.cpp.o
+[ 18%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_op_b88.c.o
+[ 18%] Linking C static library libsymspg.a
+[ 18%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_debug_console.cpp.o
+[ 20%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_context.cpp.o
+/usr/bin/ar qc libsymspg.a CMakeFiles/symspg_static.dir/src/arithmetic.o CMakeFiles/symspg_static.dir/src/cell.o CMakeFiles/symspg_static.dir/src/debug.o CMakeFiles/symspg_static.dir/src/delaunay.o CMakeFiles/symspg_static.dir/src/determination.o CMakeFiles/symspg_static.dir/src/hall_symbol.o CMakeFiles/symspg_static.dir/src/kgrid.o CMakeFiles/symspg_static.dir/src/kpoint.o CMakeFiles/symspg_static.dir/src/mathfunc.o CMakeFiles/symspg_static.dir/src/niggli.o CMakeFiles/symspg_static.dir/src/overlap.o CMakeFiles/symspg_static.dir/src/pointgroup.o CMakeFiles/symspg_static.dir/src/primitive.o CMakeFiles/symspg_static.dir/src/refinement.o CMakeFiles/symspg_static.dir/src/site_symmetry.o CMakeFiles/symspg_static.dir/src/sitesym_database.o CMakeFiles/symspg_static.dir/src/spacegroup.o CMakeFiles/symspg_static.dir/src/spg_database.o CMakeFiles/symspg_static.dir/src/spglib.o CMakeFiles/symspg_static.dir/src/spin.o CMakeFiles/symspg_static.dir/src/symmetry.o
+[ 20%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_debugger.cpp.o
+[ 20%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_op_g96.c.o
+[ 20%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_decomposer.cpp.o
+/usr/bin/ranlib libsymspg.a
+[ 20%] Built target symspg_static
+[ 20%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_enforce.cpp.o
+[ 20%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_op_pbe.c.o
+[ 20%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_enum_values_registry.cpp.o
+[ 20%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_errno_guard.cpp.o
+[ 21%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_op_pw91.c.o
+[ 21%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_exception_translator_registry.cpp.o
+[ 21%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_op_xalpha.c.o
+[ 21%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_optc.c.o
+[ 21%] Built target paw_mpi
+[ 21%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_fatal_condition_handler.cpp.o
+[ 21%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_floating_point_helpers.cpp.o
+[ 22%] Building Fortran object inq/external_libs/libpaw_interface/CMakeFiles/paw_tools.dir/m_libpaw_tools.F90.o
+[ 23%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_p86.c.o
+[ 23%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_getenv.cpp.o
+[ 23%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_p86vwn.c.o
+[ 23%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_pbe.c.o
+[ 23%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_istream.cpp.o
+[ 23%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_pbe_vwn.c.o
+[ 23%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_pbeloc.c.o
+[ 23%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_pbe_erf_gws.c.o
+[ 24%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_pw91.c.o
+[ 24%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_q2d.c.o
+[ 24%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_lazy_expr.cpp.o
+[ 24%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_regtpss.c.o
+[ 25%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_leak_detector.cpp.o
+[ 25%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_list.cpp.o
+[ 25%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_revtca.c.o
+[ 25%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_message_info.cpp.o
+[ 25%] Built target paw_tools
+[ 25%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_scan_e0.c.o
+[ 25%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_output_redirect.cpp.o
+[ 25%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_parse_numbers.cpp.o
+[ 25%] Building Fortran object inq/external_libs/libpaw_interface/CMakeFiles/paw_libxc.dir/m_libpaw_libxc.F90.o
+[ 25%] Building Fortran object inq/external_libs/libpaw_interface/CMakeFiles/paw_level1.dir/m_paral_atom.F90.o
+[ 25%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_polyfills.cpp.o
+[ 25%] Building Fortran object inq/external_libs/libpaw_interface/CMakeFiles/paw_level1.dir/m_paw_io.F90.o
+[ 25%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_sg4.c.o
+[ 25%] Building Fortran object inq/external_libs/libpaw_interface/CMakeFiles/paw_level1.dir/m_paw_numeric.F90.o
+[ 25%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_sogga11.c.o
+[ 25%] Building Fortran object inq/external_libs/libpaw_interface/abi_xc_lowlevel/CMakeFiles/xc_basic.dir/xc_invcb.F90.o
+[ 27%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_random_number_generator.cpp.o
+[ 27%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_random_seed_generation.cpp.o
+[ 27%] Building Fortran object inq/external_libs/libpaw_interface/abi_add/CMakeFiles/fft_level1.dir/defs_fftdata.F90.o
+[ 27%] Building Fortran object inq/external_libs/libpaw_interface/abi_add/CMakeFiles/fft_level1.dir/m_cgtools.F90.o
+[ 27%] Building Fortran object inq/external_libs/libpaw_interface/abi_xc_lowlevel/CMakeFiles/xc_basic.dir/xc_m_libxc_functionals.F90.o
+[ 28%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_tca.c.o
+[ 28%] Building Fortran object inq/external_libs/libpaw_interface/CMakeFiles/paw_level1.dir/m_paw_sphharm.F90.o
+[ 29%] Building Fortran object inq/external_libs/libpaw_interface/abi_add/CMakeFiles/fft_level1.dir/m_fft.F90.o
+[ 29%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_w94.c.o
+[ 29%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_wi.c.o
+[ 30%] Building Fortran object inq/external_libs/libpaw_interface/CMakeFiles/paw_level1.dir/m_pawtab.F90.o
+[ 30%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_wl.c.o
+[ 30%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_zpbeint.c.o
+[ 30%] Building Fortran object inq/external_libs/libpaw_interface/abi_add/CMakeFiles/fft_level1.dir/m_fftcore.F90.o
+[ 30%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_reporter_registry.cpp.o
+[ 30%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_reporter_spec_parser.cpp.o
+[ 30%] Building Fortran object inq/external_libs/libpaw_interface/abi_xc_lowlevel/CMakeFiles/xc_basic.dir/xc_m_xc_noncoll.F90.o
+[ 30%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_zvpbeint.c.o
+[ 30%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_result_type.cpp.o
+[ 31%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_zvpbeloc.c.o
+[ 31%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_k_dk.c.o
+[ 32%] Building Fortran object inq/external_libs/libpaw_interface/abi_xc_lowlevel/CMakeFiles/xc_basic.dir/xc_m_xciit.F90.o
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/maple2c/gga_exc/gga_c_op_xalpha.c(188): warning #550-D: variable "t124" was set but never used
+    double t112, t113, t119, t124, t125, t133, t134, t142;
+                             ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/maple2c/gga_exc/gga_c_op_xalpha.c(188): warning #550-D: variable "t134" was set but never used
+    double t112, t113, t119, t124, t125, t133, t134, t142;
+                                               ^
+
+[ 32%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_k_pg.c.o
+[ 32%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_reusable_string_stream.cpp.o
+[ 32%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_run_context.cpp.o
+[ 32%] Building C object inq/external_libs/libpaw_interface/abi_xc_lowlevel/CMakeFiles/xc_basic.dir/xc_libxc_tools.c.o
+[ 32%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_k_rational_p.c.o
+[ 34%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_section.cpp.o
+[ 34%] Built target paw_libxc
+[ 34%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_k_meyer.c.o
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/maple2c/gga_exc/gga_c_p86vwn.c(26): warning #550-D: variable "t60" was set but never used
+    double t47, t49, t53, t54, t56, t59, t60, t65;
+                                         ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/maple2c/gga_exc/gga_c_p86vwn.c(131): warning #550-D: variable "t60" was set but never used
+    double t47, t49, t53, t54, t56, t59, t60, t65;
+                                         ^
+
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/maple2c/gga_exc/gga_c_p86vwn.c(338): warning #550-D: variable "t60" was set but never used
+    double t47, t49, t53, t54, t56, t59, t60, t65;
+                                         ^
+
+[ 34%] Building Fortran object inq/external_libs/libpaw_interface/abi_xc_lowlevel/CMakeFiles/xc_basic.dir/xc_m_xchcth.F90.o
+[ 34%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_k_ol1.c.o
+[ 34%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_singletons.cpp.o
+[ 34%] Building Fortran object inq/external_libs/libpaw_interface/abi_xc_lowlevel/CMakeFiles/xc_basic.dir/xc_m_xclda.F90.o
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/maple2c/gga_exc/gga_c_pbe_vwn.c(26): warning #550-D: variable "t60" was set but never used
+    double t47, t49, t53, t54, t56, t59, t60, t65;
+                                         ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/maple2c/gga_exc/gga_c_pbe_vwn.c(141): warning #550-D: variable "t60" was set but never used
+    double t47, t49, t53, t54, t56, t59, t60, t65;
+                                         ^
+
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/maple2c/gga_exc/gga_c_pbe_vwn.c(378): warning #550-D: variable "t60" was set but never used
+    double t47, t49, t53, t54, t56, t59, t60, t65;
+                                         ^
+
+[ 35%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_k_ol2.c.o
+[ 35%] Built target fft_level1
+[ 35%] Building Fortran object inq/external_libs/libpaw_interface/abi_xc_lowlevel/CMakeFiles/xc_basic.dir/xc_m_xcpbe.F90.o
+[ 35%] Building Fortran object inq/external_libs/libpaw_interface/abi_xc_lowlevel/CMakeFiles/xc_basic.dir/xc_m_xcpositron.F90.o
+[ 35%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_ol2.c.o
+[ 35%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_k_pearson.c.o
+[ 35%] Building Fortran object inq/external_libs/libpaw_interface/abi_add/CMakeFiles/fft_level2.dir/m_kg.F90.o
+[ 35%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_k_tflw.c.o
+[ 35%] Building Fortran object inq/external_libs/libpaw_interface/abi_add/CMakeFiles/fft_level2.dir/m_sg2002.F90.o
+[ 35%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_k_thakkar.c.o
+[ 35%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_source_line_info.cpp.o
+[ 35%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_startup_exception_registry.cpp.o
+[ 35%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_k_gds08.c.o
+[ 35%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_stdstreams.cpp.o
+[ 35%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_k_exp4.c.o
+[ 35%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_string_manip.cpp.o
+[ 36%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_2d_b86.c.o
+[ 37%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_stringref.cpp.o
+[ 37%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_tag_alias_registry.cpp.o
+[ 37%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_test_case_info_hasher.cpp.o
+[ 37%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_test_case_registry_impl.cpp.o
+[ 37%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_2d_b86_mgc.c.o
+[ 37%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_2d_b88.c.o
+[ 37%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_2d_pbe.c.o
+[ 37%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_test_case_tracker.cpp.o
+[ 37%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_airy.c.o
+[ 37%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_ak13.c.o
+[ 37%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_test_failure_exception.cpp.o
+[ 38%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_test_registry.cpp.o
+[ 38%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_test_spec_parser.cpp.o
+[ 40%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_am05.c.o
+[ 40%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_textflow.cpp.o
+[ 40%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_b86.c.o
+[ 40%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_uncaught_exceptions.cpp.o
+[ 40%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_wildcard_pattern.cpp.o
+[ 40%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_xmlwriter.cpp.o
+[ 40%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/matchers/catch_matchers.cpp.o
+[ 41%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/matchers/catch_matchers_container_properties.cpp.o
+[ 41%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/matchers/catch_matchers_exception.cpp.o
+[ 41%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/matchers/catch_matchers_floating_point.cpp.o
+[ 41%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/matchers/catch_matchers_predicate.cpp.o
+[ 41%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/matchers/catch_matchers_quantifiers.cpp.o
+[ 41%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_b88.c.o
+[ 41%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/matchers/catch_matchers_string.cpp.o
+[ 42%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/matchers/catch_matchers_templated.cpp.o
+[ 42%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_k_llp.c.o
+[ 42%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/matchers/internal/catch_matchers_impl.cpp.o
+[ 42%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_k_pw86.c.o
+[ 42%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_k_mpbe.c.o
+[ 43%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_k_apbe.c.o
+[ 43%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_k_apbeint.c.o
+[ 43%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_k_lc94.c.o
+[ 43%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_k_lkt.c.o
+[ 43%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_k_vt84f.c.o
+[ 43%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_bayesian.c.o
+[ 43%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_beefvdw.c.o
+[ 44%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_bpccac.c.o
+[ 44%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_c09x.c.o
+[ 44%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_cap.c.o
+[ 44%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_chachiyo.c.o
+[ 44%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_dk87.c.o
+[ 44%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_ev93.c.o
+[ 45%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_ft97.c.o
+[ 45%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_g96.c.o
+[ 45%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_gg99.c.o
+[ 45%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_hcth_a.c.o
+[ 45%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_hjs.c.o
+[ 45%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_hjs_b88_v2.c.o
+[ 47%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_htbs.c.o
+[ 47%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_ityh.c.o
+[ 47%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_ityh_optx.c.o
+[ 47%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_ityh_pbe.c.o
+[ 47%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_kt.c.o
+[ 47%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_lag.c.o
+[ 47%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_lb.c.o
+[ 48%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_lg93.c.o
+[ 48%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_lspbe.c.o
+[ 48%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_lsrpbe.c.o
+[ 48%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_lv_rpw86.c.o
+[ 48%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_mpbe.c.o
+[ 48%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_n12.c.o
+[ 49%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_ncap.c.o
+[ 49%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_optx.c.o
+[ 49%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_pbe.c.o
+[ 49%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_pbea.c.o
+[ 49%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_pbeint.c.o
+[ 49%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_pbepow.c.o
+[ 50%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_pbetrans.c.o
+[ 50%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_pbe_erf_gws.c.o
+[ 50%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_pw86.c.o
+[ 50%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_pw91.c.o
+[ 50%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_q1d.c.o
+[ 50%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_q2d.c.o
+[ 50%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_rge2.c.o
+[ 51%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_rpbe.c.o
+[ 51%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_s12.c.o
+[ 51%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_sfat.c.o
+[ 51%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_sfat_pbe.c.o
+[ 51%] Built target fft_level2
+[ 51%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_sg4.c.o
+[ 51%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_sogga11.c.o
+[ 52%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_ssb_sw.c.o
+[ 52%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_vmt.c.o
+[ 52%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_vmt84.c.o
+[ 52%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_wc.c.o
+[ 52%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_wpbeh.c.o
+[ 52%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_fd_lb94.c.o
+[ 54%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_x_lcgau.c.o
+[ 54%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_xc_1w.c.o
+[ 54%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_xc_b97.c.o
+[ 54%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_xc_edf1.c.o
+[ 54%] Built target xc_basic
+[ 55%] Building Fortran object inq/external_libs/libpaw_interface/abi_xc_lowlevel/CMakeFiles/xc_driver.dir/m_drivexc.F90.o
+[ 55%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_xc_oblyp_d.c.o
+[ 55%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_xc_th1.c.o
+[ 55%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_xc_th2.c.o
+[ 56%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_xc_th3.c.o
+[ 56%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_xc_vv10.c.o
+[ 56%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_k_lgap.c.o
+[ 56%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_k_lgap_ge.c.o
+[ 56%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/gga_c_ccdf.c.o
+[ 56%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_gga_xc_b1wc.c.o
+[ 57%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_gga_xc_b3lyp.c.o
+[ 57%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_gga_xc_cam_b3lyp.c.o
+[ 57%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_gga_xc_camy_b3lyp.c.o
+[ 57%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_gga_xc_camy_blyp.c.o
+[ 57%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_gga_xc_edf2.c.o
+[ 57%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_gga_xc_hse.c.o
+[ 58%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_gga_xc_lc_blyp.c.o
+[ 58%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_gga_xc_lcy_blyp.c.o
+[ 58%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_gga_xc_lcy_pbe.c.o
+[ 58%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_gga_xc_o3lyp.c.o
+[ 58%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_gga_xc_pbeh.c.o
+[ 58%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_gga_xc_wb97.c.o
+[ 58%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_lda_xc_cam_lda0.c.o
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/maple2c/gga_exc/gga_x_fd_lb94.c(28): warning #550-D: variable "params" was set but never used
+    gga_x_fd_lb94_params *params;
+                          ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/maple2c/gga_exc/gga_x_fd_lb94.c(88): warning #550-D: variable "params" was set but never used
+    gga_x_fd_lb94_params *params;
+                          ^
+
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/maple2c/gga_exc/gga_x_fd_lb94.c(810): warning #550-D: variable "params" was set but never used
+    gga_x_fd_lb94_params *params;
+                          ^
+
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/maple2c/gga_exc/gga_x_fd_lb94.c(901): warning #550-D: variable "params" was set but never used
+    gga_x_fd_lb94_params *params;
+                          ^
+
+[ 60%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_lda_xc_bn05.c.o
+[ 60%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_mgga_x_dldf.c.o
+[ 60%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_mgga_x_m05.c.o
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/gga_xc_vv10.c(73): warning #550-D: variable "alpha" was set but never used
+    double alpha, beta, omega, b, C;
+           ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+[ 60%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_mgga_x_mvsh.c.o
+[ 60%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_mgga_xc_b88b95.c.o
+[ 60%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_mgga_xc_kcis.c.o
+[ 61%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_mgga_xc_tpssh.c.o
+[ 61%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_mgga_xc_wb97mv.c.o
+[ 61%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_mgga_x_js18.c.o
+[ 61%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_mgga_x_pjs18.c.o
+[ 61%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_gga_xc_b2plyp.c.o
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/hyb_gga_xc_camy_b3lyp.c(32): warning #177-D: variable "cam_values_PBEH" was declared but never referenced
+  static const double cam_values_PBEH[3] = {0.2, 0.8, 0.7};
+                      ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+[ 61%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_gga_xc_src1_blyp.c.o
+[ 62%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_gga_xc_cam_o3lyp.c.o
+[ 62%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_gga_xc_pbe_dh.c.o
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/hyb_gga_xc_hse.c(214): warning #177-D: variable "alpha" was declared but never referenced
+    double alpha, beta, omega;
+           ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+[ 62%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_gga_x_cam_s12.c.o
+[ 62%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_gga_xc_case21.c.o
+[ 62%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_mgga_xc_gas22.c.o
+[ 62%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/integrate.c.o
+[ 62%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda.c.o
+[ 63%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_1d_csc.c.o
+[ 63%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_1d_loos.c.o
+[ 63%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_2d_amgb.c.o
+[ 63%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_2d_prm.c.o
+[ 63%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_chachiyo.c.o
+[ 63%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_chachiyo_mod.c.o
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/hyb_lda_xc_bn05.c(34): warning #550-D: variable "omega" was set but never used
+    double omega;
+           ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+[ 64%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_gombas.c.o
+[ 64%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_hl.c.o
+[ 64%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_lp96.c.o
+[ 64%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_ml1.c.o
+[ 64%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_pk09.c.o
+[ 64%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_pw.c.o
+[ 65%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_pz.c.o
+[ 65%] Built target paw_level1
+[ 65%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_rc04.c.o
+[ 65%] Building Fortran object inq/external_libs/libpaw_interface/CMakeFiles/paw_level2.dir/m_paw_finegrid.F90.o
+[ 65%] Building Fortran object inq/external_libs/libpaw_interface/abi_add/CMakeFiles/fft_level3.dir/m_atm2fft.F90.o
+[ 65%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_rpa.c.o
+[ 67%] Building Fortran object inq/external_libs/libpaw_interface/abi_add/CMakeFiles/fft_level3.dir/m_mkrho.F90.o
+[ 67%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_vwn.c.o
+[ 67%] Building Fortran object inq/external_libs/libpaw_interface/CMakeFiles/paw_level2.dir/m_paw_ij.F90.o
+[ 67%] Built target xc_driver
+[ 67%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_vwn_1.c.o
+[ 67%] Linking CXX static library libCatch2.a
+[ 67%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_vwn_2.c.o
+/usr/bin/ar qc libCatch2.a CMakeFiles/Catch2.dir/catch2/benchmark/catch_chronometer.cpp.o CMakeFiles/Catch2.dir/catch2/benchmark/detail/catch_benchmark_function.cpp.o CMakeFiles/Catch2.dir/catch2/benchmark/detail/catch_run_for_at_least.cpp.o CMakeFiles/Catch2.dir/catch2/benchmark/detail/catch_stats.cpp.o CMakeFiles/Catch2.dir/catch2/generators/catch_generator_exception.cpp.o CMakeFiles/Catch2.dir/catch2/generators/catch_generators.cpp.o CMakeFiles/Catch2.dir/catch2/generators/catch_generators_random.cpp.o CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_automake.cpp.o CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_common_base.cpp.o CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_compact.cpp.o CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_console.cpp.o CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_cumulative_base.cpp.o CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_event_listener.cpp.o CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_helpers.cpp.o CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_junit.cpp.o CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_multi.cpp.o CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_registrars.cpp.o CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_sonarqube.cpp.o CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_streaming_base.cpp.o CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_tap.cpp.o CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_teamcity.cpp.o CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_xml.cpp.o CMakeFiles/Catch2.dir/catch2/interfaces/catch_interfaces_capture.cpp.o CMakeFiles/Catch2.dir/catch2/interfaces/catch_interfaces_config.cpp.o CMakeFiles/Catch2.dir/catch2/interfaces/catch_interfaces_exception.cpp.o CMakeFiles/Catch2.dir/catch2/interfaces/catch_interfaces_generatortracker.cpp.o CMakeFiles/Catch2.dir/catch2/interfaces/catch_interfaces_registry_hub.cpp.o CMakeFiles/Catch2.dir/catch2/interfaces/catch_interfaces_reporter.cpp.o CMakeFiles/Catch2.dir/catch2/interfaces/catch_interfaces_reporter_factory.cpp.o CMakeFiles/Catch2.dir/catch2/interfaces/catch_interfaces_reporter_registry.cpp.o CMakeFiles/Catch2.dir/catch2/interfaces/catch_interfaces_testcase.cpp.o CMakeFiles/Catch2.dir/catch2/catch_approx.cpp.o CMakeFiles/Catch2.dir/catch2/catch_assertion_result.cpp.o CMakeFiles/Catch2.dir/catch2/catch_config.cpp.o CMakeFiles/Catch2.dir/catch2/catch_get_random_seed.cpp.o CMakeFiles/Catch2.dir/catch2/catch_message.cpp.o CMakeFiles/Catch2.dir/catch2/catch_registry_hub.cpp.o CMakeFiles/Catch2.dir/catch2/catch_session.cpp.o CMakeFiles/Catch2.dir/catch2/catch_tag_alias_autoregistrar.cpp.o CMakeFiles/Catch2.dir/catch2/catch_test_case_info.cpp.o CMakeFiles/Catch2.dir/catch2/catch_test_spec.cpp.o CMakeFiles/Catch2.dir/catch2/catch_timer.cpp.o CMakeFiles/Catch2.dir/catch2/catch_tostring.cpp.o CMakeFiles/Catch2.dir/catch2/catch_totals.cpp.o CMakeFiles/Catch2.dir/catch2/catch_version.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_assertion_handler.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_case_insensitive_comparisons.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_clara.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_commandline.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_console_colour.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_context.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_debug_console.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_debugger.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_decomposer.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_enforce.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_enum_values_registry.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_errno_guard.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_exception_translator_registry.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_fatal_condition_handler.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_floating_point_helpers.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_getenv.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_istream.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_lazy_expr.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_leak_detector.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_list.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_message_info.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_output_redirect.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_parse_numbers.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_polyfills.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_random_number_generator.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_random_seed_generation.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_reporter_registry.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_reporter_spec_parser.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_result_type.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_reusable_string_stream.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_run_context.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_section.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_singletons.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_source_line_info.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_startup_exception_registry.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_stdstreams.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_string_manip.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_stringref.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_tag_alias_registry.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_test_case_info_hasher.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_test_case_registry_impl.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_test_case_tracker.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_test_failure_exception.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_test_registry.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_test_spec_parser.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_textflow.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_uncaught_exceptions.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_wildcard_pattern.cpp.o CMakeFiles/Catch2.dir/catch2/internal/catch_xmlwriter.cpp.o CMakeFiles/Catch2.dir/catch2/matchers/catch_matchers.cpp.o CMakeFiles/Catch2.dir/catch2/matchers/catch_matchers_container_properties.cpp.o CMakeFiles/Catch2.dir/catch2/matchers/catch_matchers_exception.cpp.o CMakeFiles/Catch2.dir/catch2/matchers/catch_matchers_floating_point.cpp.o CMakeFiles/Catch2.dir/catch2/matchers/catch_matchers_predicate.cpp.o CMakeFiles/Catch2.dir/catch2/matchers/catch_matchers_quantifiers.cpp.o CMakeFiles/Catch2.dir/catch2/matchers/catch_matchers_string.cpp.o CMakeFiles/Catch2.dir/catch2/matchers/catch_matchers_templated.cpp.o CMakeFiles/Catch2.dir/catch2/matchers/internal/catch_matchers_impl.cpp.o
+[ 67%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_vwn_3.c.o
+[ 67%] Building Fortran object inq/external_libs/libpaw_interface/CMakeFiles/paw_level2.dir/m_pawang.F90.o
+[ 68%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_vwn_4.c.o
+/usr/bin/ranlib libCatch2.a
+[ 68%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_vwn_rpa.c.o
+[ 68%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_wigner.c.o
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/hyb_gga_x_cam_s12.c(49): warning #177-D: variable "sr_exx" was declared but never referenced
+    double sr_exx;
+           ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/hyb_gga_x_cam_s12.c(51): warning #550-D: variable "params" was set but never used
+    hyb_gga_x_cam_s12_params *params;
+                              ^
+
+[ 68%] Built target Catch2
+[ 68%] Building Fortran object inq/external_libs/libpaw_interface/CMakeFiles/paw_level2.dir/m_pawcprj.F90.o
+[ 68%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_gk72.c.o
+[ 68%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_w20.c.o
+[ 68%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_pw_erf.c.o
+[ 68%] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2WithMain.dir/catch2/internal/catch_main.cpp.o
+[ 69%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_k_tf.c.o
+[ 69%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_k_zlp.c.o
+[ 69%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_k_gds08_worker.c.o
+[ 69%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_x.c.o
+[ 69%] Building Fortran object inq/external_libs/libpaw_interface/CMakeFiles/paw_level2.dir/m_pawfgrtab.F90.o
+[ 69%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_x_1d_soft.c.o
+[ 69%] Building Fortran object inq/external_libs/libpaw_interface/CMakeFiles/paw_level2.dir/m_pawrad.F90.o
+[ 69%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_x_1d_exponential.c.o
+[ 70%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_x_2d.c.o
+[ 70%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_x_erf.c.o
+[ 70%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_x_rel.c.o
+[ 70%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_xc_1d_ehwlrg.c.o
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/maple2c/lda_exc/lda_c_vwn.c(26): warning #550-D: variable "t60" was set but never used
+    double t47, t49, t54, t56, t59, t60, t65, t67;
+                                    ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/maple2c/lda_exc/lda_c_vwn.c(88): warning #550-D: variable "t60" was set but never used
+    double t47, t49, t54, t56, t59, t60, t65, t67;
+                                    ^
+
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/maple2c/lda_exc/lda_c_vwn.c(213): warning #550-D: variable "t60" was set but never used
+    double t47, t49, t54, t56, t59, t60, t65, t67;
+                                    ^
+
+[ 70%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_xc_ksdt.c.o
+[ 70%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_xc_teter93.c.o
+[ 70%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_xc_zlp.c.o
+[ 70%] Linking CXX static library libCatch2Main.a
+/usr/bin/ar qc libCatch2Main.a CMakeFiles/Catch2WithMain.dir/catch2/internal/catch_main.cpp.o
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/maple2c/lda_exc/lda_c_vwn_4.c(26): warning #550-D: variable "t60" was set but never used
+    double t47, t49, t54, t56, t59, t60, t65, t67;
+                                    ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/maple2c/lda_exc/lda_c_vwn_4.c(88): warning #550-D: variable "t60" was set but never used
+    double t47, t49, t54, t56, t59, t60, t65, t67;
+                                    ^
+
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/maple2c/lda_exc/lda_c_vwn_4.c(213): warning #550-D: variable "t60" was set but never used
+    double t47, t49, t54, t56, t59, t60, t65, t67;
+                                    ^
+
+/usr/bin/ranlib libCatch2Main.a
+[ 70%] Built target Catch2WithMain
+[ 71%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_pmgb06.c.o
+[ 71%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_xc_tih.c.o
+[ 71%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_x_sloc.c.o
+[ 71%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_epc17.c.o
+[ 71%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_x_yukawa.c.o
+[ 71%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/lda_c_epc18.c.o
+[ 72%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga.c.o
+[ 72%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_c_b88.c.o
+[ 72%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_c_b94.c.o
+[ 72%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_c_bc95.c.o
+[ 72%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_c_cs.c.o
+[ 72%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_c_kcis.c.o
+[ 74%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_c_kcisk.c.o
+[ 74%] Built target fft_level3
+[ 74%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_xc_lp90.c.o
+[ 74%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_c_m05.c.o
+[ 74%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_c_m06l.c.o
+[ 74%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_c_m08.c.o
+[ 74%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_c_pkzb.c.o
+[ 74%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_c_revscan.c.o
+[ 75%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_c_revtpss.c.o
+[ 75%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_c_rscan.c.o
+[ 75%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_c_scan.c.o
+[ 75%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_c_scanl.c.o
+[ 75%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_c_tpss.c.o
+[ 75%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_c_tpssloc.c.o
+[ 76%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_c_vsxc.c.o
+[ 76%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_c_cc.c.o
+[ 76%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_c_ccalda.c.o
+[ 76%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_k_pc07.c.o
+[ 76%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_k_csk.c.o
+[ 76%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_k_csk_loc.c.o
+[ 77%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_k_pgslb.c.o
+[ 77%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_2d_prhg07.c.o
+[ 77%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_2d_prp10.c.o
+[ 77%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_br89.c.o
+[ 77%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_br89_explicit.c.o
+[ 77%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_tb09.c.o
+[ 77%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_gvt4.c.o
+[ 78%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_gx.c.o
+[ 78%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_jk.c.o
+[ 78%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_lta.c.o
+[ 78%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_m06l.c.o
+[ 78%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_m08.c.o
+[ 78%] Linking CXX static library libspdlog.a
+/usr/bin/ar qc libspdlog.a CMakeFiles/spdlog.dir/src/spdlog.cpp.o CMakeFiles/spdlog.dir/src/stdout_sinks.cpp.o CMakeFiles/spdlog.dir/src/color_sinks.cpp.o CMakeFiles/spdlog.dir/src/file_sinks.cpp.o CMakeFiles/spdlog.dir/src/async.cpp.o CMakeFiles/spdlog.dir/src/cfg.cpp.o CMakeFiles/spdlog.dir/src/bundled_fmtlib_format.cpp.o
+/usr/bin/ranlib libspdlog.a
+[ 78%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_m11.c.o
+[ 80%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_m11_l.c.o
+[ 80%] Built target spdlog
+[ 80%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_mbeef.c.o
+[ 80%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_mn12.c.o
+[ 80%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_mbeefvdw.c.o
+[ 80%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_ms.c.o
+[ 80%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_msb.c.o
+[ 81%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_mvs.c.o
+[ 81%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_mvsb.c.o
+[ 81%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_pbe_gx.c.o
+[ 81%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_pkzb.c.o
+[ 81%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_rscan.c.o
+[ 81%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_sa_tpss.c.o
+[ 81%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_scan.c.o
+[ 82%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_scanl.c.o
+[ 82%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_tau_hcth.c.o
+[ 82%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_tm.c.o
+[ 82%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_regtm.c.o
+[ 82%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_revtm.c.o
+[ 82%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_tpss.c.o
+[ 83%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_regtpss.c.o
+[ 83%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_vt84.c.o
+[ 83%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_rtpss.c.o
+[ 83%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_xc_b97mv.c.o
+[ 83%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_xc_cc06.c.o
+[ 83%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_xc_hle17.c.o
+[ 84%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_xc_otpss_d.c.o
+[ 84%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_xc_zlp.c.o
+[ 84%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_xc_b98.c.o
+[ 84%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_2d_js17.c.o
+[ 84%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_edmgga.c.o
+[ 84%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_gdme.c.o
+[ 84%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_rlda.c.o
+[ 85%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_mbrxh_bg.c.o
+[ 85%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_mbrxc_bg.c.o
+[ 85%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_task.c.o
+[ 85%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_mggac.c.o
+[ 85%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_th.c.o
+[ 85%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_mbr.c.o
+[ 87%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_c_ltapw.c.o
+[ 87%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_r2scan.c.o
+[ 87%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_c_r2scan.c.o
+[ 87%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_k_lk.c.o
+[ 87%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_k_rda.c.o
+[ 87%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_k_gea2.c.o
+[ 88%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_k_gea4.c.o
+[ 88%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_r2scanl.c.o
+[ 88%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_c_r2scanl.c.o
+[ 88%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_c_rregtm.c.o
+[ 88%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_mcml.c.o
+[ 88%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_c_rmggac.c.o
+[ 88%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_rppscan.c.o
+[ 89%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_c_rppscan.c.o
+[ 89%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_r4scan.c.o
+[ 89%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_ft98.c.o
+[ 89%] Built target paw_level2
+[ 89%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_ktbm.c.o
+[ 89%] Building Fortran object inq/external_libs/libpaw_interface/CMakeFiles/paw_level3.dir/m_paw_an.F90.o
+[ 89%] Building Fortran object inq/external_libs/libpaw_interface/CMakeFiles/paw_level3.dir/m_paw_atom.F90.o
+[ 89%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_mgga_xc_br3p86.c.o
+[ 89%] Building Fortran object inq/external_libs/libpaw_interface/CMakeFiles/paw_level3.dir/m_paw_gaussfit.F90.o
+[ 89%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_vcml.c.o
+[ 89%] Building Fortran object inq/external_libs/libpaw_interface/CMakeFiles/paw_level3.dir/m_pawrhoij.F90.o
+[ 89%] Building Fortran object inq/external_libs/libpaw_interface/CMakeFiles/paw_xc.dir/m_pawxc.F90.o
+[ 90%] Building Fortran object inq/external_libs/libpaw_interface/CMakeFiles/paw_level3.dir/m_pawxmlps.F90.o
+[ 91%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/hyb_mgga_xc_r2scan.c.o
+[ 91%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mgga_x_eel.c.o
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/mgga_c_rppscan.c(24): warning #177-D: variable "rppscan01_values" was declared but never referenced
+  static const double rppscan01_values[1] = {0.01};
+                      ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+[ 91%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/mix_func.c.o
+[ 91%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/deorbitalize_func.c.o
+[ 91%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/references.c.o
+[ 91%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/special_functions.c.o
+[ 92%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/math_brent.c.o
+[ 92%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/util.c.o
+[ 92%] Building CUDA object inq/external_libs/libxc/CMakeFiles/xc.dir/src/version.c.o
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/mix_func.c(88): warning #550-D: variable "have_vxc" was set but never used
+    int have_vxc = (1 << 1);
+        ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/mix_func.c(89): warning #550-D: variable "have_fxc" was set but never used
+    int have_fxc = (1 << 2);
+        ^
+
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/mix_func.c(90): warning #550-D: variable "have_kxc" was set but never used
+    int have_kxc = 0;
+        ^
+
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/mix_func.c(91): warning #550-D: variable "have_lxc" was set but never used
+    int have_lxc = 0;
+        ^
+
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/mix_func.c(111): warning #550-D: variable "need_laplacian" was set but never used
+    int need_laplacian = 0;
+        ^
+
+/local/data/public/skcb2/tddft/inq/external_libs/libxc/src/mix_func.c(119): warning #550-D: variable "need_tau" was set but never used
+    int need_tau = 0;
+        ^
+
+[ 92%] Built target paw_level3
+[ 92%] Built target paw_xc
+[ 94%] Building Fortran object inq/external_libs/libpaw_interface/CMakeFiles/paw_level4.dir/m_pawdij.F90.o
+[ 94%] Building Fortran object inq/external_libs/libpaw_interface/CMakeFiles/paw_level4.dir/m_pawpsp.F90.o
+[ 94%] Built target paw_level4
+[ 95%] Building Fortran object inq/external_libs/libpaw_interface/abi_add_paw/CMakeFiles/paw_add.dir/m_paw_dfpt.F90.o
+[ 95%] Building Fortran object inq/external_libs/libpaw_interface/interface/CMakeFiles/libpaw_mod.dir/0_libpaw_mod.f90.o
+[ 95%] Building Fortran object inq/external_libs/libpaw_interface/abi_add_paw/CMakeFiles/paw_add.dir/m_paw_denpot.F90.o
+[ 95%] Building Fortran object inq/external_libs/libpaw_interface/abi_add_paw/CMakeFiles/paw_add.dir/m_paw_init.F90.o
+[ 95%] Building Fortran object inq/external_libs/libpaw_interface/abi_add_paw/CMakeFiles/paw_add.dir/m_paw_occupancies.F90.o
+[ 95%] Building Fortran object inq/external_libs/libpaw_interface/abi_add_paw/CMakeFiles/paw_add.dir/m_paw_nhat.F90.o
+[ 95%] Linking CUDA static library libxc.a
+/usr/bin/ar qc libxc.a CMakeFiles/xc.dir/src/bessel.c.o CMakeFiles/xc.dir/src/expint_e1.c.o CMakeFiles/xc.dir/src/faddeeva.c.o CMakeFiles/xc.dir/src/func_info.c.o CMakeFiles/xc.dir/src/func_reference.c.o CMakeFiles/xc.dir/src/functionals.c.o CMakeFiles/xc.dir/src/hybrids.c.o CMakeFiles/xc.dir/src/gga.c.o CMakeFiles/xc.dir/src/gga_c_acgga.c.o CMakeFiles/xc.dir/src/gga_c_acggap.c.o CMakeFiles/xc.dir/src/gga_c_am05.c.o CMakeFiles/xc.dir/src/gga_c_bmk.c.o CMakeFiles/xc.dir/src/gga_c_chachiyo.c.o CMakeFiles/xc.dir/src/gga_c_cs1.c.o CMakeFiles/xc.dir/src/gga_c_ft97.c.o CMakeFiles/xc.dir/src/gga_c_gapc.c.o CMakeFiles/xc.dir/src/gga_c_gaploc.c.o CMakeFiles/xc.dir/src/gga_c_hcth_a.c.o CMakeFiles/xc.dir/src/gga_c_lm.c.o CMakeFiles/xc.dir/src/gga_c_lyp.c.o CMakeFiles/xc.dir/src/gga_c_lypr.c.o CMakeFiles/xc.dir/src/gga_c_op_b88.c.o CMakeFiles/xc.dir/src/gga_c_op_g96.c.o CMakeFiles/xc.dir/src/gga_c_op_pbe.c.o CMakeFiles/xc.dir/src/gga_c_op_pw91.c.o CMakeFiles/xc.dir/src/gga_c_op_xalpha.c.o CMakeFiles/xc.dir/src/gga_c_optc.c.o CMakeFiles/xc.dir/src/gga_c_p86.c.o CMakeFiles/xc.dir/src/gga_c_p86vwn.c.o CMakeFiles/xc.dir/src/gga_c_pbe.c.o CMakeFiles/xc.dir/src/gga_c_pbe_vwn.c.o CMakeFiles/xc.dir/src/gga_c_pbeloc.c.o CMakeFiles/xc.dir/src/gga_c_pbe_erf_gws.c.o CMakeFiles/xc.dir/src/gga_c_pw91.c.o CMakeFiles/xc.dir/src/gga_c_q2d.c.o CMakeFiles/xc.dir/src/gga_c_regtpss.c.o CMakeFiles/xc.dir/src/gga_c_revtca.c.o CMakeFiles/xc.dir/src/gga_c_scan_e0.c.o CMakeFiles/xc.dir/src/gga_c_sg4.c.o CMakeFiles/xc.dir/src/gga_c_sogga11.c.o CMakeFiles/xc.dir/src/gga_c_tca.c.o CMakeFiles/xc.dir/src/gga_c_w94.c.o CMakeFiles/xc.dir/src/gga_c_wi.c.o CMakeFiles/xc.dir/src/gga_c_wl.c.o CMakeFiles/xc.dir/src/gga_c_zpbeint.c.o CMakeFiles/xc.dir/src/gga_c_zvpbeint.c.o CMakeFiles/xc.dir/src/gga_c_zvpbeloc.c.o CMakeFiles/xc.dir/src/gga_k_dk.c.o CMakeFiles/xc.dir/src/gga_k_pg.c.o CMakeFiles/xc.dir/src/gga_k_rational_p.c.o CMakeFiles/xc.dir/src/gga_k_meyer.c.o CMakeFiles/xc.dir/src/gga_k_ol1.c.o CMakeFiles/xc.dir/src/gga_k_ol2.c.o CMakeFiles/xc.dir/src/gga_x_ol2.c.o CMakeFiles/xc.dir/src/gga_k_pearson.c.o CMakeFiles/xc.dir/src/gga_k_tflw.c.o CMakeFiles/xc.dir/src/gga_k_thakkar.c.o CMakeFiles/xc.dir/src/gga_k_gds08.c.o CMakeFiles/xc.dir/src/gga_k_exp4.c.o CMakeFiles/xc.dir/src/gga_x_2d_b86.c.o CMakeFiles/xc.dir/src/gga_x_2d_b86_mgc.c.o CMakeFiles/xc.dir/src/gga_x_2d_b88.c.o CMakeFiles/xc.dir/src/gga_x_2d_pbe.c.o CMakeFiles/xc.dir/src/gga_x_airy.c.o CMakeFiles/xc.dir/src/gga_x_ak13.c.o CMakeFiles/xc.dir/src/gga_x_am05.c.o CMakeFiles/xc.dir/src/gga_x_b86.c.o CMakeFiles/xc.dir/src/gga_x_b88.c.o CMakeFiles/xc.dir/src/gga_k_llp.c.o CMakeFiles/xc.dir/src/gga_k_pw86.c.o CMakeFiles/xc.dir/src/gga_k_mpbe.c.o CMakeFiles/xc.dir/src/gga_k_apbe.c.o CMakeFiles/xc.dir/src/gga_k_apbeint.c.o CMakeFiles/xc.dir/src/gga_k_lc94.c.o CMakeFiles/xc.dir/src/gga_k_lkt.c.o CMakeFiles/xc.dir/src/gga_k_vt84f.c.o CMakeFiles/xc.dir/src/gga_x_bayesian.c.o CMakeFiles/xc.dir/src/gga_x_beefvdw.c.o CMakeFiles/xc.dir/src/gga_x_bpccac.c.o CMakeFiles/xc.dir/src/gga_x_c09x.c.o CMakeFiles/xc.dir/src/gga_x_cap.c.o CMakeFiles/xc.dir/src/gga_x_chachiyo.c.o CMakeFiles/xc.dir/src/gga_x_dk87.c.o CMakeFiles/xc.dir/src/gga_x_ev93.c.o CMakeFiles/xc.dir/src/gga_x_ft97.c.o CMakeFiles/xc.dir/src/gga_x_g96.c.o CMakeFiles/xc.dir/src/gga_x_gg99.c.o CMakeFiles/xc.dir/src/gga_x_hcth_a.c.o CMakeFiles/xc.dir/src/gga_x_hjs.c.o CMakeFiles/xc.dir/src/gga_x_hjs_b88_v2.c.o CMakeFiles/xc.dir/src/gga_x_htbs.c.o CMakeFiles/xc.dir/src/gga_x_ityh.c.o CMakeFiles/xc.dir/src/gga_x_ityh_optx.c.o CMakeFiles/xc.dir/src/gga_x_ityh_pbe.c.o CMakeFiles/xc.dir/src/gga_x_kt.c.o CMakeFiles/xc.dir/src/gga_x_lag.c.o CMakeFiles/xc.dir/src/gga_x_lb.c.o CMakeFiles/xc.dir/src/gga_x_lg93.c.o CMakeFiles/xc.dir/src/gga_x_lspbe.c.o CMakeFiles/xc.dir/src/gga_x_lsrpbe.c.o CMakeFiles/xc.dir/src/gga_x_lv_rpw86.c.o CMakeFiles/xc.dir/src/gga_x_mpbe.c.o CMakeFiles/xc.dir/src/gga_x_n12.c.o CMakeFiles/xc.dir/src/gga_x_ncap.c.o CMakeFiles/xc.dir/src/gga_x_optx.c.o CMakeFiles/xc.dir/src/gga_x_pbe.c.o CMakeFiles/xc.dir/src/gga_x_pbea.c.o CMakeFiles/xc.dir/src/gga_x_pbeint.c.o CMakeFiles/xc.dir/src/gga_x_pbepow.c.o CMakeFiles/xc.dir/src/gga_x_pbetrans.c.o CMakeFiles/xc.dir/src/gga_x_pbe_erf_gws.c.o CMakeFiles/xc.dir/src/gga_x_pw86.c.o CMakeFiles/xc.dir/src/gga_x_pw91.c.o CMakeFiles/xc.dir/src/gga_x_q1d.c.o CMakeFiles/xc.dir/src/gga_x_q2d.c.o CMakeFiles/xc.dir/src/gga_x_rge2.c.o CMakeFiles/xc.dir/src/gga_x_rpbe.c.o CMakeFiles/xc.dir/src/gga_x_s12.c.o CMakeFiles/xc.dir/src/gga_x_sfat.c.o CMakeFiles/xc.dir/src/gga_x_sfat_pbe.c.o CMakeFiles/xc.dir/src/gga_x_sg4.c.o CMakeFiles/xc.dir/src/gga_x_sogga11.c.o CMakeFiles/xc.dir/src/gga_x_ssb_sw.c.o CMakeFiles/xc.dir/src/gga_x_vmt.c.o CMakeFiles/xc.dir/src/gga_x_vmt84.c.o CMakeFiles/xc.dir/src/gga_x_wc.c.o CMakeFiles/xc.dir/src/gga_x_wpbeh.c.o CMakeFiles/xc.dir/src/gga_x_fd_lb94.c.o CMakeFiles/xc.dir/src/gga_x_lcgau.c.o CMakeFiles/xc.dir/src/gga_xc_1w.c.o CMakeFiles/xc.dir/src/gga_xc_b97.c.o CMakeFiles/xc.dir/src/gga_xc_edf1.c.o CMakeFiles/xc.dir/src/gga_xc_oblyp_d.c.o CMakeFiles/xc.dir/src/gga_xc_th1.c.o CMakeFiles/xc.dir/src/gga_xc_th2.c.o CMakeFiles/xc.dir/src/gga_xc_th3.c.o CMakeFiles/xc.dir/src/gga_xc_vv10.c.o CMakeFiles/xc.dir/src/gga_k_lgap.c.o CMakeFiles/xc.dir/src/gga_k_lgap_ge.c.o CMakeFiles/xc.dir/src/gga_c_ccdf.c.o CMakeFiles/xc.dir/src/hyb_gga_xc_b1wc.c.o CMakeFiles/xc.dir/src/hyb_gga_xc_b3lyp.c.o CMakeFiles/xc.dir/src/hyb_gga_xc_cam_b3lyp.c.o CMakeFiles/xc.dir/src/hyb_gga_xc_camy_b3lyp.c.o CMakeFiles/xc.dir/src/hyb_gga_xc_camy_blyp.c.o CMakeFiles/xc.dir/src/hyb_gga_xc_edf2.c.o CMakeFiles/xc.dir/src/hyb_gga_xc_hse.c.o CMakeFiles/xc.dir/src/hyb_gga_xc_lc_blyp.c.o CMakeFiles/xc.dir/src/hyb_gga_xc_lcy_blyp.c.o CMakeFiles/xc.dir/src/hyb_gga_xc_lcy_pbe.c.o CMakeFiles/xc.dir/src/hyb_gga_xc_o3lyp.c.o CMakeFiles/xc.dir/src/hyb_gga_xc_pbeh.c.o CMakeFiles/xc.dir/src/hyb_gga_xc_wb97.c.o CMakeFiles/xc.dir/src/hyb_lda_xc_cam_lda0.c.o CMakeFiles/xc.dir/src/hyb_lda_xc_bn05.c.o CMakeFiles/xc.dir/src/hyb_mgga_x_dldf.c.o CMakeFiles/xc.dir/src/hyb_mgga_x_m05.c.o CMakeFiles/xc.dir/src/hyb_mgga_x_mvsh.c.o CMakeFiles/xc.dir/src/hyb_mgga_xc_b88b95.c.o CMakeFiles/xc.dir/src/hyb_mgga_xc_kcis.c.o CMakeFiles/xc.dir/src/hyb_mgga_xc_tpssh.c.o CMakeFiles/xc.dir/src/hyb_mgga_xc_wb97mv.c.o CMakeFiles/xc.dir/src/hyb_mgga_x_js18.c.o CMakeFiles/xc.dir/src/hyb_mgga_x_pjs18.c.o CMakeFiles/xc.dir/src/hyb_gga_xc_b2plyp.c.o CMakeFiles/xc.dir/src/hyb_gga_xc_src1_blyp.c.o CMakeFiles/xc.dir/src/hyb_gga_xc_cam_o3lyp.c.o CMakeFiles/xc.dir/src/hyb_gga_xc_pbe_dh.c.o CMakeFiles/xc.dir/src/hyb_gga_x_cam_s12.c.o CMakeFiles/xc.dir/src/hyb_gga_xc_case21.c.o CMakeFiles/xc.dir/src/hyb_mgga_xc_gas22.c.o CMakeFiles/xc.dir/src/integrate.c.o CMakeFiles/xc.dir/src/lda.c.o CMakeFiles/xc.dir/src/lda_c_1d_csc.c.o CMakeFiles/xc.dir/src/lda_c_1d_loos.c.o CMakeFiles/xc.dir/src/lda_c_2d_amgb.c.o CMakeFiles/xc.dir/src/lda_c_2d_prm.c.o CMakeFiles/xc.dir/src/lda_c_chachiyo.c.o CMakeFiles/xc.dir/src/lda_c_chachiyo_mod.c.o CMakeFiles/xc.dir/src/lda_c_gombas.c.o CMakeFiles/xc.dir/src/lda_c_hl.c.o CMakeFiles/xc.dir/src/lda_c_lp96.c.o CMakeFiles/xc.dir/src/lda_c_ml1.c.o CMakeFiles/xc.dir/src/lda_c_pk09.c.o CMakeFiles/xc.dir/src/lda_c_pw.c.o CMakeFiles/xc.dir/src/lda_c_pz.c.o CMakeFiles/xc.dir/src/lda_c_rc04.c.o CMakeFiles/xc.dir/src/lda_c_rpa.c.o CMakeFiles/xc.dir/src/lda_c_vwn.c.o CMakeFiles/xc.dir/src/lda_c_vwn_1.c.o CMakeFiles/xc.dir/src/lda_c_vwn_2.c.o CMakeFiles/xc.dir/src/lda_c_vwn_3.c.o CMakeFiles/xc.dir/src/lda_c_vwn_4.c.o CMakeFiles/xc.dir/src/lda_c_vwn_rpa.c.o CMakeFiles/xc.dir/src/lda_c_wigner.c.o CMakeFiles/xc.dir/src/lda_c_gk72.c.o CMakeFiles/xc.dir/src/lda_c_w20.c.o CMakeFiles/xc.dir/src/lda_c_pw_erf.c.o CMakeFiles/xc.dir/src/lda_k_tf.c.o CMakeFiles/xc.dir/src/lda_k_zlp.c.o CMakeFiles/xc.dir/src/lda_k_gds08_worker.c.o CMakeFiles/xc.dir/src/lda_x.c.o CMakeFiles/xc.dir/src/lda_x_1d_soft.c.o CMakeFiles/xc.dir/src/lda_x_1d_exponential.c.o CMakeFiles/xc.dir/src/lda_x_2d.c.o CMakeFiles/xc.dir/src/lda_x_erf.c.o CMakeFiles/xc.dir/src/lda_x_rel.c.o CMakeFiles/xc.dir/src/lda_xc_1d_ehwlrg.c.o CMakeFiles/xc.dir/src/lda_xc_ksdt.c.o CMakeFiles/xc.dir/src/lda_xc_teter93.c.o CMakeFiles/xc.dir/src/lda_xc_zlp.c.o CMakeFiles/xc.dir/src/lda_c_pmgb06.c.o CMakeFiles/xc.dir/src/lda_xc_tih.c.o CMakeFiles/xc.dir/src/lda_x_sloc.c.o CMakeFiles/xc.dir/src/lda_x_yukawa.c.o CMakeFiles/xc.dir/src/lda_c_epc17.c.o CMakeFiles/xc.dir/src/lda_c_epc18.c.o CMakeFiles/xc.dir/src/mgga.c.o CMakeFiles/xc.dir/src/mgga_c_b88.c.o CMakeFiles/xc.dir/src/mgga_c_b94.c.o CMakeFiles/xc.dir/src/mgga_c_bc95.c.o CMakeFiles/xc.dir/src/mgga_c_cs.c.o CMakeFiles/xc.dir/src/mgga_c_kcis.c.o CMakeFiles/xc.dir/src/mgga_c_kcisk.c.o CMakeFiles/xc.dir/src/mgga_xc_lp90.c.o CMakeFiles/xc.dir/src/mgga_c_m05.c.o CMakeFiles/xc.dir/src/mgga_c_m06l.c.o CMakeFiles/xc.dir/src/mgga_c_m08.c.o CMakeFiles/xc.dir/src/mgga_c_pkzb.c.o CMakeFiles/xc.dir/src/mgga_c_revscan.c.o CMakeFiles/xc.dir/src/mgga_c_revtpss.c.o CMakeFiles/xc.dir/src/mgga_c_rscan.c.o CMakeFiles/xc.dir/src/mgga_c_scan.c.o CMakeFiles/xc.dir/src/mgga_c_scanl.c.o CMakeFiles/xc.dir/src/mgga_c_tpss.c.o CMakeFiles/xc.dir/src/mgga_c_tpssloc.c.o CMakeFiles/xc.dir/src/mgga_c_vsxc.c.o CMakeFiles/xc.dir/src/mgga_c_cc.c.o CMakeFiles/xc.dir/src/mgga_c_ccalda.c.o CMakeFiles/xc.dir/src/mgga_k_pc07.c.o CMakeFiles/xc.dir/src/mgga_k_csk.c.o CMakeFiles/xc.dir/src/mgga_k_csk_loc.c.o CMakeFiles/xc.dir/src/mgga_k_pgslb.c.o CMakeFiles/xc.dir/src/mgga_x_2d_prhg07.c.o CMakeFiles/xc.dir/src/mgga_x_2d_prp10.c.o CMakeFiles/xc.dir/src/mgga_x_br89.c.o CMakeFiles/xc.dir/src/mgga_x_br89_explicit.c.o CMakeFiles/xc.dir/src/mgga_x_tb09.c.o CMakeFiles/xc.dir/src/mgga_x_gvt4.c.o CMakeFiles/xc.dir/src/mgga_x_gx.c.o CMakeFiles/xc.dir/src/mgga_x_jk.c.o CMakeFiles/xc.dir/src/mgga_x_lta.c.o CMakeFiles/xc.dir/src/mgga_x_m06l.c.o CMakeFiles/xc.dir/src/mgga_x_m08.c.o CMakeFiles/xc.dir/src/mgga_x_m11.c.o CMakeFiles/xc.dir/src/mgga_x_m11_l.c.o CMakeFiles/xc.dir/src/mgga_x_mbeef.c.o CMakeFiles/xc.dir/src/mgga_x_mbeefvdw.c.o CMakeFiles/xc.dir/src/mgga_x_mn12.c.o CMakeFiles/xc.dir/src/mgga_x_ms.c.o CMakeFiles/xc.dir/src/mgga_x_msb.c.o CMakeFiles/xc.dir/src/mgga_x_mvs.c.o CMakeFiles/xc.dir/src/mgga_x_mvsb.c.o CMakeFiles/xc.dir/src/mgga_x_pbe_gx.c.o CMakeFiles/xc.dir/src/mgga_x_pkzb.c.o CMakeFiles/xc.dir/src/mgga_x_rscan.c.o CMakeFiles/xc.dir/src/mgga_x_sa_tpss.c.o CMakeFiles/xc.dir/src/mgga_x_scan.c.o CMakeFiles/xc.dir/src/mgga_x_scanl.c.o CMakeFiles/xc.dir/src/mgga_x_tau_hcth.c.o CMakeFiles/xc.dir/src/mgga_x_tm.c.o CMakeFiles/xc.dir/src/mgga_x_regtm.c.o CMakeFiles/xc.dir/src/mgga_x_revtm.c.o CMakeFiles/xc.dir/src/mgga_x_tpss.c.o CMakeFiles/xc.dir/src/mgga_x_regtpss.c.o CMakeFiles/xc.dir/src/mgga_x_vt84.c.o CMakeFiles/xc.dir/src/mgga_x_rtpss.c.o CMakeFiles/xc.dir/src/mgga_xc_b97mv.c.o CMakeFiles/xc.dir/src/mgga_xc_cc06.c.o CMakeFiles/xc.dir/src/mgga_xc_hle17.c.o CMakeFiles/xc.dir/src/mgga_xc_otpss_d.c.o CMakeFiles/xc.dir/src/mgga_xc_zlp.c.o CMakeFiles/xc.dir/src/mgga_xc_b98.c.o CMakeFiles/xc.dir/src/mgga_x_2d_js17.c.o CMakeFiles/xc.dir/src/mgga_x_edmgga.c.o CMakeFiles/xc.dir/src/mgga_x_gdme.c.o CMakeFiles/xc.dir/src/mgga_x_rlda.c.o CMakeFiles/xc.dir/src/mgga_x_mbrxh_bg.c.o CMakeFiles/xc.dir/src/mgga_x_mbrxc_bg.c.o CMakeFiles/xc.dir/src/mgga_x_task.c.o CMakeFiles/xc.dir/src/mgga_x_mggac.c.o CMakeFiles/xc.dir/src/mgga_x_th.c.o CMakeFiles/xc.dir/src/mgga_x_mbr.c.o CMakeFiles/xc.dir/src/mgga_c_ltapw.c.o CMakeFiles/xc.dir/src/mgga_x_r2scan.c.o CMakeFiles/xc.dir/src/mgga_c_r2scan.c.o CMakeFiles/xc.dir/src/mgga_k_lk.c.o CMakeFiles/xc.dir/src/mgga_k_rda.c.o CMakeFiles/xc.dir/src/mgga_k_gea2.c.o CMakeFiles/xc.dir/src/mgga_k_gea4.c.o CMakeFiles/xc.dir/src/mgga_x_r2scanl.c.o CMakeFiles/xc.dir/src/mgga_c_r2scanl.c.o CMakeFiles/xc.dir/src/mgga_c_rregtm.c.o CMakeFiles/xc.dir/src/mgga_x_mcml.c.o CMakeFiles/xc.dir/src/mgga_c_rmggac.c.o CMakeFiles/xc.dir/src/mgga_x_rppscan.c.o CMakeFiles/xc.dir/src/mgga_c_rppscan.c.o CMakeFiles/xc.dir/src/mgga_x_r4scan.c.o CMakeFiles/xc.dir/src/mgga_x_ft98.c.o CMakeFiles/xc.dir/src/mgga_x_ktbm.c.o CMakeFiles/xc.dir/src/hyb_mgga_xc_br3p86.c.o CMakeFiles/xc.dir/src/mgga_x_vcml.c.o CMakeFiles/xc.dir/src/hyb_mgga_xc_r2scan.c.o CMakeFiles/xc.dir/src/mgga_x_eel.c.o CMakeFiles/xc.dir/src/mix_func.c.o CMakeFiles/xc.dir/src/deorbitalize_func.c.o CMakeFiles/xc.dir/src/references.c.o CMakeFiles/xc.dir/src/special_functions.c.o CMakeFiles/xc.dir/src/math_brent.c.o CMakeFiles/xc.dir/src/util.c.o CMakeFiles/xc.dir/src/version.c.o
+[ 95%] Built target libpaw_mod
+/usr/bin/ranlib libxc.a
+[ 95%] Built target xc
+[ 95%] Built target paw_add
+[ 95%] Building Fortran object inq/external_libs/libpaw_interface/interface/CMakeFiles/libpaw_interface_files.dir/get_dij.f90.o
+[ 96%] Building Fortran object inq/external_libs/libpaw_interface/interface/CMakeFiles/libpaw_interface_files.dir/fortran_main.f90.o
+[ 96%] Building Fortran object inq/external_libs/libpaw_interface/interface/CMakeFiles/libpaw_interface_files.dir/get_nhat.f90.o
+[ 96%] Building Fortran object inq/external_libs/libpaw_interface/interface/CMakeFiles/libpaw_interface_files.dir/get_vloc_ncoret.f90.o
+[ 96%] Building Fortran object inq/external_libs/libpaw_interface/interface/CMakeFiles/libpaw_interface_files.dir/init_rho.f90.o
+[ 96%] Building Fortran object inq/external_libs/libpaw_interface/interface/CMakeFiles/libpaw_interface_files.dir/set_rhoij.f90.o
+[ 96%] Building Fortran object inq/external_libs/libpaw_interface/interface/CMakeFiles/libpaw_interface_files.dir/pawxml_local_pp.f90.o
+[ 96%] Building Fortran object inq/external_libs/libpaw_interface/interface/CMakeFiles/libpaw_interface_files.dir/paw_force.f90.o
+[ 96%] Building Fortran object inq/external_libs/libpaw_interface/interface/CMakeFiles/libpaw_interface_files.dir/map_atom_index.f90.o
+[ 97%] Building Fortran object inq/external_libs/libpaw_interface/interface/CMakeFiles/libpaw_interface_files.dir/prepare_libpaw.f90.o
+[ 97%] Building Fortran object inq/external_libs/libpaw_interface/interface/CMakeFiles/libpaw_interface_files.dir/read_pawxml_all.f90.o
+[ 97%] Building Fortran object inq/external_libs/libpaw_interface/interface/CMakeFiles/libpaw_interface_files.dir/prep_read_pawxml.f90.o
+[ 97%] Building Fortran object inq/external_libs/libpaw_interface/interface/CMakeFiles/libpaw_interface_files.dir/extract_rad_info.f90.o
+[ 98%] Building Fortran object inq/external_libs/libpaw_interface/interface/CMakeFiles/libpaw_interface_files.dir/pawxml_lmax.f90.o
+[ 98%] Building Fortran object inq/external_libs/libpaw_interface/interface/CMakeFiles/libpaw_interface_files.dir/pawxml_nchan_max.f90.o
+[ 98%] Building Fortran object inq/external_libs/libpaw_interface/interface/CMakeFiles/libpaw_interface_files.dir/pawxml_zval.f90.o
+[ 98%] Building Fortran object inq/external_libs/libpaw_interface/interface/CMakeFiles/libpaw_interface_files.dir/pawproj_exist.f90.o
+[ 98%] Building Fortran object inq/external_libs/libpaw_interface/interface/CMakeFiles/libpaw_interface_files.dir/pawxml_nprojectors.f90.o
+[100%] Building Fortran object inq/external_libs/libpaw_interface/interface/CMakeFiles/libpaw_interface_files.dir/get_sij.f90.o
+[100%] Building Fortran object inq/external_libs/libpaw_interface/interface/CMakeFiles/libpaw_interface_files.dir/pawproj.f90.o
+[100%] Building Fortran object inq/external_libs/libpaw_interface/interface/CMakeFiles/libpaw_interface_files.dir/deallocate_arrays.f90.o
+[100%] Built target libpaw_interface_files
+[100%] Building CUDA object CMakeFiles/run.dir/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E700_mpi_propagate/run.cpp.o
+[100%] Linking CUDA device code CMakeFiles/run.dir/cmake_device_link.o
+[100%] Linking CXX executable /local/data/public/skcb2/tddft/ResearchProject/systems/jellium/run_wp_n162_L50_E700_mpi_propagate/run
+[100%] Built target run
+==> Running run...
+───────────────────────────────────────
+[2026-05-20 08:22:11.055] [electrons:ppg7lQ] [info] System information:
+
+Cell:
+  Lattice vectors [b] = 50	0	0
+                        0	50	0
+                        0	0	50
+  Volume [b^3]        = 125000
+  Periodicity         = 3d (fully periodic)
+
+Species (0 total):
+
+Ions (0 total):
+
+Kpoints (1 total):
+  k-point       0 =   0.000   0.000   0.000   weight = 1.000
+
+Basis set:
+  Spacing                 = 0.297619 0.297619 0.297619 bohr
+  Grid size               = 168 x 168 x 168
+  Number of grid points   = 4741632
+
+Kohn-Sham representation:
+  Number of electrons      = 162
+  Spin                     = unpolarized
+  States per spin/kpoint   = 101
+
+
+[2026-05-20 08:22:11.056] [electrons:ppg7lQ] [info] parallelization:
+[2026-05-20 08:22:11.056] [electrons:ppg7lQ] [info]   electrons divided among 1 processes (1 kpoints x 1 states x 1 domains)
+[2026-05-20 08:22:11.056] [electrons:ppg7lQ] [info]   process 0 has gpu id OBV6ryIUSmbtX/uegaCMkw
+[2026-05-20 08:22:11.056] [electrons:ppg7lQ] [info] k-point parallelization:
+[2026-05-20 08:22:11.056] [electrons:ppg7lQ] [info]   1 k-points/spin indices divided among 1 partitions
+[2026-05-20 08:22:11.056] [electrons:ppg7lQ] [info]   partition 0 has 1 k-points/spin indices and the last partition has 1
+
+[2026-05-20 08:22:11.056] [electrons:ppg7lQ] [info] state parallelization:
+[2026-05-20 08:22:11.056] [electrons:ppg7lQ] [info]   101 states divided among 1 partitions
+[2026-05-20 08:22:11.056] [electrons:ppg7lQ] [info]   partition 0 has 101 states and the last partition has 101 states
+
+[2026-05-20 08:22:11.056] [electrons:ppg7lQ] [info] real-space parallelization:
+[2026-05-20 08:22:11.057] [electrons:ppg7lQ] [info]   168 slices (4741632 points) divided among 1 partitions
+[2026-05-20 08:22:11.057] [electrons:ppg7lQ] [info]   partition 0 has 168 slices and the last partition has 168 slices (4741632 and 4741632 points)
+[2026-05-20 08:22:11.057] [electrons:ppg7lQ] [info] fourier-space parallelization:
+[2026-05-20 08:22:11.057] [electrons:ppg7lQ] [info]   168 slices (4741632 points) divided among 1 partitions
+[2026-05-20 08:22:11.057] [electrons:ppg7lQ] [info]   partition 0 has 168 slices and the last partition has 168 slices (4741632 and 4741632 points)
+
+[2026-05-20 08:22:11.057] [electrons:ppg7lQ] [info] loading electrons from '/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/checkpoints/gs_L50_cubic_N162_dx0p30_E700_wp_injected/'
+[2026-05-20 08:22:14.638] [electrons:ppg7lQ] [info]   loading successful
+[2026-05-20 08:22:14.638] [electrons:ppg7lQ] [trace] initializing real-time propagation:
+  time step        = 0.01 atomictime (0.24 as)
+  number of steps  = 349
+  propagation time = 3.49 atomictime (0.08 fs)
+[2026-05-20 08:22:14.638] [electrons:ppg7lQ] [trace] 
+

@@ -1,0 +1,178 @@
+{
+  "notes": [
+    "point-Lindhard S(100eV, r_s5.67) = 0.282 eV/Bohr",
+    "WP: \u0394E_total=-117.3 eV, late slope=-1.03 eV/au, N_final=82.135, converged=False",
+    "classical: KE 67.5\u219254.8 eV over 25.0 Bohr \u21d2 S=0.507 eV/Bohr",
+    "classical transport: KE min 30.3 eV at z=+1.3; recovers to 54.8 eV at +12.5; face-window S=0.507 eV/Bohr (conservative well borrowed/returned)",
+    "WP deposited (E_total(final)\u2212E_GS) = 68.2 eV \u21d2 S=2.73 eV/Bohr [NOT converged \u21d2 UPPER BOUND only]; SIE floor 4.4 eV",
+    "flux: transmit(+z)=+0.865  reflect(\u2212z)=+0.013",
+    "momentum n(k_z) at anchors written",
+    "energetics written",
+    "KS excitation off-diagonal weight (final) = 0.000",
+    "[efield] efield API fallback skipped",
+    "norm/absorption figure written",
+    "heuristics: kF=0.339 vF=0.339 \u03c9_p=3.49 eV T_plasmon=48.9 au (>\u03c4=40 \u21d2 plasmon under-resolved); t_exit=12.73 au; spread\u00d741; total_absorbed WP=0.865 classical=0.037",
+    "density GIF battery: 9 WP + 3 classical (shared total/bath density vmax=1.79e-03)"
+  ],
+  "S_lindhard_point_100eV_eVbohr": 0.2815902371877103,
+  "wp_dEtot_eV": -117.29427725948115,
+  "wp_late_slope_eV_au": -1.0261320771986235,
+  "wp_Ntot_final": 82.1347388017,
+  "t_final": 40.0,
+  "wp_converged": false,
+  "classical_S_eVbohr": 0.5066171605698669,
+  "classical_ke0_eV": 99.99999908126694,
+  "classical_kef_eV": 26.834766470998606,
+  "classical_ke_min_eV": 30.323209376444446,
+  "classical_ke_min_z": 1.296393802863949,
+  "classical_S_facewindow_eVbohr": 0.5066171605698664,
+  "wp_deposited_EminusEGS_eV": 68.18481012663673,
+  "wp_S_eVbohr": 2.727392405065469,
+  "anchor_table": {
+    "A1_lead_near": 1.2812208362490844,
+    "A2_cen_near": 3.5112054625429048,
+    "A4_lead_far": 4.949828272386755,
+    "A5_cen_max": 23.6,
+    "t_final": 40.0
+  },
+  "sigma_z_growth": 41.32245579731171,
+  "zc_max": 8.66482446858,
+  "transmit_cum": 0.8651582341588001,
+  "reflect_cum": 0.012681650771457723,
+  "ks_offdiag_final": 0.0,
+  "heuristics": {
+    "wp": {
+      "eg_scales.rs": 5.666,
+      "eg_scales.n0": 0.0013124467148578653,
+      "eg_scales.kF": 0.3387148416303411,
+      "eg_scales.vF": 0.3387148416303411,
+      "eg_scales.EF_ha": 0.057363871970333526,
+      "eg_scales.EF_ev": 1.56095047675015,
+      "eg_scales.lambda_F_friedel": 9.275036896725043,
+      "eg_scales.omega_p_ha": 0.1284238756248312,
+      "eg_scales.omega_p_ev": 3.4945916828340056,
+      "eg_scales.T_plasmon_au": 48.92536747243836,
+      "eg_scales.k_TF": 0.6567077970851711,
+      "eg_scales.t_heg_ha_per_e": 0.03441843015770589,
+      "timescales.v": 2.711,
+      "timescales.t_enter_slab_au": 3.5042419771302105,
+      "timescales.t_exit_slab_au": 12.725931390630764,
+      "timescales.t_cross_au": 9.221689413500554,
+      "timescales.t_reach_box_edge_au": 21.025451862781264,
+      "wp_kinetics.sigma_wp": 0.5,
+      "wp_kinetics.sigma_charge": 0.35355339059327373,
+      "wp_kinetics.zero_point_ke_ha": 3.0,
+      "wp_kinetics.zero_point_ke_ev": 81.634158737964,
+      "norms.N_total_0": 82.9999999999,
+      "norms.N_total_f": 82.1347388017,
+      "norms.total_absorbed": 0.8652611982000025,
+      "norms.N_wp_0": 1.0,
+      "norms.N_wp_f": 0.136011372494,
+      "norms.wp_orbital_absorbed": 0.863988627506,
+      "norms.wp_fraction_absorbed": 0.863988627506,
+      "norms.bath_overflow_absorbed": 0.0012725706940024395,
+      "spreading.sigma_z_0": 0.3534092392156719,
+      "spreading.sigma_z_f": 14.603737665851163,
+      "spreading.spread_factor": 41.32245579731171,
+      "spreading.sigma_z_max": 14.918766599990764,
+      "stopping_refs.S_point_ha_per_bohr": 0.01034825044147734,
+      "stopping_refs.S_point_ev_per_bohr": 0.28159023973325575,
+      "extra.wp_zmean_max": 8.66482446858
+    },
+    "classical": {
+      "eg_scales.rs": 5.666,
+      "eg_scales.n0": 0.0013124467148578653,
+      "eg_scales.kF": 0.3387148416303411,
+      "eg_scales.vF": 0.3387148416303411,
+      "eg_scales.EF_ha": 0.057363871970333526,
+      "eg_scales.EF_ev": 1.56095047675015,
+      "eg_scales.lambda_F_friedel": 9.275036896725043,
+      "eg_scales.omega_p_ha": 0.1284238756248312,
+      "eg_scales.omega_p_ev": 3.4945916828340056,
+      "eg_scales.T_plasmon_au": 48.92536747243836,
+      "eg_scales.k_TF": 0.6567077970851711,
+      "eg_scales.t_heg_ha_per_e": 0.03441843015770589,
+      "timescales.v": 2.711,
+      "timescales.t_enter_slab_au": 3.5042419771302105,
+      "timescales.t_exit_slab_au": 12.725931390630764,
+      "timescales.t_cross_au": 9.221689413500554,
+      "timescales.t_reach_box_edge_au": 21.025451862781264,
+      "norms.N_total_0": 81.9999999999,
+      "norms.N_total_f": 81.9634628421,
+      "norms.total_absorbed": 0.036537157799998,
+      "stopping_refs.S_point_ha_per_bohr": 0.01034825044147734,
+      "stopping_refs.S_point_ev_per_bohr": 0.28159023973325575
+    }
+  },
+  "T_exit_au": 12.725931390630764,
+  "T_enter_au": 3.5042419771302105,
+  "gif_density_vmax": 0.0017864992323378332,
+  "gifs": {
+    "wp": [
+      [
+        "total",
+        "density",
+        "wp_total_density.gif"
+      ],
+      [
+        "total",
+        "delta0",
+        "wp_total_delta0.gif"
+      ],
+      [
+        "total",
+        "dstep",
+        "wp_total_dstep.gif"
+      ],
+      [
+        "wp",
+        "density",
+        "wp_wp_density.gif"
+      ],
+      [
+        "wp",
+        "delta0",
+        "wp_wp_delta0.gif"
+      ],
+      [
+        "wp",
+        "dstep",
+        "wp_wp_dstep.gif"
+      ],
+      [
+        "bath",
+        "density",
+        "wp_bath_density.gif"
+      ],
+      [
+        "bath",
+        "delta0",
+        "wp_bath_delta0.gif"
+      ],
+      [
+        "bath",
+        "dstep",
+        "wp_bath_dstep.gif"
+      ]
+    ],
+    "classical": [
+      [
+        "total",
+        "density",
+        "classical_total_density.gif"
+      ],
+      [
+        "total",
+        "delta0",
+        "classical_total_delta0.gif"
+      ],
+      [
+        "total",
+        "dstep",
+        "classical_total_dstep.gif"
+      ]
+    ]
+  },
+  "wp_wall_s": 7216.55643848,
+  "classical_wall_s": 6836.38627713
+}

@@ -1,0 +1,10 @@
+run_completed = true
+mode = cap
+epsilon = 0.00782574
+absorbed_fraction = 0.992097
+N0 = 0.04114
+E_eV = 9.99269
+L_total = 20
+eta_Ha = -0.5
+k0 = 0.857
+N_STEPS = 13910

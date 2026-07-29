@@ -1,0 +1,7 @@
+{
+  "_comment": "COPY this to muon_xc_pick.json (same dir) and edit, then re-run orchestrate.py to start Phase 5. Candidates + rationale: docs/campaigns/muon_mass_fork/phase4_muon_xc_candidates.md",
+  "functional": "A_mass_rescaled_lda",
+  "baseline":   "B_naive_electron_lda",
+  "rationale":  "one-component all-muon HEG is exactly mass-scalable; compare correct r_s^mu=m*r_s vs naive electron-LDA at physical r_s",
+  "implement":  "inqkit LDA wrapper: feed r_s^mu = m*r_s, multiply e_xc by m"
+}

@@ -1,0 +1,41 @@
+[2026-07-09 23:58:21] orchestrator started (pid 3985254, pgid 3985254)
+[2026-07-09 23:58:21] GS not complete yet — waiting up to 3 h (relaunching if it died)
+[2026-07-09 23:59:52] no GS process found — (re)launching GS on GPU 0
+[2026-07-10 00:03:20] GS relaunch finished with exit 143
+[2026-07-10 00:05:50] no GS process found — (re)launching GS on GPU 0
+[2026-07-10 00:13:13] GS relaunch finished with exit 0
+[2026-07-10 00:15:43] no GS process found — (re)launching GS on GPU 0
+[2026-07-10 00:22:55] GS relaunch finished with exit 0
+[2026-07-10 00:25:26] no GS process found — (re)launching GS on GPU 0
+[2026-07-10 00:33:04] GS relaunch finished with exit 0
+[2026-07-10 00:35:34] no GS process found — (re)launching GS on GPU 0
+[2026-07-10 00:44:48] GS relaunch finished with exit 0
+[2026-07-10 00:47:18] no GS process found — (re)launching GS on GPU 0
+[2026-07-10 00:54:28] GS relaunch finished with exit 0
+[2026-07-10 00:56:59] no GS process found — (re)launching GS on GPU 0
+[2026-07-10 01:04:05] GS relaunch finished with exit 0
+[2026-07-10 01:06:35] no GS process found — (re)launching GS on GPU 0
+[2026-07-10 01:13:37] GS relaunch finished with exit 0
+[2026-07-10 01:16:07] no GS process found — (re)launching GS on GPU 0
+[2026-07-10 01:23:21] GS relaunch finished with exit 0
+[2026-07-10 01:25:52] no GS process found — (re)launching GS on GPU 0
+[2026-07-10 01:33:17] GS relaunch finished with exit 0
+[2026-07-10 01:35:47] no GS process found — (re)launching GS on GPU 0
+[2026-07-10 01:43:07] GS relaunch finished with exit 0
+[2026-07-10 01:45:38] no GS process found — (re)launching GS on GPU 0
+[2026-07-10 01:52:56] GS relaunch finished with exit 0
+[2026-07-10 01:55:27] no GS process found — (re)launching GS on GPU 0
+[2026-07-10 02:02:53] GS relaunch finished with exit 0
+[2026-07-10 02:05:23] no GS process found — (re)launching GS on GPU 0
+[2026-07-10 02:12:28] GS relaunch finished with exit 0
+[2026-07-10 02:14:58] no GS process found — (re)launching GS on GPU 0
+[2026-07-10 02:22:03] GS relaunch finished with exit 0
+[2026-07-10 02:24:34] no GS process found — (re)launching GS on GPU 0
+[2026-07-10 02:31:46] GS relaunch finished with exit 0
+[2026-07-10 02:34:16] no GS process found — (re)launching GS on GPU 0
+[2026-07-10 02:41:03] GS relaunch finished with exit 0
+[2026-07-10 02:43:33] no GS process found — (re)launching GS on GPU 0
+[2026-07-10 02:50:20] GS relaunch finished with exit 0
+[2026-07-10 02:52:50] no GS process found — (re)launching GS on GPU 0
+[2026-07-10 02:59:37] GS relaunch finished with exit 0
+[2026-07-10 03:02:07] no GS process found — (re)launching GS on GPU 0

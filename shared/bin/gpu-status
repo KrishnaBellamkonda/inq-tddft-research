@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# gpu-status — GPU occupancy + which processes (and users) hold each card.
+#
+# nvidia-smi is broken on this box ("Failed to initialize NVML: Driver/library
+# version mismatch"), so this tool avoids NVML entirely:
+#   * MEMORY  via a tiny cudaMemGetInfo probe (compiled once, cached).
+#   * PROCESSES via the /dev/nvidiaN device handles (fuser/lsof) -> ps for
+#     user / elapsed / %cpu / command. A process with a CUDA context on GPU N
+#     holds /dev/nvidiaN open, so this maps jobs to specific cards without NVML.
+#
+# Usage:  gpu-status
+set -uo pipefail
+
+NVCC="/lsc/opt/cuda-12.6.2/bin/nvcc"        # = config.sh INQ_CUDA_COMPILER
+PROBE="${TMPDIR:-/tmp}/.gpu_status_probe.${USER}"
+SRC="${TMPDIR:-/tmp}/.gpu_status_probe.${USER}.cu"
+
+# ---- compile the free/total memory probe once (recompile if this script is newer)
+if [ ! -x "$PROBE" ] || [ "${BASH_SOURCE[0]}" -nt "$PROBE" ]; then
+  cat > "$SRC" <<'EOF'
+#include <cuda_runtime.h>
+#include <cstdio>
+int main(){ size_t f,t;
+  if(cudaSetDevice(0)!=cudaSuccess){printf("ERR ERR\n");return 1;}
+  if(cudaMemGetInfo(&f,&t)!=cudaSuccess){printf("ERR ERR\n");return 1;}
+  printf("%zu %zu\n", f/1048576, t/1048576); return 0; }
+EOF
+  "$NVCC" "$SRC" -o "$PROBE" 2>/dev/null || { echo "gpu-status: probe compile failed (nvcc=$NVCC)"; }
+fi
+
+# ---- number of GPUs on the box
+NGPU=$(ls -d /proc/driver/nvidia/gpus/* 2>/dev/null | wc -l)
+[ "${NGPU:-0}" -eq 0 ] && NGPU=2
+
+pids_on_gpu() {   # list PIDs holding /dev/nvidia$1 (fuser, fallback lsof)
+  { fuser "/dev/nvidia$1" 2>/dev/null || lsof -t "/dev/nvidia$1" 2>/dev/null; } | tr ' ' '\n' | sort -u | grep -E '^[0-9]+$'
+}
+
+bar() {   # a little used/total bar; $1=pct
+  local p=$1 n=$(( $1 / 5 )) i out=""
+  for ((i=0;i<20;i++)); do [ $i -lt $n ] && out+="█" || out+="·"; done
+  printf "%s" "$out"
+}
+
+echo "================= GPU status ($(date '+%F %T'), host $(hostname -s)) ================="
+for g in $(seq 0 $((NGPU-1))); do
+  read -r free total < <(CUDA_VISIBLE_DEVICES=$g "$PROBE" 2>/dev/null)
+  if [ "${free:-ERR}" = "ERR" ] || [ -z "${total:-}" ]; then
+    printf "GPU %s : memory probe failed\n" "$g"
+  else
+    used=$(( total - free )); pct=$(( total>0 ? used*100/total : 0 ))
+    printf "GPU %s : [%s] %5d / %5d MB used (%2d%%), %5d MB free\n" \
+           "$g" "$(bar $pct)" "$used" "$total" "$pct" "$free"
+  fi
+  # processes on this card
+  mapfile -t PIDS < <(pids_on_gpu "$g")
+  if [ "${#PIDS[@]}" -eq 0 ]; then
+    echo "        (no compute processes holding /dev/nvidia$g)"
+  else
+    printf "        %-8s %-8s %-10s %5s  %s\n" PID USER ELAPSED %CPU COMMAND
+    for p in "${PIDS[@]}"; do
+      # read splits on whitespace: rest (args, may contain spaces) -> cmd
+      read -r u e c cmd < <(ps -p "$p" -o user=,etime=,pcpu=,args= 2>/dev/null)
+      [ -z "${u:-}" ] && continue
+      printf "        %-8s %-8s %-10s %5s  %s\n" "$p" "$u" "$e" "$c" "${cmd:0:88}"
+    done
+  fi
+  echo
+done
+echo "Tip: a card is effectively free at ~20000+ MB free.  (nvidia-smi is down: NVML mismatch.)"

@@ -1,0 +1,140 @@
+#!/usr/bin/env bash
+# inq-run — compile and run a single INQ .cpp configuration in-place
+#
+# Usage (from inside a run directory):
+#   inq-run              # auto-detects the single .cpp file
+#   inq-run run.cpp      # explicit file
+#   inq-run --cpu        # CPU-only build (no CUDA)
+#   inq-run --reconfig   # force cmake reconfiguration
+#
+# On first call: configures cmake, downloads deps (~1-2 min, one-time only)
+# On subsequent calls: only recompiles if the .cpp changed (fast)
+#
+# The executable is placed in the run directory (next to the .cpp file).
+# results/ is created automatically if absent.
+
+set -euo pipefail
+
+# ── Load shared config ────────────────────────────────────────────────────────
+SHARED_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=/dev/null
+source "$SHARED_DIR/config.sh"
+TDDFT_ROOT="$(cd "$SHARED_DIR/.." && pwd)"
+INQKIT_INCLUDE="$TDDFT_ROOT/inq-stack/include"
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Parse arguments
+ENABLE_CUDA="ON"
+RECONFIG=0
+CPP_FILE=""
+
+for arg in "$@"; do
+    case "$arg" in
+        --cpu)      ENABLE_CUDA="OFF" ;;
+        --reconfig) RECONFIG=1 ;;
+        *.cpp)      CPP_FILE="$arg" ;;
+        -h|--help)
+            sed -n '/^# /s/^# //p' "$0"
+            exit 0
+            ;;
+        *) echo "Unknown argument: $arg"; exit 1 ;;
+    esac
+done
+
+# Auto-detect .cpp if not specified
+if [[ -z "$CPP_FILE" ]]; then
+    mapfile -t cpp_files < <(find . -maxdepth 1 -name "*.cpp" -type f)
+    if [[ ${#cpp_files[@]} -eq 0 ]]; then
+        echo "Error: no .cpp file found in $(pwd)"
+        exit 1
+    elif [[ ${#cpp_files[@]} -gt 1 ]]; then
+        echo "Error: multiple .cpp files found — specify one:"
+        printf '  %s\n' "${cpp_files[@]}"
+        exit 1
+    fi
+    CPP_FILE="${cpp_files[0]}"
+fi
+
+CPP_ABS="$(realpath "$CPP_FILE")"
+RUN_DIR="$(dirname "$CPP_ABS")"
+TARGET="$(basename "$CPP_ABS" .cpp)"
+BUILD_DIR="$RUN_DIR/build"
+
+mkdir -p "$BUILD_DIR"
+mkdir -p "$RUN_DIR/results"
+
+echo "───────────────────────────────────────"
+echo " inq-run"
+echo "   target : $TARGET"
+echo "   source : $CPP_ABS"
+echo "   gpu    : $ENABLE_CUDA"
+echo "───────────────────────────────────────"
+
+# ── Generate CMakeLists.txt inside build/ ─────────────────────────────────────
+# Written fresh every time so path changes are picked up automatically.
+cat > "$BUILD_DIR/CMakeLists.txt" << ENDOFCMAKE
+cmake_minimum_required(VERSION 3.21)
+
+option(ENABLE_CUDA "Enable CUDA GPU support" OFF)
+
+if(ENABLE_CUDA)
+    project(${TARGET} CXX Fortran CUDA)
+    set(ENABLE_GPU ON)
+    set(GPU_LANGUAGE CUDA)
+else()
+    project(${TARGET} CXX Fortran)
+endif()
+
+# Pull in INQ (headers + linked libraries). EXCLUDE_FROM_ALL means only
+# the targets actually needed by this executable are built.
+add_subdirectory(${INQ_SOURCE} inq EXCLUDE_FROM_ALL)
+
+add_executable(${TARGET} ${CPP_ABS})
+target_link_libraries(${TARGET} PRIVATE inq)
+target_include_directories(${TARGET} PRIVATE ${INQKIT_INCLUDE})
+
+
+# Place the binary in the run directory, next to the .cpp file.
+set_target_properties(${TARGET} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${RUN_DIR})
+
+if(ENABLE_GPU)
+    set_source_files_properties(${CPP_ABS} PROPERTIES LANGUAGE \${GPU_LANGUAGE})
+endif()
+ENDOFCMAKE
+
+# ── Configure ─────────────────────────────────────────────────────────────────
+cd "$BUILD_DIR"
+
+NEEDS_CONFIG=0
+[[ ! -f CMakeCache.txt ]] && NEEDS_CONFIG=1
+[[ "$RECONFIG" -eq 1 ]]   && NEEDS_CONFIG=1
+
+if [[ "$NEEDS_CONFIG" -eq 1 ]]; then
+    echo "==> Configuring (this takes ~1 min on first run)..."
+    if [[ "$ENABLE_CUDA" == "ON" ]]; then
+        cmake . \
+            -DENABLE_CUDA=ON \
+            -DCMAKE_CUDA_ARCHITECTURES="$INQ_CUDA_ARCH" \
+            -DCMAKE_CUDA_COMPILER="$INQ_CUDA_COMPILER" \
+            -DPython_EXECUTABLE="$INQ_PYTHON_EXE"
+    else
+        cmake . \
+            -DENABLE_CUDA=OFF \
+            -DPython_EXECUTABLE="$INQ_PYTHON_EXE"
+    fi
+else
+    echo "==> cmake already configured (use --reconfig to force)"
+fi
+
+# ── Build ─────────────────────────────────────────────────────────────────────
+echo "==> Building $TARGET..."
+cmake --build . --target "$TARGET" -j"$(nproc)"
+
+# ── Run ───────────────────────────────────────────────────────────────────────
+echo "==> Running $TARGET..."
+echo "───────────────────────────────────────"
+cd "$RUN_DIR"
+exec env \
+    INQ_SHARE_PATH="$INQ_SHARE_PATH" \
+    PSEUDOPOD_SHARE_PATH="$PSEUDOPOD_SHARE_PATH" \
+    "./$TARGET"
