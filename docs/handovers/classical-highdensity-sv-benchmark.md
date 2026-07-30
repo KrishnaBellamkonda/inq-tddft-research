@@ -497,3 +497,104 @@ energies finite & smooth, no NaN, frames writing (~2.3 s/step → ~62 min total)
 monitor armed (exits on `run_completed=true` or proc death). PENDING: run completion →
 execute A/B notebook → `pilot_direct/DIRECT_SUMMARY.md` (transient gone? S_direct vs S_poisson?
 trajectory agreement? adopt-for-sweep verdict). Campaign frontmatter NOT flipped.
+
+---
+
+## Milestone 2026-07-30 — direct-potential ledger fix + kink-free v=4.5 replica
+
+**Diagnosis (proven on the v-sweep data, not asserted).** The user flagged kinks in
+E_PB/E_PS/E_PP at the projectile's box exit and an unphysical E_PS. Root cause: routing a
+localised, NET-charged projectile through the x,y-periodic `poisson::solve`. Two artifacts,
+both confirmed:
+- **Exit kink** = the Gaussian charge clips off the z-wall (`norm_proj` 1→0 at z=42.5); all
+  curvature spikes sit at z≈42.5.
+- **E_PS drift (NOT a gauge)** = periodic replication of the net charge → a charged SHEET
+  (linear-in-z potential): recorded e_ps linear, slope −0.35 vs sheet −2πN/A=−0.51 Ha/Bohr
+  (R²=0.89). Localised erf/r gives e_ps POSITIVE →0. Density DEPLETES at the projectile →
+  applied sign already correct (do NOT reverse). See memory
+  reference_projectile_charge_sheet_inflates_stopping.
+
+**Fix (in repo).** Direct-potential path existed for the DYNAMICS (`pilot_direct`), but its
+DIAGNOSTIC ledger was still charge-based (so E_PP/E_PS/E_PB still kinked). Added:
+- `inqkit/jellium/interaction_energies.hpp::compute_coulomb_direct` (e_pp=1/(2σ√π) analytic
+  const; e_ps=+∫n_slab·V; e_pb=−∫n₊·V; slab terms Poisson).
+- `scripts/classical_highdensity_sv/dyn_direct/run.cpp` = pilot_direct + direct perturbation
+  (`moving_gaussian_projectile_potential`) + direct force (`projectile_force_direct_z`) +
+  direct ledger. Built (98 MB binary). Launch script `dyn_direct/launch_v4p5_direct.sh`.
+
+**v=4.5 replica (fastest previous projectile), GPU 1, exact old env, 1074 steps, COMPLETE.**
+Results (`hypotheses/classical_highdensity_sv/dyn_direct/run_v4p5_direct.ipynb`, 0 errors,
+density GIF embedded at top; OLD-charge vs NEW-direct overlays):
+- **No kink:** all NEW curvature maxima IN-SLAB (z≈−8), old at z=42.2. ✓
+- e_ps positive & monotone →0 (5.8→3.1→0.59 Ha); e_pp const 0.7979 Ha (std 2e-16). ✓
+- Conservation drift 3.3e-3 eV, across-wall std 1.3e-5 eV. ✓
+
+**IMPORTANT secondary finding.** The sheet DROVE the old dynamics (a ~3.5 eV ramp across the
+slab), so it INFLATED the stopping ~20–35%: in-slab KE-loss OLD 5.27 vs NEW 3.97 eV; controlled
+v=2 pilot pair 23.1 vs 19.2 eV. **S(v=4.5) 0.28 → 0.18 eV/Bohr.** ⇒ the entire old charge-based
+S(v) sweep is sheet-inflated and must be RE-RUN with `dyn_direct`.
+
+**Tests.** T1 unit `test_projectile_self_energy.cpp` (self-energy const vs numeric quadrature)
+PASS; T2–T5 (e_ps→0, no-kink curvature, conservation, in-slab agreement) PASS in the notebook.
+Catalogue rows added.
+
+**PENDING / next.** (a) User to review the notebook. (b) Re-run the full S(v) sweep (v=2.0…4.5)
+with `dyn_direct` for the corrected S(v) curve; then the WP twin comparison. (c) The CAP
+classical runs still need the extensive-energy (×norm) rescale — separate from this fix.
+
+---
+
+## Milestone 2026-07-30 (b) — autonomous direct-potential S(v) sweep launched (both GPUs)
+
+**Freed GPU 0:** stopped the WP energy-plateau run `scripts/replica_lz160_1cap/wp` (nocap,
+PID 2918523) at step 4800/8000 (last checkpoint 14:39, valid). RESUMABLE:
+`cd .../replica_lz160_1cap/wp && WP_RESUME=1 WP_OUT=nocap WP_N_STEPS=8000 CUDA_VISIBLE_DEVICES=<g> ./run`
+(its `cap` sibling is already complete at 8000). Both GPUs then free.
+
+**Orchestrator:** `scripts/classical_highdensity_sv/orchestrate_direct.py` (detached,
+`dyn_direct/orchestrate.log`). Runs the direct-potential replicas v=2.0,2.5,3.0,3.5,4.0
+(v4.5 already done) on BOTH GPUs (one run/GPU, refills as they finish), idempotent
+(skips run_completed), never self-blocks. Uses the `dyn_direct/run` binary (direct
+perturbation + direct force + `compute_coulomb_direct` ledger). Started 14:58: v2p0 on
+GPU0, v2p5 on GPU1, both propagating.
+
+**Observables stored per run (user requirement, confirmed):**
+observables.csv = full DFT decomposition (energy_total/kinetic/hartree/xc/external/
+nonlocal/ion); projectile.csv = proj_z, proj_vz (position+velocity vs t), energy_proj_ke,
+energy_proj_bg_ideal, force_z; interactions.csv = direct pairwise ledger; density frames;
+resumable checkpoint.
+
+**Autonomy:** per-run email (with S from gauge-free KE-loss across the slab /25) + a
+run notebook (`build_run_notebook.py <vtag>`); final synthesis `S_of_v_direct.{csv,png}`
+in hypotheses/.../dyn_direct + a completion email overlaying the old (sheet-inflated) curve.
+ETA ~2.5 h (parallel).
+
+**WP analogues:** qsp_phase5/wp exists (v=1.3,3,4,5,6) but DIFFERENT system (r_s≈5.66,
+N=82, 50x50x90, CAP) — NOT a matched twin of this r_s=4.18 CAP-free slab. A true WP twin
+at r_s=4.18 would need a separate matched sweep.
+
+---
+
+## Milestone 2026-07-30 (c) — direct-potential S(v) sweep COMPLETE
+
+All 6 velocities re-run with the direct-potential fix (dyn_direct), gauge-free KE-loss
+across the equal-potential slab (-12.5..+12.5)/25 Bohr. GPU1 was intermittently
+contended (external container job, 2->50 s/step) so v=2.5 was killed and the sweep
+finished GPU0-only (finish_gpu0.py); v=4.0 was slotted onto GPU1 once it freed. Done
+20:56. Outputs in hypotheses/classical_highdensity_sv/dyn_direct/: S_of_v_direct.{csv,png},
+run_v{2p0,2p5,3p0,3p5,4p0,4p5}_direct.ipynb (all 0-error, density GIFs embedded).
+
+Corrected S(v) (eV/Bohr), vs old charge-based (sheet-inflated):
+  v=2.0: 0.76 (old 1.1)   v=2.5: 0.51 (0.97)   v=3.0: 0.36 (0.71)
+  v=3.5: 0.26 (0.51)      v=4.0: 0.20 (0.37)   v=4.5: 0.16 (0.28)
+Clean monotonic Bethe tail, uniformly ~30-45% below the sheet-inflated sweep — the
+periodic charged-sheet was the over-estimate (reference_projectile_charge_sheet_inflates_stopping).
+
+Full observables stored per run: observables.csv (E_total/kinetic/hartree/xc/external/
+nonlocal/ion), projectile.csv (proj_z, proj_vz vs t, KE, U_proj_bg, force_z),
+interactions.csv (direct P/S/B ledger), density frames, resumable checkpoint.
+
+NOTE (direct runs): E_total does NOT plateau (1/r tail; projectile never dissolves) —
+stopping comes from KE-loss (converged at slab exit), not an E_total plateau. Runs are
+extendable (LJ_RESUME=1 + larger LJ_N_STEPS) but extension won't flatten E_total; use
+E_total - e_ps for a plateau view. WP twin at r_s=4.18 on this CAP-free box NOT yet run.

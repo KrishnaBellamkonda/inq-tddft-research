@@ -344,3 +344,220 @@ GS checkpoint: `.../shared_gs/slab_n102_L25x25x140_w0p5_h0p5`.
   in-built CAP, inq-study, ETRS, energy/momentum writers).
 - CAP mechanism: `inq-study` diff in `self_consistency.hpp` (complex vscalar +
   `real()` on external energy so CAP's imaginary term never inflates energetics).
+
+## Milestone 2026-07-29 — IN-RUN extensive-kinetic observable (norm-division fix)
+
+Prelude to the next localised-jellium run design: fix INQ's per-particle
+(norm-divided) `energy_kinetic` (energy.hpp:55) at the WRITE layer, no engine
+edit. Plan section: `docs/plans/norm-corrected-stopping-power.md` → "Extension
+(2026-07-29)". Root-cause note: `docs/notes/inq-energy-normalization-error.md`.
+
+### Done (verified)
+- **`inqkit::observables::OrbitalKineticStats`**
+  (`/local/data/public/skcb2/tddft/inq-stack/include/inqkit/observables/orbital_kinetic_stats.hpp`):
+  per-orbital BARE T_i = ½(dV/N_grid)Σk²|ψ̃_i|² and norm_i (physical units;
+  INQ's to_fourier is an unnormalized DFT — raw Parseval sum = (N_grid/dV)·∫|ψ|²dV,
+  verified numerically: raw norm 13,183,593.75 = 843750/0.064 for norm-1 orbital).
+  CSV: kin_bare_total (extensive), kin_normdiv_total (identity reconstruction of
+  INQ's reported kinetic — matched 14.7769538333 Ha to all printed digits at t=0,
+  = analytic ½k₀²+3/(4σ₀²)), norm_total, per-orbital columns, wall_ms self-timing.
+- **Vacuum `run.cpp` extended**
+  (`/local/data/public/skcb2/tddft/ResearchProject/systems/vacuum/scripts/wp_traversal_energy/run.cpp`):
+  `WP_CAP2=1` double-sided CAP (−z band `absorbing(η,−0.5+w/2,w)` +z band via
+  `perturbations::sum`; contravariant/fraction convention verified in source),
+  `WP_EXTKIN`/`WP_EXTKIN_EVERY`, propagate wall-time in run_summary, final
+  checkpoint (electrons.save + rt_state.txt).
+- Cutoff guard PASS (σ₀=3, E=400 eV, h=0.4 → tail 0.00%, E_cut=839 eV).
+- Comparison script:
+  `/local/data/public/skcb2/tddft/ResearchProject/systems/vacuum/hypotheses/cap_norm_investigation/extensive_kinetic/compare_extkin.py`.
+
+### ✅ VALIDATED (2026-07-29 02:11) — all acceptance checks PASS
+- Pair completed (`dcap_extkin` + `dcap_baseline`, two-sided CAP, 700 steps).
+  First TWO attempts crashed at step ~420: **/local/data was 100% FULL** (VTI
+  writer ENOSPC — not the mid-run rebuild as first suspected). Fixed by
+  WP_WF_EVERY=700 (t=0+final frames only; comparison is CSV-based). Disk later
+  freed to 125G by someone else — still tight, USER SHOULD REVIEW.
+- **Identity EXACT**: Σocc·T_i/norm_i == energies.csv:kinetic, 0.0 Ha at all
+  701 steps. t=0 bare kinetic == analytic 14.777 Ha.
+- **Fix works**: E_reported(final)=383 eV (pinned at remnant mean, norm 3.5e-6)
+  vs E_corr → 0.00 eV == E0·norm (captured 100.0% of 402 eV). Post-hoc route
+  (e_kin_ha·norm) agrees with in-run bare to 2.5e-9 eV.
+- **Cost**: 0.42 ms/step self-timed (0.14% of the ~300 ms step, 1 orbital);
+  run-level ON−OFF Δ = −15 ms/step (noise). Jellium-162: expect a few % at
+  every-step cadence (one extra set-FFT vs ETRS's several per step); measure in
+  pilot; WP_EXTKIN_EVERY available.
+- Results in `docs/notes/inq-energy-normalization-error.md` (§ IN-RUN FIX
+  VALIDATED), test-catalogue row added, figs+summary in
+  `systems/vacuum/hypotheses/cap_norm_investigation/extensive_kinetic/`.
+
+### Next
+- Wire OrbitalKineticStats into the next localised-jellium run.cpp (all 163
+  orbitals, WP_EXTKIN_EVERY from pilot timing); design the run per the
+  2026-07-29 recap (extensive ledger + explicit CAP-sink bookkeeping).
+
+## Milestone 2026-07-29 — replica_lz160_1cap CRASHED on full disk; ~130 GB freed (VTI prune, user-approved)
+
+### What happened
+- The LZ=160 one-sided-CAP replica run
+  (`/local/data/public/skcb2/tddft/ResearchProject/systems/localised_jellium/scripts/replica_lz160_1cap/`,
+  GPU 0, 8000 steps) **aborted 2026-07-28 20:54 at step 4382** (t = 87.6 a.u.,
+  ~55%): `VTIImageDataWriter` failed writing
+  `results/cap/raw/vti/density_delta/density_delta_t004382.vti` → std::runtime_error
+  → abort. Cause: `/local/data` was **100% full (0 bytes free)**. Physics was clean
+  (E ≈ −997.71 Ha, ~7 s/step, no instability). Failure email was sent by the
+  dispatcher. The no-CAP leg never started.
+- **Recoverable:** interior checkpoint at `results/cap/rt_ckpt/` with
+  `last_step=3200`, t=64, 75 states. Resume: `WP_RESUME=1 WP_GS_DIR=... WP_CAP_ETA=-0.7
+  WP_OUT=cap WP_N_STEPS=8000 WP_CKPT_EVERY=1600 inq-run` from the `wp/` dir
+  (loses 1182 steps ≈ 2.3 h). Observables on disk up to the crash.
+
+### Disk cleanup (DESTRUCTIVE, user-approved 2026-07-29: "Remove VTI dirs of superseded runs")
+- Deleted **only `results/raw/vti/` directories** of 16 old
+  `systems/jellium/run_*` runs, each strictly name-superseded by a completed
+  `_v2`/`_v3`/`_attempt2` twin (twin verified to have non-empty observables) and
+  with zero VTI references in hypotheses/, inqview, docs/. All CSVs, observables,
+  run_summary, checkpoints kept. Freed ~130 GB → **125 GB now available (99%)**.
+- Deleted (VTI only): classical L30 highdens E50/E300; classical L50 E50, E600;
+  wp L30 highdens_sigma1 E50/E100/E200/E300; wp L50 E300, E50, E600,
+  E20_sigma1, E25_sigma1, E50_sigma1, E200_sigma1, E300_sigma1.
+- **SPARED deliberately:** `run_classical_n162_L50_E100` + `run_wp_n162_L50_E100`
+  (E100 case-study pair — VTIs referenced by
+  `docs/reports/classical-vs-wp-case-study.md` and
+  `docs/reports/14-05-2026-meeting-emilio/case_study_E100eV.py`),
+  `run_wp_n162_L50_E100_sigma1` (VTIs used by
+  `docs/reports/2026-05-21-meeting-emilio/build_axial_gifs.py` / `build_density_diff.py`),
+  `run_classical_n162_L30_E100_highdens` (its _v2 twin has EMPTY observables — old
+  run may be the good one), all `_wf` σ-sweep pairs (old runs hold WP-included
+  density, `_wf` hold bath-only — different fields, not redundant).
+
+### Open / caution
+- **125 GB may NOT cover both remaining legs**: CAP remainder (~4800 steps ≈
+  40 GB VTI) + full no-CAP 8000-step leg (~85 GB) ≈ 125 GB — zero margin.
+  Options before relaunch: prune Tier-2 (qsp_phase2/4 VTIs, ~80 GB, user approval
+  needed) or reduce VTI cadence for the no-CAP leg.
+- Ranked deletion-candidate list (Tiers 1–3) delivered in-session 2026-07-29;
+  only Tier 1a executed.
+
+### 2026-07-29 second prune pass (user-approved: "remove more of the wf, v1 superseded")
+- Deleted VTI dirs of the three `_wf`-superseded σ runs (successors verified
+  complete, zero VTI references): `run_wp_n162_L50_E100_sigma0p5` (15G),
+  `_sigma3` (19G), `_sigma8` (20G) → **178 GB now free (98%)**.
+- **`run_wp_n162_L50_E100_sigma1_v2` SPARED — do not treat v3 as its successor:**
+  all report1 analysis scripts (`stopping_power_data.py`, `fig_matched_pair.py`,
+  `fig_gs_decomposition*.py`) consume **v2**; `sigma1_v3` has ZERO analysis
+  mentions (appears to be an abandoned later experiment, ~15G — candidate for a
+  future pass if user confirms it is dead).
+- Still spared (referenced by report/meeting figure scripts): E100 case-study
+  pair + `run_wp_n162_L50_E100_sigma1` (v1) — ~47 GB more if user releases them.
+
+### 2026-07-29 02:32 — replica RESUMED (launched, verified propagating)
+- New script `.../replica_lz160_1cap/resume_jellium_replica.sh` (setsid-detached,
+  survives session; log `jellium_replica_resume.log`): CAP leg `WP_RESUME=1` via
+  the EXISTING `wp/run` binary (deliberately NOT inq-run — no rebuild of a
+  possibly-drifted source; binary is the Jul-28 inq-study CAP build), then chains
+  the fresh no-CAP 8000-step leg + COMPLETE email, mirroring the original script.
+- Pre-flight: GPU 0 free (extkin test DONE marker), 178 GB disk free vs ~125 GB
+  projected need.
+- **Restore verified bit-consistent**: resumed step 3200 e = −997.341832913767
+  == original log at step 3200 (all printed digits). ~10 s/step → CAP leg done
+  ≈ +9–13 h, no-CAP ≈ +15–22 h after that. Segment CSVs: `*.from3200.csv`.
+- Post-processing must CONCATENATE `observables*.csv`/segment files in step order
+  (final-timestep-checkpoint rule).
+
+### 2026-07-29 02:46 — resume attempt 1 crashed (VTI collision); FIXED, attempt 2 running
+- Attempt 1 aborted at step 3210: `VTIImageDataWriter: file already exists and
+  overwrite=false: .../wavefunction_wp/wavefunction_t003210.vti`. Cause: resume
+  writers open with `overwrite=!RESUME`, but the ORIGINAL run died at 4382 —
+  PAST the 3200 checkpoint — leaving orphan frames 3201–4382 that the resumed
+  (recomputing) propagation must rewrite.
+- Fix: deleted the 2599 orphan frames with step > 3200 across all five VTI dirs
+  (density_delta 1182, density_delta_coarse 1181, density_total 59, density_wp 59,
+  wavefunction_wp 118), incl. the truncated `density_delta_t004382.vti`.
+- **General rule for any resume after a crash BEYOND the last checkpoint: prune
+  every per-step output with step > last_step before relaunching.**
+- Attempt 2 launched 02:46, verified past the collision point (step 3234,
+  e drifting smoothly, ~10 s/step). Failure emails fired correctly on both aborts.
+- 02:52 full health check PASSED: e(3250)/e(3270) bit-identical to original log;
+  VTI frames rewriting past 3210 with no overwrite errors; segment CSVs
+  (`*.from3200.csv`) start at 3201 with NO duplicate steps (attempt 2 truncated
+  attempt 1's rows); ~7 s/step → CAP leg ETA ≈ 12:00 same day; 189 GB free.
+
+## 2026-07-29 (later): extkin_plateau_E100 wired — first jellium run with the IN-RUN fix
+
+User-interviewed design (full decision log in
+`docs/plans/norm-corrected-stopping-power.md` "Run design (2026-07-29)"):
+35×35×120 box h=0.5; slab N=92 / r_s=4.0 exact / thickness 20.13 Bohr
+(faces ±10.07, edge 0.5); 46 occ + 16 extra states, T≈100 K; WP σ=1.5 /
+100 eV, launch z=−17.5 (5σ rule met; ×1.58 free-dispersion at slab entry
+ACCEPTED by user); two-sided CAP 15 Bohr/side η=−1.0 (inner edges ±45);
+dt=0.04 × 1500 steps (t=60 a.u.). OrbitalKineticStats ALL states EVERY step.
+USER SCOPE CUTS (recorded): no no-CAP twin, no dt=0.04 vacuum gate — first
+CAP run at this dt, absorption quality unverified; E_plateau single-source.
+
+Files (all new, untracked):
+- `ResearchProject/systems/localised_jellium/shared/configs/slab_n92_L35x35x120_w0p5.hpp`
+- `.../scripts/extkin_plateau_E100/{gs,wp}/run.cpp` (clones of
+  wp_cap_energy_plateau + OrbitalKineticStats + η=−1.0 + per-step timing +
+  final ckpt; resumable)
+- `.../scripts/extkin_plateau_E100/run_extkin_plateau.sh` (autonomous:
+  GS → CAP → notebook; emails; EXTKIN_GPU env; DONE marker)
+- `.../hypotheses/extkin_plateau_E100/build_extkin_plateau_report.py`
+  (partial-tolerant; density GIF + E_corr/plateau/identity/cost cells)
+
+Gates: cutoff guard PASS (0.00% aliased, k_Nyq=6.28 vs p0+3σp=4.13).
+Compile probes + launch: see below / next milestone.
+
+GPU NOTE: the replica campaign RESUMED 02:39 on GPU 0 (CAP run from step
+3200/8000, ~7–12 s/step → many hours + no-CAP after). extkin_plateau launches
+on GPU 1 (EXTKIN_GPU=1). Revised wall estimate from replica timing: ~2–4 h,
+not minutes. /local/data at 99% (125G free) — run writes ~2 GB.
+
+### Launch (2026-07-29 ~03:20): extkin_plateau_E100 RUNNING on GPU 1
+
+Compile probes PASS (gs + wp, inq-study). Dispatcher setsid-detached
+(`run_extkin_plateau.sh`, pid 2845144, EXTKIN_GPU=1) — VERIFIED live: GS SCF
+iterating all 62 states (46 occ + 16 extra), top eigenvalues ≈ −0.073 Ha.
+Fully autonomous: GS → CAP (1500 steps, ckpt/200 + final) → notebook
+auto-build; email milestones via notify.py. Expected ~2–4 h total.
+Log: `.../scripts/extkin_plateau_E100/extkin_plateau.log`;
+DONE marker: `EXTKIN_PLATEAU_DONE.txt`; results: `wp/results/cap/`.
+To extend afterwards: WP_RESUME=1 + larger WP_N_STEPS (final ckpt present).
+Reminder of open caveats: dt=0.04 CAP absorption ungated; no no-CAP twin.
+GPU 0 still owned by the replica resume (step ~3300/8000 + no-CAP after).
+
+### COMPLETE (2026-07-29 13:12): extkin_plateau_E100 results
+
+Run finished (1500/1500 steps, t=60; ~10 h wall — ~25 s/step, ~2× slowed by
+host/disk contention with the concurrent replica on GPU 0). Final ckpt at 1500
+(extendable). Notebook built+executed 0 errors after fixing a builder API
+mismatch (_nbreport md()/code() RETURN cells, no anchor kwarg; cells list ->
+build(cells, path)): `hypotheses/extkin_plateau_E100/extkin_plateau_E100_study.ipynb`
+(77 KB, GIF path-referenced, 76 frames).
+
+Headline (2 s.f.):
+- **E_plateau = 4.1 eV** (corrected E_corr − E_GS; windows 4.6/4.2/4.1 eV,
+  final drift −0.006 eV/a.u. — converged; residual WP norm 9.7e-4 ⇒ ≤0.1 eV).
+- Reported total would say 22 eV — the 17.8 eV norm-division artifact
+  inflates deposition ~5×; removed in-run.
+- Identity EXACT with 62 interacting states: 0.0 Ha, all 1501 steps.
+- Absorption 99.9% (9.7e-4 vs ~8e-4 predicted) ⇒ dt=0.04 CAP behaves as the
+  dt=0.01 calibration — ungated-dt caveat empirically retired.
+- Bath norms 0.99999999999 (CAP does not drain the slab).
+- OrbitalKineticStats cost 0.6%/step (143 ms of 23.7 s), every step, 62 states.
+
+Open: no no-CAP twin (user cut). Replica still on GPU 0 (step ~5240/8000).
+
+### 2026-07-29 (later): stopping-power sections added to the study notebook
+
+Two new sections in extkin_plateau_E100_study.ipynb (builder updated, executed
+0 errors): (1) "Orbital-free stopping power" — S = E_pl/L = 4.1/20.13 =
+**0.20 eV/Bohr** vs Bethe bulk point-charge (ω_p²/v²)ln(2v²/ω_p) =
+0.73 eV/Bohr (ratio 0.28; suppression attributed — inference — to
+20-Bohr slab ≪ 79-Bohr wake wavelength, packet form factor, subbands).
+(2) "Orbital-dependent stopping power" — position via ∫⟨p_z⟩dt (every step)
+vs density centroid (VTI every 10 steps + z_mean every 100): agree to
+0.25 Bohr while norm>0.995; orbital KE 109.9→108.4 eV across the slab →
+S_orb = **0.07 eV/Bohr** (endpoint AND mid-slab gradient). S_orb ≈ ⅓·S_free
+QUANTIFIES the standing caveat: the WP orbital's KE loss misses ~2/3 of the
+deposition (Hartree/xc channels) — total-energy deposition remains the
+primary quantum stopping measure. New figs: fig_wp_position/ke_time/ke_position.

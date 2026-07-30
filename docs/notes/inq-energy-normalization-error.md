@@ -105,6 +105,65 @@ The running hypothesis is being tested by the suite in
   inq-study; `WP_ABS`/`WP_PROP` switches added to
   `ResearchProject/systems/vacuum/scripts/wp_traversal_energy/run.cpp`.
 
+### Cross-run results (2026-07-28, all 13 vacuum runs complete)
+
+Aggregation `.../wp_traversal_energy/aggregate_investigation.py` ->
+`results/investigation_summary.csv`. Key column is `E_ext = E_reported*norm`.
+
+- **Phase 1 (eta-sweep, 5 runs).** ΔE_reported grows with |η| (+1.3 -> +14.0 eV) but
+  ONLY because stronger CAPs absorb more (norm_T 0.44 -> 0.00). `E_ext/E0 == norm_T`
+  to 3 d.p. in every run. The rise tracks the absorbed fraction, not η per se ->
+  falsifier (b) (reflection) FAILS.
+- **Phase 2 (partial-absorption, 3 runs).** `E_ext/E0` vs `norm` is the identity line
+  y=x: 0.708/0.549/0.317 at norm 0.707/0.548/0.316. Cleanest confirmation.
+- **Phase 3 (DECISIVE — the surprise, RESOLVED).** Both mask absorbers show ~+19 eV
+  in `E_reported` (ETRS +18.86, CN +19.15). On the reported energy alone, falsifier
+  (c) (a norm-preserving absorber still rises) appears to fire. BUT `E_ext` separates
+  them: **ETRS -> E_ext/E0 = 0.000** (pure normalization artifact, energy correctly
+  absorbed); **CN -> E_ext/E0 = 1.048** (extensive energy genuinely ROSE 4.8%).
+  Crank-Nicolson does not merely preserve norm — it RENORMALIZES the sin²-clipped
+  orbital every step (`crank_nicolson.hpp:139-165`), and clip-then-renormalize injects
+  real high-k content. So **mask+CN is not a clean norm-preserving control**; it pumps
+  real energy, a DIFFERENT mechanism from the CAP artifact. The physics CAP runs use
+  ETRS + `perturbations::absorbing` (norm-losing), where `E_ext = E_reported*norm` is
+  the correct extensive energy. **The normalization hypothesis STANDS; the red flag
+  was a Crank-Nicolson renormalization confound, exposed by the `E_ext` diagnostic.**
+
+Falsifier scorecard: (a) E_ext tracks norm — HELD (Phases 1,2); (b) residual scales
+with η→reflection — FAILS (collapses on absorbed-fraction); (c) norm-preserving
+absorber still rises — APPARENT-yes on E_reported but E_ext reveals it as energy
+pumping, not the artifact; (d) rise without norm loss — only under CN's active
+renormalization, itself a norm-changing operation. Phases 4 (numerics), 5 (spectral
+width), 1b (W-sweep), 1c (two-sided) not yet run.
+
+Notebooks: per-run deep dives at `results/<run>/report/run_report.ipynb`; phase
+study notebooks + index at
+`ResearchProject/systems/vacuum/hypotheses/cap_norm_investigation/`.
+
+### IN-RUN FIX VALIDATED (2026-07-29, double-sided-CAP vacuum test)
+
+`inqkit::observables::OrbitalKineticStats` (per-orbital BARE kinetic + norm,
+one set-FFT per recorded step, physical units — INQ's to_fourier is an
+unnormalized DFT, scale dV/N_grid) validated on `dcap_extkin` vs
+`dcap_baseline` (LZ=60, CAP_L=15 BOTH ends, launch z=0, η=−3.5, 700 steps):
+
+- **Identity EXACT:** max |Σocc·T_i/norm_i − energies.csv:kinetic| = 0.0 Ha at
+  ALL 701 steps — we compute the same per-orbital T_i INQ reduces, minus /norm.
+- **Artifact + fix:** E_reported(final) = 383 eV (pinned at the remnant mean,
+  norm 3.5e-6) vs E_corrected = total − kinetic + kin_bare → 0.00 eV,
+  == E0·norm throughout (captured 100.0% of the 402 eV).
+- **Post-hoc route equivalent:** e_kin_ha·norm matches kin_bare to 2.5e-9 eV
+  (single-orbital case).
+- **Cost negligible:** observable self-timing 0.42 ms/step vs ~300 ms/step
+  run cost (0.14%, 1 orbital, 844k grid); run-level ON−OFF wall Δ = −15 ms/step
+  (i.e. within run-to-run noise, 30× the observable's own cost). Jellium-162
+  estimate: ~one extra forward set-FFT per recorded step vs ETRS's several
+  FFT passes per step → a few % at every-step cadence; measure in pilot,
+  reducible via WP_EXTKIN_EVERY.
+
+Artifacts: `.../hypotheses/cap_norm_investigation/extensive_kinetic/`
+(fig_extkin_energies.png, fig_extkin_identity_timing.png, extkin_summary.txt).
+
 ## Related
 
 Memory [[reference_inq_reports_normalized_energy]]; diagnostics

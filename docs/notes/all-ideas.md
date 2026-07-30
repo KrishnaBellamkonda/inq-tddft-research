@@ -32,6 +32,7 @@ What's the best way to categorise these ideas? Firstly, there might be a lot of 
         - Stopping power definition using localised jellium simulation
         - KS orbital definition of stopping power
         - (Fourth using the loss function, we should consider doing this for the localised jellium case. With long simulation runs, we can make a loss function graph, and then also find the stopping power through integration.)
+        - Loss function in combination with the localised jellium. This way, we get a long simulation, that is free of interference effects. I think, atleast, this would be a very good sanity check. 
 6. Classical Projectile
     - Verifying Nazarov Gross using a classical projectile
 ## Potential Tasks

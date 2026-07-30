@@ -40,7 +40,7 @@ Content
 
 (I would want to pursue a few of these)
 Campaigns done internally to fix results 
-3. Sopping power and fourier training
+3. Stopping power and fourier training
 
 4. Debugging quantum SP
 7. Jellium sigma sweep
@@ -75,7 +75,7 @@ Additional Tangential Work
 1. Refined project direction
 2. Code validation and verification
 3. Results
-4. post processing and resutls
+4. Post processing and results
 5. Discussion and conclusions
 5. References
 
@@ -232,3 +232,34 @@ Follows directly from having a working finite slab.
 
 Appendices
 A. Full absorbing potential reflectivity curves
+
+
+Reviews from Runfeng
+1. Runfeng has suggested that I need to think carefully about writing structure. This would perhaps mean that I need to come up with a good narrative to tie everything down. I can do this by firstly thoroguhly analysing subsections, each results I want to include. After making all of the analysis points, I can stitch everything together into a cohesive and neat report 2. 
+2. Finally, I would also need to consider continuity with report 1. Then, I need to fix any issues with plots, and strucuture I have in that report. 
+
+Specific comments: 
+1. In connection to the previous report, I need to address why jellium is important. I can use Penn paper for ths. 
+2. I need to emphaise the issues with loss function route of quantifying stopping power. I need to mention here cost estimate to illustrate that this is not feasible. Also, i can mention the trade off between wave packet spreading and sampling time. 
+3. I need to describe the new simulation system
+4. I would present results from bulk jellium too, and describe these two systems here. 
+5. I need a separate subsection is required to explain how stopping power is derived from this hypothesis. This part should be described in detail as this represents my main controbtion. (Jellium Slab in detail)
+6. Should explain clearly why the changing the mass of electrons makes sense. (Change in mass of electrons, whether this helped us in getting closer to the classical limit or for future work has to be clearly explained. )
+7. In results and discussion section, just use the descriptions that I've come up with, and discuss them. There is no need to again invoke them here. 
+8. For conclusions: 
+   - Come up with a clear definition, even though it has some limitations. 
+   - 
+9. Realistic TODO: 
+   - Come up with a realistic TODO and execute it. Select one or two fil materials and claculate some data. This does not have to be very extensive. 
+
+
+Reviews from report 1
+1. Establish a clearer pathway between experiemental relevance (motivation)
+2. Explain why these particular systems. 
+3. The student could hone report presentation skills more, particularly figures and associated descriptions. I think the captions should have been written in a much better manner. Need to ensure I do a much better job now. 
+4. I need to do a better job of quantifying uncertainties. 
+
+
+### Learnings for report 2
+1. Stopping Cross Sections for Protons Across Different Phases of Water - F. Matias: 
+   - This paper uses TDDFT-Penn method. This method uses the Experimental Loss function of a certain material. The peaks in the loss function are turned into frequencies. Each of these frequencies can be mapped to a certain density of jellium that has this density. Then, we run a tddft simulation for each jellium system. For each system, we find a stopping power. then, by statistically weighting the stopping powers of these jellium systems, we construct the stopping power a given material.
