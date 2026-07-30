@@ -26,6 +26,7 @@
 #define INQKIT__JELLIUM__INTERACTION_ENERGIES
 
 #include <inq/inq.hpp>
+#include <cmath>
 
 namespace inqkit {
 namespace jellium {
@@ -53,6 +54,41 @@ coulomb_terms compute_coulomb(Field const & n_slab, Field const & n_P, Field con
 	t.e_pb = -     inq::operations::integral_product(n_P, phiplus);
 	t.norm_slab =  inq::operations::integral(n_slab);
 	t.norm_p    =  inq::operations::integral(n_P);
+	return t;
+}
+
+// DIRECT-potential pairwise decomposition (companion to the direct erf/r projectile
+// perturbation, moving_gaussian_projectile_potential). The projectile terms are formed
+// from the DIRECT free-space potential v_proj = gaussian_potential(basis,center,σ_pot)
+// = erf(|r-R|/(√2σ))/|r-R| — NO charge on the grid, NO Poisson, NO periodic
+// neutralizing background. This removes BOTH charge-based artifacts of compute_coulomb:
+//   (i)  the exit KINK (the charge no longer clips at the z-wall), and
+//   (ii) the linear e_ps DRIFT (the localised potential is not replicated into an
+//        x,y-periodic charged sheet), so e_ps is POSITIVE and →0 as the projectile
+//        recedes — the physical trend (verified against ∫n·erf/r on saved frames).
+//
+//   E_PP = 1/(2·σ_pot·√π)            projectile self-Hartree (analytic, CONSTANT for a
+//                                    rigid Gaussian — no clip, no kink)
+//   E_PS = +∫ n_slab·v_proj          projectile-slab   (repulsion: −proj, −electrons > 0)
+//   E_SB = −∫ n_slab·φ₊              slab-background   (Poisson, unchanged)
+//   E_PB = −∫ n₊·v_proj              projectile-background (reciprocity; attraction < 0)
+//   E_SS = ½∫ n_slab·φ_slab          slab-slab (= INQ E_hartree, classical)
+// Closure (classical, direct rep): E_hartree = E_SS ; E_external = E_SB + E_PS
+// (the applied external field is v_bg + v_proj, so ∫n·v_ext = e_sb + e_ps EXACTLY).
+// norm_p is set to 1.0 (the direct potential carries no grid charge to integrate).
+template <class Field>
+coulomb_terms compute_coulomb_direct(Field const & n_slab, Field const & v_proj,
+                                     Field const & nplus, Field const & phiplus,
+                                     double sigma_pot) {
+	auto phi_slab = inq::solvers::poisson::solve(n_slab);
+	coulomb_terms t;
+	t.e_ss = 0.5 * inq::operations::integral_product(n_slab, phi_slab);
+	t.e_pp = 1.0 / (2.0 * sigma_pot * std::sqrt(M_PI));            // analytic self-energy (constant)
+	t.e_ps =        inq::operations::integral_product(n_slab, v_proj);   // + , →0
+	t.e_sb = -      inq::operations::integral_product(n_slab, phiplus);
+	t.e_pb = -      inq::operations::integral_product(nplus,  v_proj);   // attraction, →0
+	t.norm_slab =   inq::operations::integral(n_slab);
+	t.norm_p    =   1.0;   // direct potential: no charge density on the grid
 	return t;
 }
 
