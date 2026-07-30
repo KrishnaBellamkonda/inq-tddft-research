@@ -1,0 +1,9 @@
+extensive-kinetic validation — vacuum double-sided CAP (dcap_extkin vs dcap_baseline)
+E0 = 402.1 eV   final norm = 3.45e-06
+E_reported(final) = 383.2 eV   (artifact: stays at the mean)
+E_corrected(final) = 0.00 eV  (E0·norm = 0.00 eV)
+captured = 100.0% of E0
+identity max |Σocc·T/N − kinetic_INQ| = 0.00e+00 Ha
+post-hoc vs in-run bare kinetic: max |Δ| = 2.47e-09 eV
+timing: per-step 285.9 ms (obs ON) vs 301.5 ms (OFF) -> overhead -15.5 ms/step = -5.2%
+observable self-timing: mean 0.42 ms/step (1 orbital)

@@ -56,19 +56,34 @@
 // Env: WP_K0(5.421) WP_SIGMA(3.0) WP_ETA(0=no CAP; -3.5=CAP) WP_OUT
 //      WP_LZ(45) WP_LPERP(30) WP_H(0.4) WP_DT(0.01) WP_NSTEPS(800 cap / 350 nocap)
 //      WP_LAUNCH_Z(-7.5) WP_CAP_L(15) WP_WF_EVERY(20) WP_MOM_EVERY(1)
+//
+// EXTENSIVE-KINETIC TEST ADDITIONS (2026-07-29):
+//   WP_CAP2=1    -> DOUBLE-SIDED CAP: a second absorbing band at the -z end
+//                   (frac mid=-0.5+w/2, same eta/width), composed with the +z
+//                   band via perturbations::sum. Geometry for this mode:
+//                   LZ=60 box [-30,30], CAP_L=15 both ends, launch z=0
+//                   (5 sigma0 clearance to BOTH CAP inner edges).
+//   WP_EXTKIN=1  -> OrbitalKineticStats: per-orbital BARE kinetic + norm each
+//                   step (orbital_kinetic_stats.csv) — the extensive-kinetic
+//                   fix for the norm-divided energy_kinetic (energy.hpp:55).
+//                   WP_EXTKIN_EVERY(1) sets its cadence. Its wall_ms column +
+//                   the propagate wall-time in run_summary give the overhead.
 // ============================================================================
 #include <inq/inq.hpp>
 #include <inqkit/fields/density.hpp>
 #include <inqkit/fields/orbital.hpp>
 #include <inqkit/io/real_field_3d_writer.hpp>
 #include <inqkit/observables/momentum_distribution.hpp>
+#include <inqkit/observables/orbital_kinetic_stats.hpp>
 #include <inqkit/observables/wp_momentum_stats.hpp>
 #include <inqkit/observables/wp_real_space_stats.hpp>
 #include <inqkit/wavepacket/wavepacket.hpp>
 #include <inqkit/absorbers/mask_absorber.hpp>
 
+#include <chrono>
 #include <cmath>
 #include <cstdlib>
+#include <optional>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
@@ -98,6 +113,9 @@ int main() {
     const double CAP_L    = env_d("WP_CAP_L", 15.0);        // one-sided, +z end (wide, adiabatic)
     const int    WF_EVERY = env_i("WP_WF_EVERY", 20);
     const int    MOM_EVERY= env_i("WP_MOM_EVERY", 1);
+    const int    CAP2     = env_i("WP_CAP2", 0);            // 1 -> double-sided CAP
+    const int    EXTKIN   = env_i("WP_EXTKIN", 0);          // 1 -> OrbitalKineticStats
+    const int    EK_EVERY = env_i("WP_EXTKIN_EVERY", 1);
     const std::string OUT = "results/" + env_s("WP_OUT", (ETA==0.0? "nocap":"cap"));
 
     const double E_eV      = 0.5 * K0 * K0 * HA_TO_EV;
@@ -139,8 +157,13 @@ int main() {
     const long wp_idx = rep.state_index;
     std::cout << "  WP injected: state_index=" << wp_idx << " norm_after=" << rep.norm_after << "\n";
 
-    // one-sided +z sin^2 CAP (inq-study makes its imaginary part reach orbitals)
-    perturbations::absorbing cap(ETA*1.0_Ha, mid_frac, width_frac);
+    // one-sided +z sin^2 CAP (inq-study makes its imaginary part reach orbitals);
+    // WP_CAP2 adds the mirror -z band (frac mid = -0.5+w/2 -> physical
+    // [-LZ/2, -LZ/2+CAP_L]); absorbing works in CONTRAVARIANT (cell-fraction)
+    // coordinates, mid_pos in [-0.5, 0.5), matching rvector.
+    perturbations::absorbing cap  (ETA*1.0_Ha,  mid_frac, width_frac);
+    perturbations::absorbing cap_m(ETA*1.0_Ha, -mid_frac, width_frac);
+    perturbations::sum       dcap (cap, cap_m);
 
     // --- absorber / propagator selection (energy-normalization investigation) ---
     // WP_ABS = cap (non-Hermitian CAP, default) | mask (spatial sin^2 mask on the WP
@@ -167,6 +190,12 @@ int main() {
     obs_::WPMomentumStats  wp_mom(OUT + "/raw/observables/wp_momentum_stats.csv", wp_idx, {.write_every=MOM_EVERY});
     obs_::WPRealSpaceStats wp_rs (OUT + "/raw/observables/wp_real_space_stats.csv", wp_idx, {.write_every=WF_EVERY});
 
+    // extensive per-orbital kinetic + norm (the norm-division fix, measured in-run)
+    std::optional<obs_::OrbitalKineticStats> extkin;
+    if (EXTKIN)
+        extkin.emplace(OUT + "/raw/observables/orbital_kinetic_stats.csv",
+                       obs_::OrbitalKineticStatsConfig{.write_every=EK_EVERY});
+
     // ---- density writers for the density GIF --------------------------------
     using RLay = inqkit::io::RealField3DLayout;
     const auto vti = inqkit::io::VTIWriteOptions::Format::binary;
@@ -191,6 +220,7 @@ int main() {
         mom_dist.maybe_accumulate(data);
         wp_mom.maybe_accumulate(data);
         wp_rs.maybe_accumulate(data);
+        if (extkin) extkin->maybe_accumulate(data);
         if (step % WF_EVERY == 0) {
             wp_wr.write (inqkit::fields::density::orbital(electrons, wp_idx), data.time(), step);
             tot_wr.write(inqkit::fields::density::total(electrons), data.time(), step);
@@ -202,6 +232,7 @@ int main() {
     };
 
     auto theory = options::theory{}.non_interacting();
+    const auto wall0 = std::chrono::steady_clock::now();
     if (USE_MASK) {
         if (USE_CN)
             real_time::propagate(ions, electrons, step_fn, theory,
@@ -209,11 +240,25 @@ int main() {
         else
             real_time::propagate(ions, electrons, step_fn, theory,
                 options::real_time{}.num_steps(N_STEPS).dt(DT*1.0_atomictime));   // ETRS
+    } else if (CAP2) {
+        real_time::propagate(ions, electrons, step_fn, theory,
+            options::real_time{}.num_steps(N_STEPS).dt(DT*1.0_atomictime), dcap); // 2-sided CAP (ETRS)
     } else {
         real_time::propagate(ions, electrons, step_fn, theory,
             options::real_time{}.num_steps(N_STEPS).dt(DT*1.0_atomictime), cap);  // CAP (ETRS)
     }
+    const double wall_s = std::chrono::duration<double>(
+        std::chrono::steady_clock::now() - wall0).count();
     en.close();
+
+    // final checkpoint (rule: every run checkpoints its last timestep)
+    electrons.save(OUT + "/checkpoint");
+    {
+        std::ofstream rt(OUT + "/rt_state.txt");
+        rt << std::setprecision(17)
+           << "last_step=" << N_STEPS << "\ntime_au=" << N_STEPS*DT
+           << "\ndt=" << DT << "\nwp_idx=" << wp_idx << "\n";
+    }
 
     std::ofstream sum(OUT + "/run_summary.txt");
     sum << std::setprecision(12)
@@ -221,7 +266,12 @@ int main() {
         << "engine = inq-study\ntheory = non_interacting\n"
         << "cap = " << (CAP_ON? "on":"off") << "  eta_Ha = " << ETA
         << "  cap_L = " << CAP_L << "  z_cap0 = " << z_cap0
-        << "  cap_z = [" << z_cap0 << "," << LZ/2.0 << "] (one-sided +z)\n"
+        << "  cap_z = [" << z_cap0 << "," << LZ/2.0 << "]"
+        << (CAP2 ? " + [-" : " (one-sided +z)")
+        << (CAP2 ? std::to_string(LZ/2.0) + ",-" + std::to_string(z_cap0) + "] (two-sided)" : "")
+        << "\nextkin = " << (EXTKIN? "on":"off") << "  extkin_every = " << EK_EVERY
+        << "\npropagate_wall_s = " << wall_s
+        << "  per_step_ms = " << 1000.0*wall_s/N_STEPS << "\n"
         << "wp = gaussian sigma " << SIGMA << " k0 " << K0 << " E " << E_eV << " eV mass 1\n"
         << "launch_z = " << LAUNCH_Z << "  wp_state_index = " << wp_idx
         << "  launch_clearance_sigma = " << (LZ/2.0 + LAUNCH_Z)/SIGMA

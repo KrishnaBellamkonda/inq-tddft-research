@@ -14,7 +14,7 @@ cd "$(dirname "$0")"
 ROOT=/local/data/public/skcb2/tddft
 JCAMP=$ROOT/ResearchProject/systems/localised_jellium/scripts/wp_cap_energy_plateau
 PY=$ROOT/venv/bin/python3
-export INQ_SOURCE=$ROOT/inq-study CUDA_VISIBLE_DEVICES=0
+export INQ_SOURCE=$ROOT/inq-study CUDA_VISIBLE_DEVICES=1
 export INQ_SHARE_PATH=${INQ_SHARE_PATH:-$ROOT/inq/install/share}
 export PSEUDOPOD_SHARE_PATH=${PSEUDOPOD_SHARE_PATH:-$ROOT/inq/install/share/pseudopod}
 export PATH="$ROOT/shared/bin:$PATH" PYTHONPATH=$ROOT/inq-stack/python
