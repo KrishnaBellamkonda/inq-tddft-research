@@ -109,18 +109,33 @@ NEEDS_CONFIG=0
 [[ ! -f CMakeCache.txt ]] && NEEDS_CONFIG=1
 [[ "$RECONFIG" -eq 1 ]]   && NEEDS_CONFIG=1
 
+# Reuse the FetchContent sources the engine configure already downloaded, so this
+# configure never needs the network (CSD3 compute nodes have none). Each
+# <name>-src under INQ_DEPS_CACHE becomes -DFETCHCONTENT_SOURCE_DIR_<NAME>.
+FC_ARGS=()
+if [[ -d "${INQ_DEPS_CACHE:-}" ]]; then
+    for dep_src in "$INQ_DEPS_CACHE"/*-src; do
+        [[ -d "$dep_src" ]] || continue
+        dep_name="$(basename "$dep_src")"; dep_name="${dep_name%-src}"
+        FC_ARGS+=("-DFETCHCONTENT_SOURCE_DIR_$(printf '%s' "$dep_name" | tr '[:lower:]' '[:upper:]')=$dep_src")
+    done
+fi
+
 if [[ "$NEEDS_CONFIG" -eq 1 ]]; then
     echo "==> Configuring (this takes ~1 min on first run)..."
+    [[ ${#FC_ARGS[@]} -gt 0 ]] && echo "    reusing ${#FC_ARGS[@]} cached FetchContent dep(s) from $INQ_DEPS_CACHE"
     if [[ "$ENABLE_CUDA" == "ON" ]]; then
         cmake . \
             -DENABLE_CUDA=ON \
             -DCMAKE_CUDA_ARCHITECTURES="$INQ_CUDA_ARCH" \
             -DCMAKE_CUDA_COMPILER="$INQ_CUDA_COMPILER" \
-            -DPython_EXECUTABLE="$INQ_PYTHON_EXE"
+            -DPython_EXECUTABLE="$INQ_PYTHON_EXE" \
+            "${FC_ARGS[@]}"
     else
         cmake . \
             -DENABLE_CUDA=OFF \
-            -DPython_EXECUTABLE="$INQ_PYTHON_EXE"
+            -DPython_EXECUTABLE="$INQ_PYTHON_EXE" \
+            "${FC_ARGS[@]}"
     fi
 else
     echo "==> cmake already configured (use --reconfig to force)"
@@ -128,7 +143,7 @@ fi
 
 # ── Build ─────────────────────────────────────────────────────────────────────
 echo "==> Building $TARGET..."
-cmake --build . --target "$TARGET" -j"$(nproc)"
+cmake --build . --target "$TARGET" -j"${INQ_BUILD_JOBS:-4}"
 
 # ── Run ───────────────────────────────────────────────────────────────────────
 echo "==> Running $TARGET..."

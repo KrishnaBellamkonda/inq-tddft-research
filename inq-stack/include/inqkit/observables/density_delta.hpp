@@ -95,6 +95,25 @@ struct DensityDeltaConfig {
      */
     bool   compute_l2       = true;
     double coarse_bin_bohr  = 3.0;
+
+    /* VTI write cadence: emit a delta FIELD only when step % emit_every == 0.
+     *
+     * The scalar L2 above is cheap and is normally wanted EVERY step, but the
+     * field is a full grid (18 MB at 35x35x85 / dx=0.4) and is not. Callers that
+     * call snapshot() every step to keep the L2 series dense would otherwise also
+     * write a field every step: at 3623 steps that is 66 GB per run.
+     *
+     * That is not hypothetical. It filled /rds (1.0 TB, 100 %) on 2026-07-31 and
+     * killed three of the four sigma=3 wavepacket runs mid-flight, their vacuum
+     * controls, and the notebook job -- density_delta held 3624 frames where
+     * density_total and density_wp held 302 at the same SAVE_EVERY=12 cadence.
+     *
+     * DEFAULT 1 = write on every call, i.e. the historical behaviour, so none of
+     * the ~130 existing run.cpp callers change. Set it to the run's SAVE_EVERY to
+     * align delta frames with density_total / density_wp (which is the pairing the
+     * GIF builders assume anyway). <= 0 is treated as 1.
+     */
+    int    emit_every       = 1;
 };
 
 class DensityDelta {
@@ -136,14 +155,21 @@ public:
         // or is t=0 the base for all timesteps?
         // TODO: It would also be interesting to view the step-by-step changes,
         // i.e. changes induced only within each individual timestep.
+        // Field-emission cadence (see DensityDeltaConfig::emit_every). The scalar
+        // L2 below is still computed on EVERY call; only the grid write is gated.
+        const int  every = (cfg_.emit_every > 0) ? cfg_.emit_every : 1;
+        const bool emit  = (step % every == 0);
+
         if (!have_ref_) {
             set_reference(current);
             // Emit a zero-delta frame so the output series has no missing
-            // first frame.
+            // first frame. (step is 0 here in normal use, so `emit` is true;
+            // the guard matters only for a resumed run whose first call lands
+            // on an off-cadence step.)
             inqkit::fields::RealField3D zero = current;
             std::fill(zero.values.begin(), zero.values.end(), 0.0);
-            if (cfg_.emit_raw_vti)    raw_writer_.write(zero, time_au, step);
-            if (cfg_.emit_coarse_vti) {
+            if (cfg_.emit_raw_vti && emit)    raw_writer_.write(zero, time_au, step);
+            if (cfg_.emit_coarse_vti && emit) {
                 auto coarse = coarse_grain_(zero, cfg_.coarse_bin_bohr);
                 coarse_writer_.write(coarse, time_au, step);
             }
@@ -166,11 +192,11 @@ public:
             delta.values[i] = current.values[i] - ref_.values[i];
         }
 
-        if (cfg_.emit_raw_vti) {
+        if (cfg_.emit_raw_vti && emit) {
             raw_writer_.write(delta, time_au, step);
         }
 
-        if (cfg_.emit_coarse_vti) {
+        if (cfg_.emit_coarse_vti && emit) {
             auto coarse = coarse_grain_(delta, cfg_.coarse_bin_bohr);
             coarse_writer_.write(coarse, time_au, step);
         }

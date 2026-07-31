@@ -248,11 +248,21 @@ def _load_at(run_dir: Path, z0: float = LAUNCH_Z) -> K.WPRun:
 
     norm = df["norm_check_r"].to_numpy() if "norm_check_r" in df \
         else df["norm_check"].to_numpy()
+    # ks_stopping.WPRun gained a required `parseval` field (the momentum-space
+    # norm_check: a large FFT-prefactor constant, ~3e7 here, NOT 1). Omitting it
+    # raised TypeError in every run and synthesis notebook on 2026-07-31, which
+    # then cascaded into NameErrors for every downstream cell. It is the _p side
+    # of the merge; fall back to the un-suffixed column when only one file
+    # carried it.
+    parseval = df["norm_check_p"].to_numpy() if "norm_check_p" in df \
+        else df["norm_check"].to_numpy() if "norm_check" in df \
+        else np.full_like(t, np.nan)
 
     return K.WPRun(run_dir=Path(run_dir), box_length_z=LZ, t=t,
                    step=df["step"].to_numpy(), T1=T1, T2=T2, pz=pz,
                    s3=s3, s3_naive=df["z_mean"].to_numpy(), s4=s4,
-                   norm=norm, sigma_z=df["sigma_z_circ"].to_numpy())
+                   norm=norm, sigma_z=df["sigma_z_circ"].to_numpy(),
+                   parseval=parseval)
 
 
 def load_run(v: float, results_root: Path = WP_RESULTS) -> K.WPRun:
