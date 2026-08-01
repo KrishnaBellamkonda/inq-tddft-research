@@ -126,23 +126,116 @@ Never modify the user's original spec file.
 
 Before any plots, apply the canonical theme `inqview.visualisation.style`
 (`style.apply_theme()`, `STYLE_CONFIG` lives there) — **not** the retired
-report1-local `_shared_style.py`. For report panels, scale the theme's font/line
-sizes for downscaling on top of the canonical base:
+report1-local `_shared_style.py` (its sizing / pinned-axes constants were
+promoted verbatim into the canonical theme).
 
-- **Font sizes must account for panel downscaling.** If plots will be placed
-  2-per-row in LaTeX, they render at ~50% of their generated width. Font sizes
-  must be scaled up accordingly:
-  - Standalone plots: 10pt labels, 9pt ticks
-  - 2-per-row panels: 14pt labels, 13pt ticks
-  - 4-per-row panels: 18pt labels, 16pt ticks
-- **Line widths scale similarly**: 1.2 → 1.8 for 2-per-row.
-- **Tick geometry scales**: major size 3.5 → 5.0, width 0.6 → 0.9.
-- Make all style values tuneable via a `STYLE_CONFIG` dict.
-- Set `text.usetex: True` with preamble matching the report template.
-- **Always produce individual plots, never pre-composed panels.**
-  Panel composition is done exclusively in LaTeX via `minipage` layouts.
-  Each script outputs one PNG per subplot. This allows the user to
-  rearrange, resize, or drop individual subplots without regenerating.
+### Default sizes — the first version of every plot (user decision, report-2)
+
+Make the **first version** of every plot at the theme's default aspect ratios:
+
+| Role | Aspect (w:h) | Default size (in) | Theme factory |
+|---|---|---|---|
+| **one-column** | **3.5 : 3** | 3.5 × 3.0 | `style.figure_one_col()` |
+| **two-column / full-width** | **7 : 3** | 7.0 × 3.0 | `style.figure_two_col()` |
+| heatmap / 2D map | 1 : 1 | square (3.0² or 3.5²) | pinned square axes |
+
+- Fonts stay at the theme defaults (**10 pt labels / 9 pt ticks**). Do **not**
+  bump them per layout. (The former "scale fonts up for 2-/4-per-row
+  downscaling" rule is **retired** — that mismatch is exactly what made
+  report-1 fonts render off their authored pt.)
+- These defaults are for looking at a plot on its own / a first cut. **Exact**
+  sizing for a panel happens in the panel workflow below (save-at-final-width).
+- **Fine-tuning beyond these defaults happens only when the user asks for it
+  explicitly.** Otherwise the defaults stand — do not pre-optimise.
+- Set `text.usetex: True` with a preamble matching the report template.
+
+### Save-at-final-width — the sizing discipline (report-1 `figures_latex_contract.md`)
+
+- On-page font pt = `authored_pt × (\includegraphics width ÷ PNG physical width)`.
+  Author each **panel-bound** PNG at the EXACT inch-width of its LaTeX slot, then
+  include it at that same width, so scale = 1 and fonts render at true pt.
+- Save on a **fixed canvas**: no `bbox_inches="tight"`, no `constrained` layout.
+  Pin the axes rectangle (`figure_one_col()` already does; else
+  `fig.subplots_adjust(...)` with fixed *inch* margins). Save `bbox_inches=None`.
+- Never `\resizebox`/`scale=` a data plot, and never unify all figures to one
+  `\includegraphics` width — honour each figure's authored width individually.
+- **Text-free images** (VTI/density screenshots, schematics) are exempt: they
+  carry no font, so LaTeX may scale them freely.
+- **Always produce individual plots, never pre-composed panels.** Composition is
+  done exclusively in LaTeX via `minipage` layouts; each script outputs one PNG
+  per subplot, so subplots can be rearranged/resized/dropped without regenerating.
+
+### Soft gate — uncertainty quantification (non-blocking reminder, per plot)
+
+For **every** plot, before finalising it, surface a short **non-blocking**
+reminder to the user: *"Does this plot have a quantifiable uncertainty, and is it
+represented?"* (error bars / bands / shaded CI / a stated tolerance). This is a
+REMINDER, never a block — many plots legitimately have no uncertainty (schematics,
+single deterministic traces, geometry maps), and "none here" is a valid answer.
+When a plot *does* carry uncertainty, represent it correctly (error bars, a
+±band, or a caption-stated bound) rather than dropping it. (User decision,
+report-2.)
+
+## Directory layout (report-2 onward — user decision)
+
+Figures live **per-draft**, and paneled plots live **per-panel**:
+
+```
+docs/reports/<report>/drafts/<draftN>/
+    <draftN>.tex
+    figures/
+        <standalone_fig>.png          # single-plot figures sit loose here
+        <panel_name>/                 # one subfolder per multi-plot panel
+            <subplot_a>.png           # subplots remade to fit THIS panel
+            <subplot_b>.png
+            make_<panel_name>.py      # the panel's plot-generation script
+```
+
+- Multiple drafts coexist under `drafts/`; each owns its own `figures/`.
+- A standalone (single-plot) figure sits loose directly in `figures/`.
+- **Every multi-plot panel gets its own `figures/<panel_name>/` subfolder** —
+  that is where its subplots are resized/reshaped to the panel's slots.
+
+## The panel workflow — design the panel first, then remake plots to fit it
+
+A panel is built in **two passes, never one** (user decision, report-2):
+
+1. **Design the panel independently — map the spaces, IN LaTeX.** Lay the panel
+   out in a **compiled LaTeX document**, with **placeholder boxes** (`\fbox` /
+   `\rule` / tikz `\node[draw,minimum width=…,minimum height=…]`), and review it
+   as the compiled **PDF**. This fixes the geometry: how many slots, each slot's
+   width fraction (→ its inch width = fraction × `\textwidth`) and target
+   height/aspect. Iterate the geometry until the layout is right.
+   - **The placeholder is LaTeX, NEVER a rendered PNG/SVG image.** Do not draw the
+     layout in Inkscape/matplotlib and export a picture of it — that does not
+     reflect the true LaTeX minipage/tikz mechanics the panel will actually use,
+     so the measured slot sizes would be wrong. Map the spaces in the same engine
+     that will compose the final panel.
+   - **Connectors (arrows) and text labels between slots are LaTeX too** (tikz
+     `\draw[-{Latex}]`, or `\node` labels) — not baked into an exported image.
+     Only the *slot contents* (individual plots, drawn schematic assets, icons)
+     come from matplotlib / Inkscape and are dropped into the LaTeX slots.
+2. **Remake the plots to fit.** *Only then* generate each subplot into the
+   panel's `figures/<panel_name>/` subfolder, authored at its slot's inch
+   width/height (save-at-final-width). **The panel geometry drives the plot
+   size, not the reverse.**
+
+The single number tying the two passes together is the **width-fraction ↔
+inch-width mapping** (e.g. `0.48\textwidth → 2.95 in` at a 6.142 in textwidth).
+Keep the LaTeX fraction and the authored inch-width in sync.
+
+Layout mechanisms (worked demo:
+`docs/reports/report2/dimension-experiments/panel_experiment.{tex,pdf}`):
+
+| Need | LaTeX tool |
+|---|---|
+| different widths | `minipage` fractions summing (+ gaps) to ≤ 1 |
+| different heights, aligned | `adjustbox{valign=t/c/b}` or minipage `[t]/[b]/[c]` |
+| grid (2×2, 1+2, …) | minipage columns + `\\[v]` row breaks |
+| irregular / overlapping | `tikzpicture` `\node[anchor=…] at (x,y){…}` |
+
+**Positioning is always LaTeX; sizing (and fonts) is the figure phase.** The
+only cross-phase contract is the width fraction ↔ inch-width mapping above.
 
 ## Phase 2: One Plot at a Time
 
@@ -157,6 +250,10 @@ Make plots sequentially, showing each to the user before proceeding.
 4. **Preview**: resize to ≤1200px wide for API display. If too large,
    use PIL to create a preview copy.
 5. **Show the user**: display the preview and wait for feedback.
+5b. **Uncertainty soft gate (non-blocking)**: with the preview, remind the user —
+   *"does this plot carry a quantifiable uncertainty, and is it represented?"*
+   (error bars / ±band / shaded CI / stated tolerance). Never block on it;
+   "no uncertainty here" is a valid answer. If yes, represent it correctly.
 6. **Iterate**: apply feedback (colour scale, floor, norm, layout).
    Common iteration patterns:
    - Linear → log → symlog (for data with both signs)
