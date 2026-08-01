@@ -1,0 +1,6 @@
+last_step=2070
+time_au=82.8
+dt=0.04
+wp_idx=73
+k0=3.5
+sigma_wp=2

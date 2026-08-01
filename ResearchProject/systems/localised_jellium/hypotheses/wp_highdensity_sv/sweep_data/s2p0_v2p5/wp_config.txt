@@ -1,0 +1,7 @@
+wp_center_bohr = 0 0 -24
+wp_sigma_bohr  = 2
+wp_sigma_density = 1.414213562373095
+wp_k0_bohr_inv = 2.5
+wp_state_index = 73
+norm_after     = 1
+max_overlap    = 4.845353647585006e-05

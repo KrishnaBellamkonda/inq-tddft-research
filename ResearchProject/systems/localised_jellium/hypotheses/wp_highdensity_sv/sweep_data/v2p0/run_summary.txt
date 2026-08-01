@@ -1,0 +1,36 @@
+run = localised_jellium/wp_highdensity_sv/wp/v2p0
+run_type = wavepacket projectile, localised jellium slab TDDFT (ALDA)
+campaign = classical-highdensity-sv (WP twin)
+plan = docs/plans/wavepacket-highdensity-sv-twin.md
+engine = inq-study
+xc = LDA (ALDA in TDDFT)
+date_finished = 2026-07-31T00:02:54
+wall_time_s = 11372.190591146
+cell_bohr = 35x35x85
+periodicity = 2
+spacing_bohr = 0.4
+slab_half_width = 12.5  edge_width = 1
+n_electrons = 100  n0_a0m3 = 0.003265306122449  r_s = 4.1814717081217
+n_states = 74  extra_states = 24
+wp_enabled = yes
+wp_state_index = 73
+wp_sigma_bohr = 0.5
+wp_sigma_note = wavepacket sigma (psi width); density std = this/sqrt2 = classical sigma_pot
+wp_sigma_density = 0.35355339059327
+wp_k0_bohr_inv = 2  wp_velocity = 2
+wp_drift_energy_ev = 54.422772491976
+wp_localisation_energy_ev = 81.634158737964
+launch_z = -24
+norm_after = 1  max_overlap = 0.00036915648553826
+cap = on  cap_eta_ha = -1  cap_width_bohr = 12.5 per face
+cap_mid_frac = 0.42647058823529  cap_width_frac = 0.14705882352941
+cap_band_hi_bohr = [30,42.5]
+cap_band_lo_bohr = [-42.5,-30]
+cap_note = energy_total NOT conserved (non-Hermitian); gate on norm instead
+start_step = 0  rt_num_steps = 3623  dt_au = 0.04  total_time_au = 144.92
+save_every = 12  wf_every = 36  stats_every = 1  ckpt_every = 724
+spread_rate_bohr_per_au = 1.4142135623731
+t_transverse_overlap_au = 4.12  (6 sigma_d = L_xy = 35; step 103)
+analysis_note = fit S over the pre-overlap window; later steps are recorded but the packet is delocalised
+gs_dir = /rds/user/skcb2/hpc-work/tddft/inq-tddft-research/ResearchProject/systems/localised_jellium/shared_gs/slab_n100_L35x35x85_dx0p4_per2
+run_completed = true
