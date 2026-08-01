@@ -517,3 +517,40 @@ the box after everything the CAP absorbed is already gone. It is a **lower bound
 on the deposit, not the classical quantity. The two must not be read as the same
 measurement — which is exactly why S_23 (drift momentum loss), not S_deposit, is
 the estimator that tracks the classical benchmark to 4-13 %.
+
+---
+
+## Addendum 2026-08-01 — sweep observables versioned into the repo (user request)
+
+The user wanted the non-VTI results of the WP S(v) sweep on GitHub (to read from
+another device). The production outputs live under
+`/rds/user/skcb2/hpc-work/tddft/inq-tddft-research/ResearchProject/systems/localised_jellium/scripts/wp_highdensity_sv/wp/results/`,
+which `.gitignore` excludes wholesale (`**/results/`), so nothing of the sweep
+was ever pushed.
+
+**Done (verified):**
+- New `hypotheses/wp_highdensity_sv/export_sweep_data.py` copies, for each of
+  the 12 production points (sigma_WP in {0.5, 2, 3} x v in {2.0, 2.5, 3.0, 3.5}),
+  every `.csv`/`.txt` in `raw/observables` (resume segments included) plus
+  `run_summary.txt`/`rt_state.txt` into
+  `hypotheses/wp_highdensity_sv/sweep_data/<run_name>/`, and writes
+  `observables_corrected.csv` — the segment-concatenated INQ ledger merged with
+  the CAP norm-correction columns (`norm_wp`, `correction_ev`,
+  `e_total_raw_ev`, `e_total_corrected_ev`, `wp_kinetic_bare_ev`,
+  `energy_total_corrected` in Ha):
+  `E_total_corrected = E_total_raw - T1*(1 - norm_WP)` (see
+  `wp_hd_stopping.wp_kinetic_norm_correction`).
+- Self-check ran and PASSED for all 12 runs: the final-step corrected energy
+  reproduces the published `S_deposit_corrected = (E(t_f) - E_GS)/25 Bohr` in
+  `sigma_sweep_S_deposit.csv` (atol 5e-4). Full cadence confirmed (e.g. v2p0:
+  3624 steps in both source and export).
+- Committed alongside: the sweep summary CSVs (`sigma_sweep_S_deposit.csv`,
+  `wp_S_summary*.csv`), the sweep figures (`sigma_sweep_*.png`,
+  `wp_vs_classical_Sv*.png`, force-added past the global `*.png` ignore) and the
+  four small synthesis notebooks (`sigma_sweep.ipynb`, `synthesis*.ipynb`,
+  force-added past `*.ipynb`) — these render on GitHub. The 23–51 MB per-run
+  notebooks stay untracked.
+
+**Not done / unchanged:** vacuum CAP-control runs (`cap_check/results/vac_*`)
+are not exported — the deposit estimator does not use them; re-run
+`export_sweep_data.py` with an extended run list if they are wanted too.
