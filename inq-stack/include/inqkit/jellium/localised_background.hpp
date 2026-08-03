@@ -14,6 +14,10 @@
  *     annulus:n₊(r) = n₀ · mask(d ; R_out) · [1 − mask(d ; R_in)], with d the
  *             radial distance ⟂ the tube axis — a hollow periodic tube
  *             (positive background only for R_in < d < R_out, uniform along axis).
+ *     cylinder: n₊(r) = n₀ · mask(d ; R) — a FILLED periodic tube. A separate
+ *             shape, not annulus with R_in = 0: the erfc step is centred on its
+ *             nominal edge, so a degenerate inner edge would put n₀/2 on the tube
+ *             axis. See cylinder_mask.
  *
  * with n₀ = 3/(4π r_s³) the interior density. Charge neutrality is the CALLER's
  * responsibility: set electrons = round(∫n₊) and set n₀ = N/V_inside so that
@@ -52,18 +56,21 @@
 namespace inqkit {
 namespace jellium {
 
-enum class background_shape { slab, sphere, box, annulus };
+enum class background_shape { slab, sphere, box, annulus, cylinder };
 
 // All lengths in Bohr, density in a₀⁻³. center is the cartesian centre r₀.
 // For a slab, only half_width (along the slab axis) and slab_axis are used.
 // For a sphere, only half_width (= R_cl) is used. For a box, box_half is used.
+// For a cylinder, half_width (= R) and slab_axis (= tube axis) are used;
+// inner_radius is IGNORED — a filled tube is its own shape, not an annulus with
+// R_in = 0 (see cylinder_mask).
 struct localised_background_params {
 	background_shape shape   = background_shape::slab;
 	double           n0      = 0.0;             // interior density n₀
 	inq::vector3<double> center{0.0, 0.0, 0.0}; // r₀ (Bohr, cartesian)
-	double           half_width = 0.0;          // slab half-thickness a / sphere R_cl / annulus R_out
+	double           half_width = 0.0;          // slab half-thickness a / sphere R_cl / annulus R_out / cylinder R
 	double           inner_radius = 0.0;        // annulus R_in (hollow bore radius); unused by other shapes
-	int              slab_axis  = 2;            // 0=x,1=y,2=z (slab/box normal, or annulus TUBE axis); slab confines this axis
+	int              slab_axis  = 2;            // 0=x,1=y,2=z (slab/box normal, or annulus/cylinder TUBE axis); slab confines this axis
 	inq::vector3<double> box_half{0.0, 0.0, 0.0};// box half-extents (Bohr)
 	double           edge_width = 0.0;          // 0 = sharp Θ; >0 = erfc softening width w
 };
@@ -74,6 +81,32 @@ struct localised_background_params {
 inline GPU_FUNCTION double background_mask(double d, double R, double w) {
 	if(w <= 0.0) return (d < R) ? 1.0 : 0.0;
 	return 0.5 * erfc((d - R) / w);
+}
+
+// Radial mask of a SOLID tube (background_shape::cylinder) at perpendicular
+// distance d from the axis: 1 for d < R, erfc-softened at the single outer edge.
+//
+// This is a SHAPE IN ITS OWN RIGHT, deliberately not annulus_mask(d, R, 0, w).
+// The erfc step is centred ON its nominal edge, so background_mask(0, 0, w) = ½ for
+// every w > 0; an annulus evaluated at R_in = 0 therefore returns n₊ = n₀/2 EXACTLY
+// ON THE TUBE AXIS, relaxing to n₀ only by d ≈ 2w. That is where a channeling
+// projectile flies, so the error would be both silent and maximal at the same point.
+// A filled tube has ONE radial boundary and this function has one erfc factor —
+// the degenerate inner edge never enters.
+//
+// (The w = 0 sharp case is accidentally right either way, since
+// background_mask(d, 0, 0) = 0 for all physical d ≥ 0. That is why a sharp-edge
+// test of the R_in → 0 limit does not cover the production w > 0 path.)
+inline GPU_FUNCTION double cylinder_mask(double d, double r, double w) {
+	return background_mask(d, r, w);
+}
+
+// Radial mask of a HOLLOW tube at perpendicular distance d: 1 for R_in < d < R_out,
+// erfc-softened at both edges. Requires r_in > 0 — for a filled tube use
+// background_shape::cylinder / cylinder_mask, which is the correct limit.
+inline GPU_FUNCTION double annulus_mask(double d, double r_out, double r_in, double w) {
+	const double outer = background_mask(d, r_out, w);
+	return (r_in > 0.0) ? outer * (1.0 - background_mask(d, r_in, w)) : outer;
 }
 
 // Build n₊ on the given real-space basis. Templated on the basis type so it
@@ -109,22 +142,24 @@ make_localised_background(Basis const & basis, localised_background_params const
 				double dx = r[0]-c[0], dy = r[1]-c[1], dz = r[2]-c[2];
 				double d  = sqrt(dx*dx + dy*dy + dz*dz);
 				mask = background_mask(d, a, w);
-			} else if(shape == background_shape::annulus) {
-					// Hollow periodic tube: positive background between two
-					// concentric cylinders R_in < d < R_out, axis = sax, uniform
-					// along sax. d = radial distance in the plane PERPENDICULAR to
-					// the tube axis (sum the two non-axis components).
+			} else if(shape == background_shape::annulus
+			          || shape == background_shape::cylinder) {
+					// Periodic tube along axis sax, uniform along it. d = radial
+					// distance in the plane PERPENDICULAR to the tube axis (sum the
+					// two non-axis components).
+					//   annulus  — hollow: positive background for R_in < d < R_out
+					//   cylinder — filled: positive background for d < R (R = a);
+					//              a SEPARATE shape, never annulus with R_in = 0
 					double drad2 = 0.0;
 					for(int ax = 0; ax < 3; ++ax) {
 						if(ax == sax) continue;
 						double t = r[ax] - c[ax];
 						drad2 += t*t;
 					}
-					double d = sqrt(drad2);
-					// ½erfc((d−R_out)/w) · [1 − ½erfc((d−R_in)/w)]:
-					// outer step (1 for d<R_out) times inner complement (0 for d<R_in)
-					// ⇒ 1 inside the annulus, erfc-softened at both radial edges.
-					mask = background_mask(d, a, w) * (1.0 - background_mask(d, rin, w));
+					const double d = sqrt(drad2);
+					mask = (shape == background_shape::cylinder)
+					     ? cylinder_mask(d, a, w)
+					     : annulus_mask(d, a, rin, w);
 				} else { // box: product of per-axis masks
 				double mx = background_mask(fabs(r[0]-c[0]), bh[0], w);
 				double my = background_mask(fabs(r[1]-c[1]), bh[1], w);

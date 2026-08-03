@@ -123,6 +123,10 @@ TEST_CASE("T0.5 annulus = outer cylinder − inner cylinder (bore carved correct
 	// becomes 1 everywhere (background_mask(d,0,0)=0 for physical d≥0). Then the
 	// continuum identity ∫annulus(Rin,Rout) + ∫cyl(0,Rin) = ∫cyl(0,Rout) must hold;
 	// the shared R_in surface is discretised identically in both terms and cancels.
+	//
+	// NOTE this identity is used here only as a SHARP-EDGE (w=0) algebraic check.
+	// Production filled tubes must use background_shape::cylinder — at w > 0 the
+	// R_in = 0 annulus is a trap (n₀/2 on the axis); see T0.7.
 	const double L = 20.0, n0 = 0.01, R_in = 3.0, R_out = 7.0;
 	const double ann   = annulus_integral(L, n0, R_in, R_out, 0.0);
 	const double inner = annulus_integral(L, n0, 0.0,  R_in,  0.0);
@@ -140,4 +144,66 @@ TEST_CASE("T0.6 erfc-smoothed (production w=1) annulus conserves charge",
 	const double integ  = annulus_integral(L, n0, R_in, R_out, /*w=*/1.0);
 	const double expect = n0 * M_PI * (R_out*R_out - R_in*R_in) * L;
 	CHECK(integ == Approx(expect).epsilon(0.10));
+}
+
+// --- filled tube: background_shape::cylinder ---------------------------------
+// Added while designing the R_in → 0 proximity ladder (2026-08-02), which needs a
+// FILLED r_s=3 tube as its final rung.
+//
+// The filled tube is its own shape rather than annulus(R_in = 0). Reason: the erfc
+// step is centred ON its nominal edge, so background_mask(0,0,w) = ½ for every
+// w > 0 — an annulus with a degenerate inner edge yields n₊ = n₀/2 EXACTLY ON THE
+// TUBE AXIS, relaxing to n₀ only by d ≈ 2w. That is precisely where a channeling
+// projectile flies, so the error would be silent and maximal at the same point.
+//
+// T0.5 above cannot catch that: it probes R_in = 0 at w = 0, where
+// background_mask(d,0,0) = 0 for all physical d ≥ 0 and the composition is
+// accidentally right. Only the SOFTENED branch — i.e. only production, w = 0.5 —
+// is affected, so the shape check below is done at w > 0.
+TEST_CASE("T0.7 filled cylinder carries full n0 ON the axis (w>0)",
+          "[jellium][localised][cylinder]") {
+	const double R = 7.0, w = 0.5;
+
+	// the whole point: n₀, not n₀/2, at d = 0
+	CHECK(cylinder_mask(0.0, R, w) == Approx(1.0).margin(1e-12));
+	// ...and the value that would have appeared there via a degenerate inner edge
+	CHECK(background_mask(0.0, 0.0, w) == Approx(0.5).margin(1e-12));
+
+	// uniform across the whole interior
+	for(double d : {0.0, 0.25, 0.5, 1.0, 2.0, 5.0})
+		CHECK(cylinder_mask(d, R, w) == Approx(1.0).epsilon(1e-6));
+
+	// one radial boundary, erfc-softened: ½ on it, → 0 outside
+	CHECK(cylinder_mask(R, R, w) == Approx(0.5).margin(1e-12));
+	CHECK(cylinder_mask(R + 4.0*w, R, w) < 1e-6);
+}
+
+TEST_CASE("T0.8 hollow tube still carves its bore (w>0)",
+          "[jellium][localised][annulus]") {
+	// The new shape must not disturb the hollow production geometry (R_in=10,R_out=14).
+	const double R_in = 10.0, R_out = 14.0, w = 0.5;
+	CHECK(annulus_mask(0.0,   R_out, R_in, w) < 1e-12);                     // axis EMPTY
+	CHECK(annulus_mask(R_in,  R_out, R_in, w) == Approx(0.5).margin(1e-9)); // on bore edge
+	CHECK(annulus_mask(12.0,  R_out, R_in, w) == Approx(1.0).epsilon(1e-6));// mid-wall
+	CHECK(annulus_mask(R_out, R_out, R_in, w) == Approx(0.5).margin(1e-9)); // on outer edge
+}
+
+TEST_CASE("T0.9 cylinder integrates to n0·πR²·Lz (builder branch)",
+          "[jellium][localised][cylinder][engine]") {
+	// Exercises the shape through make_localised_background, not just the mask:
+	// proves the enum reaches the right branch and reads half_width as the RADIUS.
+	const double L = 20.0, n0 = 0.01, R = 7.0;
+	auto electrons = make_basis_electrons(L);
+	localised_background_params p;
+	p.shape = background_shape::cylinder;
+	p.n0 = n0; p.half_width = R; p.slab_axis = 2; p.edge_width = 0.0;
+	const double integ  = operations::integral(make_localised_background(electrons.density_basis(), p));
+	const double expect = n0 * M_PI * R * R * L;                 // = 30.79
+	// one curved radial surface → same discretisation class as T0.4
+	CHECK(integ == Approx(expect).epsilon(0.08));
+
+	// and it must NOT depend on inner_radius, which the shape ignores
+	p.inner_radius = 3.0;
+	CHECK(operations::integral(make_localised_background(electrons.density_basis(), p))
+	      == Approx(integ).epsilon(1e-12));
 }
