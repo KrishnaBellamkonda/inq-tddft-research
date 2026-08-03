@@ -1,0 +1,28 @@
+{
+  "wp_dir": "/rds/user/skcb2/hpc-work/tddft/inq-tddft-research/ResearchProject/systems/cylindrical_jellium/scripts/channeling_twin/wp/results/wp",
+  "classical_dir": "/rds/user/skcb2/hpc-work/tddft/inq-tddft-research/ResearchProject/systems/cylindrical_jellium/scripts/channeling_twin/classical/results/classical",
+  "representation": "perturbation",
+  "dynamic": true,
+  "parity_fields_checked": [
+    "periodicity",
+    "lz",
+    "spacing",
+    "n",
+    "sigma_wp",
+    "launch_z",
+    "gs_dir"
+  ],
+  "shared_config": {
+    "periodicity": 3.0,
+    "lz": 60.0,
+    "spacing": 0.5,
+    "n": 160.0,
+    "sigma_wp": 4.0,
+    "launch_z": -28.0,
+    "gs_dir": "/rds/user/skcb2/hpc-work/tddft/inq-tddft-research/ResearchProject/systems/cylindrical_jellium/shared_gs/tube_rs3_R10_14_L60_dx0p5"
+  },
+  "wp_projectile": "wavepacket_orbital",
+  "classical_projectile": "gaussian_charge_perturbation",
+  "u_proj_bg_source": "column",
+  "valid": true
+}
