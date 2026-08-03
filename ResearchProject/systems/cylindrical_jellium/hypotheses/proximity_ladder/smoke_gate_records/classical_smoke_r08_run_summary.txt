@@ -1,0 +1,50 @@
+run = cylindrical_jellium/proximity_ladder/classical/r08/smoke_r08
+rung = r08
+run_type = classical Gaussian-charge projectile, annular jellium tube TDDFT (ALDA)
+campaign = cylindrical channeling KS-orbital stopping (twin)
+plan = docs/plans/cylindrical-proximity-ladder.md
+twin_role = classical
+twin_partner = ../wp/results/wp
+engine = inq-study
+xc = LDA (ALDA in TDDFT)
+representation = perturbation
+projectile = gaussian_charge_perturbation
+projectile_detail = moving Gaussian charge (velocity-Verlet, 3-D Ehrenfest)
+drive = ehrenfest
+minimum_image = yes  (charge AND force)
+geometry = annular_tube
+r_in_bohr = 8  r_out_bohr = 14  edge_width_bohr = 0.5  tube_axis = 2
+cell_bohr = 40x40x60
+Lz = 60
+periodicity = 3
+spacing = 0.5
+spacing_bohr = 0.5
+N = 220
+n_electrons = 220
+n0_a0m3 = 0.0088419412828831
+r_s = 3
+omega_p_au = 0.33333333333333  omega_p_ev = 9.070462081996  lambda_p_bohr = 36.134811136085
+v_fermi = 0.6397194308925  v_over_vf = 2.996643805747
+n_states = 143  extra_states = 33
+sigma_WP = 4
+sigma_wp = 4
+sigma_pot = 2.8284271247462
+sigma_note = the run is LABELLED by sigma_WP; sigma_pot = sigma_WP/sqrt2 is the internal charge std that matches the WP density std
+launch_z = -28
+k0 = 1.91701127  v0 = 1.91701127  mass = 1  charge = -1
+projectile_energy_ev = 49.999999887638
+delta_fd = 0.05
+start_step = 0  n_steps = 20  dt = 0.02  dt_au = 0.02  total_time_au = 0.4
+save_every = 10  ckpt_every = 999999
+proj_x_final = 2.2529254690395e-07  proj_y_final = -7.4340955179109e-08
+proj_z_final = -27.194855243428  proj_vz_final = 1.9170112312677
+proj_z_unwrapped_final = -27.194855243428  n_wraps = 0
+v_final_over_v0 = 0.99999997979549
+energy_conserved_first_ha = -118.3700281213
+energy_conserved_last_ha = -118.37002805142
+energy_conserved_drift_ev = 1.9013843999503e-06
+energy_conserved_note = E_electronic + KE_proj + U_proj_bg
+date_finished = 2026-08-02T23:50:56
+wall_time_s = 67.961581329
+gs_dir = /rds/user/skcb2/hpc-work/tddft/inq-tddft-research/ResearchProject/systems/cylindrical_jellium/shared_gs/ladder_rs3_r08_L60_dx0p5
+run_completed = true

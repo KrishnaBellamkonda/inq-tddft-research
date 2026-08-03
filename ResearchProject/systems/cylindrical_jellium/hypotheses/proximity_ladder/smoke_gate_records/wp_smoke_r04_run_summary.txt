@@ -1,0 +1,63 @@
+run = cylindrical_jellium/proximity_ladder/wp/r04/smoke_r04
+rung = r04
+run_type = wavepacket projectile, annular jellium tube TDDFT (ALDA)
+campaign = cylindrical channeling KS-orbital stopping (twin)
+plan = docs/plans/cylindrical-proximity-ladder.md
+twin_role = wavepacket
+twin_partner = ../classical/results/classical
+engine = inq-study
+xc = LDA (ALDA in TDDFT)
+representation = wavepacket
+projectile = wavepacket_orbital
+projectile_detail = occupied KS orbital, Gaussian envelope with drift k0
+geometry = annular_tube
+r_in_bohr = 4  r_out_bohr = 14  edge_width_bohr = 0.5  tube_axis = 2
+cell_bohr = 40x40x60
+Lz = 60
+periodicity = 3
+spacing = 0.5
+spacing_bohr = 0.5
+N = 300
+n_electrons = 300  (bath; +1 for the WP)
+n0_a0m3 = 0.0088419412828831
+r_s = 3
+omega_p_au = 0.33333333333333  omega_p_ev = 9.070462081996  lambda_p_bohr = 36.134811136085
+v_fermi = 0.6397194308925  v_over_vf = 2.996643805747
+n_states = 195  extra_states = 45
+wp_enabled = yes
+wp_state_index = 194
+sigma_WP = 4
+sigma_wp = 4
+wp_sigma_bohr = 4
+wp_sigma_density = 2.8284271247462
+sigma_pot = 2.8284271247462
+wp_sigma_note = the run is LABELLED by sigma_WP; the density std sigma_WP/sqrt2 equals the twin's classical sigma_pot
+wp_k0_bohr_inv = 1.91701127  wp_velocity = 1.91701127  k0 = 1.91701127  v0 = 1.91701127
+wp_drift_energy_ev = 49.999999887638
+projectile_energy_ev = 49.999999887638
+wp_localisation_energy_ev = 1.2755337302807
+launch_z = -28
+norm_after = 1  max_overlap = 2.9872580133844e-07
+cap = off
+cap_enabled = no
+cap_note = no absorbing potential; H is Hermitian and t-independent so energy_total is CONSERVED and is the correctness gate
+start_step = 0  rt_num_steps = 20  n_steps = 20  dt_au = 0.02  dt = 0.02  total_time_au = 0.4
+save_every = 10  wf_every = 0  stats_every = 1  ckpt_every = 999999
+energy_total_first_ha = -260.1341626837
+energy_total_last_ha = -260.13416268961
+energy_total_drift_ev = -1.608690690975e-07
+var_pz_free_value = 0.03125
+var_pz_first = 0.031249999999706
+var_pz_final = 0.031277697336714
+var_pz_growth_pct = 0.088631478424739
+f_bore_first = 0.62075028827951
+f_bore_final = 0.61923779750687
+f_bore_min = 0.61923779750687
+spread_rate_bohr_per_au = 0.17677669529664
+t_2sigma_reaches_bore_au = -nan
+t_transverse_overlap_au = 34.149995932975  (6 sigma_d = L_xy; AFTER the end of the run)
+analysis_note = fit S over the window where f_bore stays near 1; later steps are recorded but the packet has begun to touch the wall
+date_finished = 2026-08-03T03:23:19
+wall_time_s = 129.689832158
+gs_dir = /rds/user/skcb2/hpc-work/tddft/inq-tddft-research/ResearchProject/systems/cylindrical_jellium/shared_gs/ladder_rs3_r04_L60_dx0p5
+run_completed = true
