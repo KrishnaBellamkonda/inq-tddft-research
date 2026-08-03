@@ -11,17 +11,26 @@ import nbformat as nbf
 from nbformat.v4 import new_notebook, new_markdown_cell, new_code_cell
 from nbconvert.preprocessors import ExecutePreprocessor
 
-VTAG = sys.argv[1] if len(sys.argv) > 1 else "v4p5"
-V = float(VTAG.replace("v", "").replace("p", "."))
+TAG = sys.argv[1] if len(sys.argv) > 1 else "v4p5"   # v3p0 (sigma_WP=0.5 family) OR s2p0_v2p0 (sigma sweep)
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = "/local/data/public/skcb2/tddft"
 SYS  = f"{ROOT}/ResearchProject/systems/localised_jellium"
-NEW  = f"{SYS}/scripts/classical_highdensity_sv/dyn_direct/results/{VTAG}_direct"
-OLD  = f"{SYS}/scripts/classical_highdensity_sv/dyn/results/{VTAG}"
+NEW  = f"{SYS}/scripts/classical_highdensity_sv/dyn_direct_cap/results/{TAG}_cap"
+OLD  = f"{SYS}/scripts/classical_highdensity_sv/dyn_direct/results/{TAG}_direct"  # overlay: no-CAP direct twin (sigma_WP=0.5 family only)
 E_GS = 207.18322156141
-NB   = f"{HERE}/run_{VTAG}_direct.ipynb"
+NB   = f"{HERE}/run_{TAG}_cap.ipynb"
 sys.path.insert(0, f"{ROOT}/inq-stack/python")
-SIGMA_POT = 0.5 / 2**0.5; FACE = 12.5; WALL = 42.5; DT = 0.04
+# --- reconstruct config from run_summary.txt so one builder serves both run families ---
+def _rs(key, default, cast=float):
+    m = re.search(rf"\b{key}\s*=\s*([-\d.eE+]+)", open(NEW + "/run_summary.txt").read())
+    return cast(m.group(1)) if m else default
+V         = _rs("v0", 0.0)
+SIGMA_WP  = _rs("sigma_wp", 0.5)
+SIGMA_POT = SIGMA_WP / 2**0.5
+FACE      = _rs("slab_half", 12.5)
+WALL      = _rs("Lz", 85.0) / 2.0
+DT        = _rs("dt", 0.04)
+VTAG = TAG   # back-compat alias for gif filenames / titles below
 
 def build_gifs():
     import numpy as np, matplotlib; matplotlib.use("Agg")
@@ -60,8 +69,8 @@ def build_gifs():
                 if np.isfinite(zc): a.axhline(zc, ls="-", c="k", lw=0.6, alpha=0.5)
             fig.suptitle(f"{VTAG} direct {ttl} — step {step}, proj_z={zc:+.1f}")
         anim.FuncAnimation(fig, upd, frames=sel, interval=120).save(f"{HERE}/{fn}", writer=anim.PillowWriter(fps=8)); plt.close(fig)
-    mk("total", f"gif_total_{VTAG}.gif", "total density"); out["total"] = f"{HERE}/gif_total_{VTAG}.gif"
-    mk("induced", f"gif_induced_{VTAG}.gif", "induced Δn"); out["induced"] = f"{HERE}/gif_induced_{VTAG}.gif"
+    mk("total", f"gif_total_{VTAG}_cap.gif", "total density"); out["total"] = f"{HERE}/gif_total_{VTAG}_cap.gif"
+    mk("induced", f"gif_induced_{VTAG}_cap.gif", "induced Δn"); out["induced"] = f"{HERE}/gif_induced_{VTAG}_cap.gif"
     return out
 GIFS = build_gifs()
 
@@ -69,10 +78,11 @@ cells = []
 def md(s): cells.append(new_markdown_cell(s))
 def code(s): cells.append(new_code_cell(s))
 
-md(f"# Classical projectile in jellium slab — {VTAG} (v={V}), DIRECT potential\n"
-   f"Direct erf/r potential (charge-free) replica of the old charge-based `dyn/{VTAG}`. "
-   "System: r_s≈4.18, N=100, box 35×35×85, slab ±12.5, `periodicity(2)` (CAP-free). "
-   "σ_WP=0.5, launch z=−24, mass 1, free Ehrenfest. Shows: no exit kink + physical ledger.")
+md(f"# Classical projectile in jellium slab — {TAG} (v={V:g}, σ_WP={SIGMA_WP:g}), DIRECT potential + two-sided CAP\n"
+   f"Direct erf/r potential (charge-free) classical projectile. System: r_s≈4.18, N=100, box 35×35×85, "
+   f"slab ±{FACE:g}, `periodicity(2)`. σ_WP={SIGMA_WP:g} (σ_pot=σ_WP/√2={SIGMA_POT:.3f}), launch z=−24, "
+   "mass 1, free Ehrenfest, two-sided sin² CAP (η=−1 Ha, inner ±30, width 12.5). "
+   "Shows: density evolution, physical ledger, projectile transport, stopping (Def-A KE-loss & Def-B E_absorbed).")
 md("## Setup (run_summary.txt)")
 code(f"import pandas as pd,numpy as np,matplotlib.pyplot as plt,os\nfrom matplotlib.colors import LogNorm\n"
      f"NEW=r'{NEW}';OLD=r'{OLD}';HA=27.211386;E_GS={E_GS!r};FACE={FACE};WALL={WALL};DT={DT};V={V}\n"
@@ -102,11 +112,11 @@ code("from inqview import load_vti\nimport glob\n"
      "ax[1].plot(tt,Nt);ax[1].set_title('N(t)=∫n dV (conserved)');ax[1].set_xlabel('t');plt.tight_layout();plt.show()\n"
      "cons=N.energy_total+N.energy_proj_ke+N.energy_proj_bg_ideal\n"
      "print('conservation drift %.2e eV; N(t) %.4f->%.4f'%((cons.max()-cons.min())*HA,Nt[0],Nt[-1]))")
-md("## No-kink demonstration — OLD charge vs NEW direct (curvature max should be IN-SLAB)")
+md("## No-kink demonstration — no-CAP direct vs NEW direct (curvature max should be IN-SLAB)")
 code("if O is not None:\n"
      "    fig,ax=plt.subplots(2,3,figsize=(15,8))\n"
      "    def pan(a,c,t,ref=0,vz=False):\n"
-     "        a.plot(O.proj_z,O[c] if vz else (O[c]-ref)*HA,c='tab:red',alpha=0.7,label='OLD charge');a.plot(N.proj_z,N[c] if vz else (N[c]-ref)*HA,c='tab:blue',label='NEW direct')\n"
+     "        a.plot(O.proj_z,O[c] if vz else (O[c]-ref)*HA,c='tab:red',alpha=0.7,label='no-CAP direct');a.plot(N.proj_z,N[c] if vz else (N[c]-ref)*HA,c='tab:blue',label='NEW direct')\n"
      "        a.axvline(WALL,ls=':',c='k');a.axvline(FACE,ls='--',c='grey');a.set_title(t);a.set_xlabel('proj_z');a.legend(fontsize=8)\n"
      "    pan(ax[0,0],'energy_total','E-E_GS (eV)',ref=E_GS);pan(ax[0,1],'e_ps','E_PS (eV)');pan(ax[0,2],'e_pb','E_PB (eV)')\n"
      "    pan(ax[1,0],'e_pp','E_PP (eV)');pan(ax[1,1],'energy_proj_bg_ideal','U_proj_bg (eV)');pan(ax[1,2],'proj_vz','vz',vz=True)\n"
@@ -136,7 +146,7 @@ code("fig,ax=plt.subplots(1,3,figsize=(16,4))\n"
      "print('v_launch=%.3f v_final=%.3f  (t_final=%.1f a.u., z_final=%.1f Bohr)'%(N.proj_vz.iloc[0],N.proj_vz.iloc[-1],N.time_au.iloc[-1],N.proj_z.iloc[-1]))\n"
      "print('Def-A  S_A = KEloss(-12.5..+12.5)/25       = %.3f eV/Bohr'%S_A)\n"
      "print('Def-B  S_B = [E_total(t_final)-E_GS]/25    = %.3f eV/Bohr   (E_absorbed=%.2f eV)'%(S_B,Eabs))\n"
-     "if O is not None: print('  (OLD charge Def-A = %.3f eV/Bohr -> sheet-inflated)'%((ke(O,-FACE)-ke(O,FACE))*HA/(2*FACE)))")
+     "if O is not None: print('  (no-CAP direct Def-A = %.3f eV/Bohr -> no-CAP)'%((ke(O,-FACE)-ke(O,FACE))*HA/(2*FACE)))")
 md(f"## Takeaway\n- Direct erf/r potential: no exit kink, physical ledger (E_PS>0→0, E_PP const, E_PB<0→0), energy conserved.\n"
    f"- Two stopping definitions reported: **Def-A** (KE-loss across slab /25, gauge-free) and **Def-B** "
    f"([E_total(t_final)−E_GS]/25). Def-B > Def-A because E_total retains the 1/r e_ps offset (does not fully plateau).\n"

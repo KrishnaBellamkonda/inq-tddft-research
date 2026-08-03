@@ -399,7 +399,7 @@ int main() {
         gate_rel("sigma_pz^2 = 1/(2 s^2)",    m0.sz2, sigma_p2, 10.0);
         gate_rel("T1 = (k0^2+3 sp2)/2 (Ha)",  T1, 0.5*(K0*K0 + 3.0*sigma_p2), 3.0);
         gate_rel("T1-T2 = 3/(4 s^2) (Ha)",    T1-T2, 3.0/(4.0*SIGMA_WP*SIGMA_WP), 5.0);
-        gate_abs("centroid z (circular)",     r0.zc, LAUNCH_Z, 0.05);
+        gate_abs("centroid z",                r0.z, LAUNCH_Z, 0.05);  // t=0: plain==circular (no wrap)
         gate_rel("density std = s/sqrt2",     std::sqrt(r0.sz2), SIGMA_WP/std::sqrt(2.0), 5.0);
         std::cout << "  [info] max_overlap with occupied manifold = "
                   << report.max_overlap << " (want < 1e-3)\n";

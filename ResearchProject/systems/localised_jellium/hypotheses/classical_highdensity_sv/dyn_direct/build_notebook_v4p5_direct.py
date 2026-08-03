@@ -149,12 +149,15 @@ md("## 3. Source files\n"
    f"- launch: `.../dyn_direct/launch_v4p5_direct.sh` | this builder: `.../hypotheses/.../dyn_direct/build_notebook_v4p5_direct.py`\n"
    f"- plan: `docs/plans/direct-potential-ledger-fix.md`")
 
-code("def load(run):\n"
+code("import glob as _g\n"
+     "def _cat(b,stem):\n"
+     "    fs=sorted(_g.glob(b+stem+'*.csv'))\n"
+     "    return pd.concat([pd.read_csv(f) for f in fs]).drop_duplicates('step').sort_values('step').reset_index(drop=True)\n"
+     "def load(run):\n"
      "    b=run+'/raw/observables/'\n"
-     "    ob=pd.read_csv(b+'observables.csv'); pj=pd.read_csv(b+'projectile.csv'); ix=pd.read_csv(b+'interactions.csv')\n"
-     "    return ob.merge(pj,on=['step','time_au']).merge(ix,on=['step','time_au'])\n"
+     "    return _cat(b,'observables').merge(_cat(b,'projectile'),on=['step','time_au']).merge(_cat(b,'interactions'),on=['step','time_au'])\n"
      "N=load(NEW); O=load(OLD)\n"
-     "print('NEW rows',len(N),' proj_z %.1f..%.1f'%(N.proj_z.min(),N.proj_z.max()))")
+     "print('NEW steps %d..%d (segments concatenated), proj_z %.1f..%.1f'%(N.step.min(),N.step.max(),N.proj_z.min(),N.proj_z.max()))")
 
 # ---- visual intuition: GIFs ----
 md("## Visual intuition — density evolution (mid-y x–z, LINEAR | LOG)\n"
@@ -255,11 +258,13 @@ code("fig,ax=plt.subplots(1,3,figsize=(16,4))\n"
      "plt.tight_layout(); plt.show()\n"
      "# stopping: KE loss across the equal-potential slab window (-FACE..+FACE) and to z~20\n"
      "def ke_at(d,z): return d.loc[(d.proj_z-z).abs().idxmin(),'energy_proj_ke']\n"
-     "dep_slab=(ke_at(N,-FACE)-ke_at(N,FACE))*HA; dep20=(N.energy_proj_ke.iloc[0]-ke_at(N,20))*HA\n"
-     "print('v_launch=%.3f  v_final=%.3f'%(N.proj_vz.iloc[0],N.proj_vz.iloc[-1]))\n"
-     "print('KE loss across slab (-12.5..+12.5): NEW %.2f eV  (OLD %.2f eV) -> sheet inflated OLD ~%.0f%%'\n"
-     "      %(dep_slab,(ke_at(O,-FACE)-ke_at(O,FACE))*HA,100*((ke_at(O,-FACE)-ke_at(O,FACE))/(ke_at(N,-FACE)-ke_at(N,FACE))-1)))\n"
-     "print('S(v=4.5) via KE-loss to z~20 = %.3f eV/Bohr  (old sweep charge-based reported 0.28)'%(dep20/25.0))")
+     "dep_slab=(ke_at(N,-FACE)-ke_at(N,FACE))*HA\n"
+     "S_A=dep_slab/25.0\n"
+     "Eabs=(N.energy_total.iloc[-1]-E_GS)*HA; S_B=Eabs/25.0\n"
+     "print('v_launch=%.3f  v_final=%.3f  (t_final=%.1f a.u., z_final=%.1f Bohr, extended)'%(N.proj_vz.iloc[0],N.proj_vz.iloc[-1],N.time_au.iloc[-1],N.proj_z.iloc[-1]))\n"
+     "print('Def-A  S_A = KEloss(-12.5..+12.5)/25    = %.3f eV/Bohr   (NEW %.2f eV vs OLD %.2f eV -> sheet inflated OLD ~%.0f%%)'\n"
+     "      %(S_A,dep_slab,(ke_at(O,-FACE)-ke_at(O,FACE))*HA,100*((ke_at(O,-FACE)-ke_at(O,FACE))/(ke_at(N,-FACE)-ke_at(N,FACE))-1)))\n"
+     "print('Def-B  S_B = [E_total(t_final)-E_GS]/25 = %.3f eV/Bohr   (E_absorbed=%.2f eV; upper bound, 1/r e_ps offset not fully plateaued)'%(S_B,Eabs))")
 
 # ---- physical anchors ----
 md("## Physical anchors (HEG scales, projectile timescales, Lindhard) — r_s=4.18")
