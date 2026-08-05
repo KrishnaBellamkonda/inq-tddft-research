@@ -220,13 +220,22 @@ def measure(cfg: str, v: float, half: str = "wp") -> Point:
     target = STEPS_TARGET[cfg][v]
     ti, to = transit_window(cfg, v)
 
-    # E_PS monopole-tail correction (sigma56 finding, 2026-08-03): the classical
-    # projectile keeps travelling and its N_e/z tail never decays within any
-    # affordable run; the WP is annihilated by the CAP so its E_PS(t_f) ~ 0.
-    # Subtracting E_PS(t_f) makes both halves measure the same quantity.
+    # E_PS monopole-tail correction (sigma56 finding, 2026-08-03) — applied to
+    # the CLASSICAL half ONLY. The classical projectile keeps travelling and its
+    # N_e/z tail never decays within any affordable run, so it must be
+    # subtracted. On the WP half the correction is either moot or WRONG:
+    # at sigma = 5 the CAP annihilates the packet (norm ~ 1e-10, E_PS(t_f) ~ 0,
+    # cut is a no-op), while at sigma = 0.5 a few percent of the dispersed
+    # packet SURVIVES with a large NEGATIVE E_PS, and subtracting it would
+    # inflate S by ~2.5x and break comparability with the L = 25 anchor
+    # (sigma_sweep_S_deposit is norm-corrected with NO E_PS cut). Measured on
+    # the 2026-08-05 pilot: the "non-monotone" sigma=0.5 WP S(L) was entirely
+    # this convention mismatch — on the anchor's convention the trace is
+    # monotone (0.189 / 0.167 / 0.160 eV/Bohr at L = 15/25/35, v = 3.0).
     eps_f = e_ps_final(cfg, v, half)
     kv = summary_kv(d / "run_summary.txt")
     z_f = float(kv.get("proj_z_final", "nan")) if half == "classical" else float("nan")
+    eps_cut = eps_f if (half == "classical" and not np.isnan(eps_f)) else 0.0
 
     return Point(
         cfg=cfg, sigma_wp=b.sigma, L_slab=b.l_slab, inv_L=1.0 / b.l_slab,
@@ -244,8 +253,7 @@ def measure(cfg: str, v: float, half: str = "wp") -> Point:
         sigma_eq=sigma_eq(cfg, v),
         e_ps_final_eV=eps_f,
         z_proj_final=z_f,
-        S_deposit_eV_per_Bohr=(a.E_absorbed_eV - (0.0 if np.isnan(eps_f) else eps_f))
-                              / b.l_slab,
+        S_deposit_eV_per_Bohr=(a.E_absorbed_eV - eps_cut) / b.l_slab,
     )
 
 
