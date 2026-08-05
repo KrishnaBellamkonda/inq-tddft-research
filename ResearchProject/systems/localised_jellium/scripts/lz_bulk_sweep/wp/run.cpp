@@ -1,109 +1,36 @@
 // ============================================================================
-// localised_jellium / scripts/wp_highdensity_sv / wp / run.cpp
+// localised_jellium / scripts/lz_bulk_sweep / wp / run.cpp
 //
-// WAVEPACKET twin of the high-density classical S(v) benchmark.
-// Campaign: docs/campaigns/localised_jellium/classical-highdensity-sv-benchmark.md
-// Plan:     docs/plans/wavepacket-highdensity-sv-twin.md
+// WAVEPACKET half of the slab->bulk L_slab sweep.
+// Plan: docs/plans/jellium-slab-extend-Lz.md
 //
-// A Gaussian electron wavepacket replaces the classical Gaussian-charge
-// projectile, with EVERY other physical parameter held at the classical
-// campaign's values, so the classical curve (S = 1.087 -> 0.283 eV/Bohr over
-// v = 2.0 -> 4.5) becomes the like-for-like reference for a quantum S(v).
+// Cloned from scripts/sigma56_sv/wp/run.cpp (the validated sigma = 5/6
+// production binary) with exactly one structural change: the geometry moves
+// from the compile-time Cfg to the RUNTIME box preset (env LZB_CFG,
+// shared/configs/lzb_boxes.hpp), so ONE binary serves all four boxes:
 //
-// ---------------------------------------------------------------------------
-// THE WIDTH MAPPING (.claude/rules/sigma-wp-convention.md)
-// sigma always means sigma_WP, the psi-width. The classical campaign ran a
-// Gaussian CHARGE of std sigma_pot = 0.35355 = 0.5/sqrt(2), i.e. the sigma_pot
-// of sigma_WP = 0.5. This run therefore uses sigma_WP = 0.5, whose DENSITY std
-// sigma_WP/sqrt(2) = 0.35355 equals the classical charge std exactly. Both
-// halves are labelled sigma = 0.5. LJ_SIGMA is sigma_WP in BOTH binaries —
-// the sqrt(2) lives inside each one, never at the call site.
+//   preset     L_z   L_slab  N_e  launch z   family
+//   s0p5_L15    75     15     60    -19.0    sigma = 0.5 (standoff 11.5)
+//   s0p5_L35    95     35    140    -29.0    sigma = 0.5
+//   s5p0_L15    95     15     60    -22.5    sigma = 5   (standoff 15)
+//   s5p0_L35   115     35    140    -32.5    sigma = 5
 //
-// ---------------------------------------------------------------------------
-// WHY THERE IS A CAP HERE WHEN THE CLASSICAL CAMPAIGN IS CAP-FREE
-// The classical campaign is CAP-free by design: periodicity(2) makes z open for
-// the ELECTROSTATICS, so the moving Gaussian CHARGE leaves the box and energy is
-// conserved, giving an exact post-exit plateau. That mechanism does NOT transfer
-// to a wavepacket. periodicity(2) is consulted only by the Poisson solver
-// (inq/src/solvers/poisson.hpp:189,206), ionic replicas and the kick gauge; the
-// wavefunction basis and kinetic operator are a plain 3-D FFT periodic in ALL
-// three directions (inq/src/basis/fourier_space.hpp:60-151,
-// inq/src/hamiltonian/ks_hamiltonian.hpp:200-204). A KS ORBITAL travelling +z
-// therefore WRAPS and re-enters at -z, arriving behind the slab and
-// contaminating the bath. (Confirmed in-repo: docs/handovers/pbc-open-z-
-// oscillation.md:20 "wavefunction always wraps on the FFT grid (p2 switches
-// electrostatics only)".)
+// Every t=0 gate, the orthogonalisation budget, the pairwise ledger, the
+// checkpoint/resume block and the CAP wiring are UNCHANGED from sigma56_sv, so
+// nothing validated there needs re-validating. The CAP fractions are derived
+// from the preset's L_z, so they follow the box automatically; the launch
+// standoff is per sigma FAMILY so each family's runs match its existing
+// L_slab = 25 anchor (the user's comparability rule, 2026-08-05).
 //
-// So two absorbing bands are added at the z faces (user decision 2026-07-30):
-//   width 12.5 Bohr per face, |eta| = 1 Ha
-// perturbations::absorbing takes FRACTIONAL cell coordinates (it compares
-// point_op.rvector()[2], which uses the contravariant spacing and lies in
-// [-0.5,0.5) — see real_space.hpp:105,129; the constructor's
-// assert(mid_pos in [-0.5,0.5)) is the tell):
-//   CAP_WIDTH_FRAC = 12.5/85 = 0.147058823529
-//   CAP_MID_FRAC   = 0.5 - W/2 = 0.426470588235   ( = 36.25 Bohr )
-//   +z band z in [+30.0,+42.5];  -z band z in [-42.5,-30.0]
-// eta < 0 ABSORBS (exp(-iVt) = exp(eta sin^2 t)); +1.0 would be a gain medium.
-// The CAP geometry and strength are validated independently, before production,
-// by scripts/wp_highdensity_sv/cap_check/ (free WP, no slab).
+// See the sigma56_sv wp/run.cpp header for the full rationale of the CAP
+// (orbitals wrap on the FFT grid regardless of periodicity(2)), the width
+// mapping sigma_pot = sigma_WP/sqrt(2), the E_absorbed-vs-ledger discussion and
+// the checkpoint rules — all of it applies verbatim here.
 //
-// CONSEQUENCES OF THE CAP, which the notebooks must state:
-//   * energy_total is NO LONGER CONSERVED (the CAP is non-Hermitian), so the
-//     classical correctness gate is replaced by norm/absorption monitoring.
-//   * the WP norm decays; WPMomentumStats divides every moment by the CURRENT
-//     norm, so T1/T2 stay valid expectation values OF THE SURVIVING PACKET —
-//     but the CAP preferentially removes the slow, spread tail, which biases
-//     <p_z> upward. This is the qsp5 lesson (docs/handovers/qsp5-momentum-
-//     stopping.md) and is why norm_check is recorded every step.
-//
-// ---------------------------------------------------------------------------
-// WHY E_absorbed HAS NO DIRECT WP ANALOGUE
-// In the classical run the projectile is an EXTERNAL moving perturbation doing
-// work, so energy_total climbs and plateaus and E_absorbed = plateau - E_GS.
-// Here the projectile IS part of the system, so (CAP aside) the Hamiltonian is
-// time-independent and energy_total is conserved: there is no plateau to read.
-// The deposited energy must come from the pairwise Coulomb ledger instead —
-// hence interactions.csv is written EVERY step via compute_coulomb_wp, whose
-// documented WP closure is
-//     E_hartree = E_SS + E_PS + E_PP ,  E_external = E_SB + E_PB
-// and which emits e_hartree_check / e_external_check as closure gates against
-// INQ's own scalars.
-//
-// ---------------------------------------------------------------------------
-// STOPPING POWER (definitions locked in docs/plans/bulk-jellium-ks-stopping.md §4)
-//   T1 = <p^2>/2m   -> wp_momentum_stats.csv, e_kin_ha
-//   T2 = <p>^2/2m   -> 0.5*(px_mean^2+py_mean^2+pz_mean^2), same file
-//   s3 = WP density centroid -> wp_real_space_stats.csv, z_mean_circ (CIRCULAR:
-//        the naive centroid is discontinuous across the periodic z face)
-//   s4 = integral of <p_z> dt -> cumulative trapezoid of pz_mean
-// S_ij = -dT_i/ds_j. Both stats files are written EVERY step: they ARE the
-// measurement, and one extra FFT per step is negligible against ~74 orbitals.
-//
-// ANALYSIS WINDOW CAVEAT (sigma_WP = 0.5 disperses fast). sigma_d(t) =
-// sqrt(sigma^2/2 + t^2/(2 sigma^2)) spreads at 1/(sqrt2 sigma) = 1.414 Bohr per
-// a.u. The transverse periodic images overlap (6 sigma_d = L_xy = 35) at
-// t = 4.12 a.u. = step 103, independent of velocity; the leading 3-sigma tail
-// reaches the +z CAP by t ~ 7.6-10.7 a.u. The packet is projectile-like only for
-// the first ~100-260 of 1611-3623 steps. Later steps are still recorded (they
-// carry the density GIFs and the absorption physics) but must be excluded from
-// the slope fit. T1 - T2 = 3/(4 sigma^2) = 3.0 Ha = 81.6 eV of localisation
-// energy is likewise inherent to the matched width.
-//
-// ---------------------------------------------------------------------------
-// CHECKPOINTS (.claude/rules/final-timestep-checkpoint.md + checkpoint-dont-block)
-// The user asked for AT LEAST 4 resumable checkpoints per run. This writes:
-//   * results/checkpoint          — rolling latest; what LJ_RESUME=1 loads
-//   * results/ckpt_step<N>        — RETAINED numbered snapshots, one per
-//                                   LJ_CKPT_EVERY (default N_STEPS/5 -> 5 of them)
-//   * results/rt_state.txt        — last_step, time_au, dt, wp_idx
-// so a killed job loses at most one interval and any quarter can be resumed from.
-//
-// ENGINE: inq-study, NOT stock inq (the CAP's complex scalar potential does not
-// compile, let alone propagate, against stock inq).
-//
-// Env: LJ_K0(2.0) LJ_N_STEPS(3623) LJ_DT(0.04) LJ_SIGMA(0.5) LJ_LAUNCH_Z(-24)
-//      LJ_CAP_ETA(-1.0) LJ_CAP_L(12.5) LJ_SAVE_EVERY(12) LJ_WF_EVERY(36)
-//      LJ_CKPT_EVERY(0=auto N/5) LJ_RESUME(0) LJ_OUT(REQUIRED) LJ_GS_DIR(REQUIRED)
+// Env: LZB_CFG(REQUIRED) LJ_K0 LJ_N_STEPS LJ_DT(0.04) LJ_SIGMA(family default)
+//      LJ_LAUNCH_Z(preset) LJ_CAP_ETA(-1.0) LJ_CAP_L(12.5) LJ_SAVE_EVERY
+//      LJ_WF_EVERY LJ_CKPT_EVERY(0=auto N/5) LJ_RESUME(0) LJ_OUT(REQUIRED)
+//      LJ_GS_DIR(REQUIRED)
 // ============================================================================
 #include <inq/inq.hpp>
 #include <inqkit/fields/density.hpp>
@@ -123,7 +50,7 @@
 #include <inqkit/jellium/interaction_energies.hpp>
 #include <inqkit/jellium/analytics.hpp>
 
-#include "../../../shared/configs/slab_n100_L35x35x85.hpp"
+#include "../../../shared/configs/lzb_boxes.hpp"
 
 #include <chrono>
 #include <cmath>
@@ -138,7 +65,7 @@
 
 using namespace inq;
 using namespace inq::magnitude;
-using Cfg = localised_jellium::config::SlabN100_L35x35x85;
+using Sh = localised_jellium::config::LzbShared;
 
 static double      env_d(const char* k, double d){ const char* v=std::getenv(k); return v?std::atof(v):d; }
 static int         env_i(const char* k, int d){ const char* v=std::getenv(k); return v?std::atoi(v):d; }
@@ -163,42 +90,42 @@ int main() {
     auto t_wall0 = std::chrono::steady_clock::now();
     const double HA = 27.211386245988;
 
-    // ---- parameters (geometry pinned to the classical campaign's Cfg) -------
-    const double SIGMA_WP = env_d("LJ_SIGMA", Cfg::WP_SIGMA_BOHR);   // 0.5
-    // PRODUCTION GRID = 0.40, NOT the classical campaign's 0.50 (user decision
-    // 2026-07-30). dx is a numerical, not physical, parameter: at dx = 0.5 the
-    // sigma_WP = 0.5 packet is ONE grid point per sigma and aliases 10.4 % of its
-    // z-momentum weight past k_Nyq = pi/dx at v = 4.5, biasing T1 = <p^2>/2 — the
-    // primary stopping observable. At 0.40 that falls to <= 0.9 % everywhere, for
-    // 2x the grid. The campaign's own <resolved_decisions> called dx = 0.50
-    // PROVISIONAL and pre-authorised 0.35-0.40. The GS_DIR must match this dx.
-    const double SPACING  = env_d("LJ_SPACING", 0.40);
-    const double K0       = env_d("LJ_K0", 2.0);                     // = v (m = 1)
-    const double LAUNCH_Z = env_d("LJ_LAUNCH_Z", -24.0);
+    const auto B = localised_jellium::config::lzb_box_from_env();
+
+    // ---- parameters (geometry pinned to the LZB_CFG preset) -----------------
+    const double SIGMA_WP = env_d("LJ_SIGMA", B.SIGMA_DEFAULT);
+    const double SPACING  = env_d("LJ_SPACING", Sh::SPACING_BOHR);
+    const double K0       = env_d("LJ_K0", 3.0);                 // pilot velocity
+    // Per-FAMILY launch: both halves of a family and every L_slab share it, so
+    // arrival width depends on (sigma, v) only — the comparability rule.
+    const double LAUNCH_Z = env_d("LJ_LAUNCH_Z", B.LAUNCH_Z);
     const double DT       = env_d("LJ_DT", 0.04);
-    const int    N_STEPS  = env_i("LJ_N_STEPS", 3623);
-    const double CAP_ETA  = env_d("LJ_CAP_ETA", -1.0);               // Ha, <0 absorbs
-    const double CAP_L    = env_d("LJ_CAP_L", 12.5);                 // Bohr per face
-    const int    SAVE_EVERY = env_i("LJ_SAVE_EVERY", 12);
-    const int    WF_EVERY   = env_i("LJ_WF_EVERY", 36);
+    const int    N_STEPS  = env_i("LJ_N_STEPS", 2543);
+    const double CAP_ETA  = env_d("LJ_CAP_ETA", Sh::CAP_ETA_HA); // Ha, <0 absorbs
+    const double CAP_L    = env_d("LJ_CAP_L", Sh::CAP_L_BOHR);   // Bohr per face
+    const int    SAVE_EVERY = env_i("LJ_SAVE_EVERY", 25);        // ~100 frames
+    const int    WF_EVERY   = env_i("LJ_WF_EVERY", 64);          // ~40 wavefunctions
     const bool   RESUME     = env_i("LJ_RESUME", 0) != 0;
-    const std::string OUT    = "results/" + env_s("LJ_OUT", "wp");
+    const std::string OUT    = "results/" + env_s("LJ_OUT", B.name);
     const std::string GS_DIR = env_s("LJ_GS_DIR", "");
 
     int CKPT_EVERY = env_i("LJ_CKPT_EVERY", 0);
-    if (CKPT_EVERY <= 0) CKPT_EVERY = std::max(1, N_STEPS / 5);      // >= 4 retained
+    if (CKPT_EVERY <= 0) CKPT_EVERY = std::max(1, N_STEPS / 5);  // >= 4 retained
 
     if (GS_DIR.empty() || !std::filesystem::exists(GS_DIR)) {
         std::cerr << "FATAL: LJ_GS_DIR missing or unset: '" << GS_DIR << "'\n";
         return 2;
     }
 
-    const double CAP_WIDTH_FRAC = CAP_L / Cfg::LZ_BOHR;
+    const double CAP_WIDTH_FRAC = CAP_L / B.LZ_BOHR;
     const double CAP_MID_FRAC   = 0.5 - CAP_WIDTH_FRAC / 2.0;
-    const double z_cap_in       = Cfg::LZ_BOHR/2.0 - CAP_L;          // +30.0
+    const double z_cap_in       = B.LZ_BOHR/2.0 - CAP_L;
     const bool   CAP_ON         = (CAP_ETA != 0.0);
-    const double sigma_p2       = 1.0 / (2.0 * SIGMA_WP * SIGMA_WP); // = 2.0
-    const double rs             = inqkit::jellium::rs_from_n0(Cfg::N0);
+    const double sigma_p2       = 1.0 / (2.0 * SIGMA_WP * SIGMA_WP);
+    const double rs             = inqkit::jellium::rs_from_n0(B.n0());
+    // transverse periodic-image overlap: 6 sigma_d = L_xy
+    const double t_ov_arg = 2.0 * std::pow(Sh::LX_BOHR/6.0, 2) - SIGMA_WP*SIGMA_WP;
+    const double t_ov     = (t_ov_arg > 0.0) ? SIGMA_WP * std::sqrt(t_ov_arg) : 0.0;
 
     // ---- resume state -------------------------------------------------------
     const std::string CKPT = OUT + "/checkpoint", RT_STATE = OUT + "/rt_state.txt";
@@ -217,40 +144,42 @@ int main() {
     const std::string SEG = (START > 0) ? (".from" + std::to_string(START)) : std::string("");
 
     std::cout << std::setprecision(10)
-              << "\n=== wp_highdensity_sv  OUT=" << OUT << " ===\n"
-              << "  cell      = " << Cfg::LX_BOHR << " x " << Cfg::LY_BOHR << " x "
-              << Cfg::LZ_BOHR << " Bohr, periodicity(2), dx=" << SPACING << "\n"
-              << "  slab      = 25 Bohr (half " << Cfg::SLAB_HALF_WIDTH << ", edge "
-              << Cfg::EDGE_WIDTH_BOHR << "), N=" << Cfg::N_ELECTRONS
-              << ", n0=" << Cfg::N0 << ", r_s=" << rs << "\n"
+              << "\n=== lz_bulk_sweep WP [" << B.name << "]  OUT=" << OUT << " ===\n"
+              << "  cell      = " << Sh::LX_BOHR << " x " << Sh::LY_BOHR << " x "
+              << B.LZ_BOHR << " Bohr, periodicity(2), dx=" << SPACING << "\n"
+              << "  slab      = " << B.l_slab() << " Bohr (half " << B.SLAB_HALF
+              << ", edge " << Sh::EDGE_WIDTH_BOHR << "), N=" << B.N_ELECTRONS
+              << ", n0=" << B.n0() << ", r_s=" << rs << "\n"
               << "  WP        = sigma_WP " << SIGMA_WP << " (density std "
               << SIGMA_WP/std::sqrt(2.0) << " == classical sigma_pot)"
               << "  k0=" << K0 << " (v=" << K0 << ")  E_drift="
               << 0.5*K0*K0*HA << " eV\n"
-              << "  launch_z  = " << LAUNCH_Z << "\n"
+              << "  launch_z  = " << LAUNCH_Z
+              << "  (standoff " << (-B.SLAB_HALF - LAUNCH_Z) << " Bohr)\n"
               << "  CAP       = " << (CAP_ON ? "ON" : "OFF") << "  eta=" << CAP_ETA
               << " Ha  width=" << CAP_L << " Bohr/face  bands +/-["
-              << z_cap_in << "," << Cfg::LZ_BOHR/2.0 << "]\n"
+              << z_cap_in << "," << B.LZ_BOHR/2.0 << "]\n"
               << "  dt=" << DT << "  START=" << START << " -> N_STEPS=" << N_STEPS
               << "  t_total=" << (DT*N_STEPS) << " a.u." << (RESUME ? "  [RESUME]" : "") << "\n"
               << "  cadence   : density/" << SAVE_EVERY << "  wavefn/" << WF_EVERY
               << "  stats/1  ckpt/" << CKPT_EVERY << "\n"
               << "  GS        = " << GS_DIR << "\n"
               << "  spreading : rate " << 1.0/(std::sqrt(2.0)*SIGMA_WP)
-              << " Bohr/a.u.;  T1-T2 = " << 3.0/(4.0*SIGMA_WP*SIGMA_WP)*HA << " eV\n\n";
+              << " Bohr/a.u.;  T1-T2 = " << 3.0/(4.0*SIGMA_WP*SIGMA_WP)*HA << " eV"
+              << ";  t_ov = " << t_ov << " a.u.\n\n";
 
     // ---- system -------------------------------------------------------------
-    auto cell = systems::cell::orthorhombic(Cfg::LX_BOHR * 1.0_b,
-                                            Cfg::LY_BOHR * 1.0_b,
-                                            Cfg::LZ_BOHR * 1.0_b).periodicity(2);
+    auto cell = systems::cell::orthorhombic(Sh::LX_BOHR * 1.0_b,
+                                            Sh::LY_BOHR * 1.0_b,
+                                            B.LZ_BOHR * 1.0_b).periodicity(2);
     auto ions = systems::ions(cell);                    // jellium: no nuclei
     auto electrons = systems::electrons(
         ions,
         options::electrons{}
             .spacing(SPACING * 1.0_b)
-            .extra_electrons(Cfg::N_ELECTRONS)
-            .extra_states(Cfg::EXTRA_STATES)
-            .temperature(Cfg::TEMPERATURE_EV * 1.0_eV),
+            .extra_electrons(B.N_ELECTRONS)
+            .extra_states(B.EXTRA_STATES)
+            .temperature(Sh::TEMPERATURE_EV * 1.0_eV),
         input::kpoints::gamma());
     const int n_states = electrons.states().num_states();
 
@@ -302,12 +231,8 @@ int main() {
           << "wp_state_index = " << wp_idx << "\n"
           << "norm_after     = " << report.norm_after << "\n"
           << "max_overlap    = " << report.max_overlap << "\n"
-          // Orthogonalisation LOSS. norm_after is measured AFTER renormalisation
-          // and is ~1 by construction, so it cannot report how much of the packet
-          // the Gram-Schmidt projection removed. That matters as soon as the
-          // launch point moves into the slab's electronic spill-out (the
-          // near-launch campaign, docs/plans/effective-sigma-near-launch.md);
-          // it is ~1e-6 at the far-launch z = -24.
+          // Orthogonalisation LOSS: norm_after is measured AFTER renormalisation
+          // and cannot report how much the Gram-Schmidt projection removed.
           << "norm_pre_ortho = " << report.norm_pre_ortho << "\n"
           << "norm_pre_renorm = " << report.norm_pre_renorm << "\n"
           << "removed_weight = " << report.removed_weight << "\n"
@@ -319,11 +244,11 @@ int main() {
     // ---- background well + the two CAPs ------------------------------------
     inqkit::jellium::localised_background_params bg;
     bg.shape      = inqkit::jellium::background_shape::slab;
-    bg.n0         = Cfg::N0;
-    bg.half_width = Cfg::SLAB_HALF_WIDTH;
-    bg.slab_axis  = Cfg::SLAB_AXIS;
-    bg.center     = {0.0, 0.0, Cfg::SLAB_CENTER_BOHR};
-    bg.edge_width = Cfg::EDGE_WIDTH_BOHR;
+    bg.n0         = B.n0();
+    bg.half_width = B.SLAB_HALF;
+    bg.slab_axis  = Sh::SLAB_AXIS;
+    bg.center     = {0.0, 0.0, Sh::SLAB_CENTER};
+    bg.edge_width = Sh::EDGE_WIDTH_BOHR;
     inqkit::jellium::localised_background_perturbation bg_pert(bg);
 
     perturbations::absorbing cap_lo(CAP_ETA * 1.0_Ha, -CAP_MID_FRAC, CAP_WIDTH_FRAC);
@@ -348,7 +273,7 @@ int main() {
          .emit_vti = true, .vti_format = inqkit::io::VTIWriteOptions::Format::binary},
         {.overwrite = (START == 0)});
 
-    // FULL energy decomposition — the user asked for every component.
+    // FULL energy decomposition — every component, every step.
     inqkit::io::ObservableSelection sel;
     sel.step = sel.time_au = true;
     sel.energy_total = sel.energy_kinetic = sel.energy_hartree = sel.energy_xc = true;
@@ -362,13 +287,8 @@ int main() {
     inqkit::observables::WPMomentumStats  wp_mom(OBS + "/wp_momentum_stats"  + SEG + ".csv", wp_idx, {.write_every = 1});
     inqkit::observables::WPRealSpaceStats wp_pos(OBS + "/wp_real_space_stats" + SEG + ".csv", wp_idx, {.write_every = 1});
 
-    // snapshot() is called EVERY step (the density_delta L2 is an every-step
-    // scalar in observables.csv), but the 18 MB delta FIELD is only wanted at the
-    // density cadence. Without .emit_every this wrote 3624 frames per run instead
-    // of 302 -- 66 GB each, which filled /rds on 2026-07-31 and killed three
-    // sigma=3 runs mid-flight. Aligning on SAVE_EVERY also matches delta frames
-    // one-to-one with density_total / density_wp, which is what the GIF battery
-    // pairs them against.
+    // Delta FIELD only at the density cadence (the every-frame version once
+    // filled /rds — see the sigma56 header); the L2 scalar stays every-step.
     inqkit::observables::DensityDelta density_delta(
         VTI + "/density_delta", VTI + "/density_delta_coarse",
         {.emit_raw_vti = true, .emit_coarse_vti = true,
@@ -390,10 +310,7 @@ int main() {
         const double T1 = m0.ekin;
         const double T2 = 0.5*(m0.px*m0.px + m0.py*m0.py + m0.pz*m0.pz);
         int fails = 0;
-        // RELATIVE tolerances: sigma_WP = 0.5 on a dx = 0.5 grid is ONE grid point
-        // per sigma, so the momentum moments carry a real O(1%) discretisation
-        // error (measured in cap_check: sigma_pz^2 +1.6%, <p_z> -0.5% at k0 = 2).
-        // Percent-level bounds accept that while still catching a factor-2 blunder.
+        // RELATIVE tolerances — see sigma56_sv wp/run.cpp for the calibration.
         auto gate_rel = [&](char const* nm, double got, double want, double relpc){
             const double rel = (want != 0.0) ? 100.0*(got-want)/std::abs(want) : 0.0;
             const bool ok = std::abs(rel) <= relpc;
@@ -416,43 +333,14 @@ int main() {
         gate_rel("sigma_pz^2 = 1/(2 s^2)",    m0.sz2, sigma_p2, 10.0);
         gate_rel("T1 = (k0^2+3 sp2)/2 (Ha)",  T1, 0.5*(K0*K0 + 3.0*sigma_p2), 3.0);
         gate_rel("T1-T2 = 3/(4 s^2) (Ha)",    T1-T2, 3.0/(4.0*SIGMA_WP*SIGMA_WP), 5.0);
-        // Upstream (16382f0) moved this from the circular mean r0.zc to the plain
-        // r0.z: at t = 0 the packet has not wrapped, so the two agree. Kept.
-        gate_abs("centroid z",                r0.z, LAUNCH_Z, 0.05);  // t=0: plain==circular (no wrap)
-        // Upstream's unconditional `density std = s/sqrt2` gate is NOT dropped --
-        // it survives verbatim in the tail_free branch of the block below, which
-        // only relaxes it for a near-slab launch. Far launches gate exactly as before.
+        gate_abs("centroid z (circular)",     r0.zc, LAUNCH_Z, 0.05);
 
-        // ---- orthogonalisation loss (near-launch campaign) ------------------
-        // ALWAYS strict: the packet that propagates must still be mostly the
-        // Gaussian we asked for. 3 % is the user's criterion (2026-08-01).
+        // Orthogonalisation loss — ALWAYS strict (user criterion, 2026-08-01).
         gate_abs("ortho removed weight < 3 %", 100.0*report.removed_weight, 0.0,
                  env_d("LJ_ORTHO_TOL_PC", 3.0));
 
-        // ---- real-space width ------------------------------------------------
-        // The raw second moment is the RIGHT gate for a far launch and the WRONG
-        // one for a near-slab launch, so it is applied conditionally.
-        //
-        // WHY. Launched inside the slab's electronic spill-out, the packet is
-        // Pauli-orthogonalised against occupied states that extend through the
-        // whole slab, so it necessarily acquires a small, PHYSICAL far tail.
-        // Variance weights by (z-zc)^2, so ~0.1 % of the weight sitting ~10 Bohr
-        // away inflates sqrt(sz2) by tens of percent while the packet CORE is
-        // untouched. Measured at z = -14 (job 32528019): full-profile std 0.4684
-        // (+32.5 %) but CORE std 0.3559 vs the Gaussian 0.3536 — +0.65 %.
-        // Gating the raw second moment there rejects a CORRECT packet (it did:
-        // job 32528175 aborted on exactly this).
-        //
-        // Nothing is lost by relaxing it, because sigma is probed by two
-        // TAIL-IMMUNE gates that stay strict in both regimes: sigma_pz^2 and
-        // T1-T2 = 3/(4 sigma^2). Momentum moments are not distance-weighted, so
-        // a genuine factor-2 sigma blunder is still caught. What replaces it is
-        // a CONSISTENCY check: the excess variance must be explainable by the
-        // measured loss placing weight at a physically sensible distance,
-        //     dvar = var_measured - sigma^2/2  ~=  w_tail * d^2,
-        // so d = sqrt(dvar / removed_weight) must land beyond the packet core
-        // and inside the box. At z = -14 this gives d = 9.3 Bohr, which is
-        // exactly the distance from the launch point to the slab orbitals.
+        // Real-space width: raw second moment for a tail-free far launch,
+        // consistency check against the ortho tail otherwise (see sigma56).
         {
             const double var_meas  = r0.sz2;
             const double var_gauss = SIGMA_WP*SIGMA_WP/2.0;
@@ -471,30 +359,23 @@ int main() {
                              " not a deformed core\n"
                           << "  [info] implied tail RMS distance = " << d_implied
                           << " Bohr (launch " << LAUNCH_Z << ", slab face "
-                          << -Cfg::SLAB_HALF_WIDTH << ")\n";
-                // A sensible tail sits beyond the core (> 3 sigma_d) and inside
-                // the box. Outside that range the excess is NOT an orthogonality
-                // tail and something really is wrong.
+                          << -B.SLAB_HALF << ")\n";
                 const bool ok = (d_implied > 3.0*SIGMA_WP/std::sqrt(2.0))
-                             && (d_implied < Cfg::LZ_BOHR/2.0);
+                             && (d_implied < B.LZ_BOHR/2.0);
                 std::cout << (ok ? "  [PASS] " : "  [FAIL] ")
                           << "excess variance consistent with the ortho tail"
                           << "  (d_implied " << d_implied << " Bohr, want "
                           << 3.0*SIGMA_WP/std::sqrt(2.0) << " < d < "
-                          << Cfg::LZ_BOHR/2.0 << ")\n";
+                          << B.LZ_BOHR/2.0 << ")\n";
                 if (!ok) ++fails;
             }
         }
         std::cout << "  [info] max_overlap with occupied manifold = "
                   << report.max_overlap << " (want < 1e-3)\n";
 
-        // Momentum-space aliasing diagnostic. The WP k-distribution is centred at
-        // k0 with std sigma_p = 1/(sqrt2 sigma) = 1.414; whatever lies beyond
-        // k_Nyq = pi/dx folds back and corrupts <p^2> (T1) worst of all. At
-        // dx = 0.5 this is 0.12 % at v = 2.0 but 10.4 % at v = 4.5 — a
-        // WP-SPECIFIC problem the classical Gaussian CHARGE never had, and the
-        // reason the campaign flagged dx = 0.5 as PROVISIONAL. Reported, not
-        // gated, so the number lands in every run log and notebook.
+        // Momentum-space aliasing diagnostic. Matters again at sigma = 0.5
+        // (sigma_p = 1.414): the recorded dx = 0.40 table gives sigma_pz^2 bias
+        // +0.05/+0.26/+1.24/+5.06 % at v = 2.0-3.5 — reported, not gated.
         {
             const double sp   = 1.0/(std::sqrt(2.0)*SIGMA_WP);
             const double knyq = M_PI / SPACING;
@@ -528,8 +409,7 @@ int main() {
         inqkit::StepContext out = ctx; out.density_l2 = l2;
         obs.append(out);
 
-        // pairwise Coulomb ledger with the WP as charge group P (Poisson-linearity
-        // form, so the terms close EXACTLY against INQ's own E_hartree/E_external)
+        // pairwise Coulomb ledger with the WP as charge group P
         auto n_wp_f = inqkit::jellium::orbital_density_field(*ctx.electrons, wp_idx);
         auto ct = inqkit::jellium::compute_coulomb_wp(ctx.electrons->density(), n_wp_f, phiplus);
         if (ctx.electrons->root())
@@ -562,8 +442,8 @@ int main() {
             rt.step(data);
             wp_mom.maybe_accumulate(data);
             wp_pos.maybe_accumulate(data);
-            // Interior checkpoints: rolling `checkpoint` (what LJ_RESUME loads) plus
-            // a RETAINED numbered snapshot, so >= 4 distinct resume points survive.
+            // Interior checkpoints: rolling `checkpoint` plus a RETAINED
+            // numbered snapshot, so >= 4 distinct resume points survive.
             if (data.iter() > 0 && data.iter() % CKPT_EVERY == 0) {
                 electrons.save(CKPT);
                 write_rt_state(data.iter());
@@ -587,19 +467,21 @@ int main() {
         ix.close();
         std::ofstream s(OUT + "/run_summary.txt");
         s << std::setprecision(14)
-          << "run = localised_jellium/wp_highdensity_sv/wp/" << env_s("LJ_OUT","wp") << "\n"
+          << "run = localised_jellium/lz_bulk_sweep/wp/" << env_s("LJ_OUT", B.name) << "\n"
           << "run_type = wavepacket projectile, localised jellium slab TDDFT (ALDA)\n"
-          << "campaign = classical-highdensity-sv (WP twin)\n"
-          << "plan = docs/plans/wavepacket-highdensity-sv-twin.md\n"
+          << "campaign = lz_bulk_sweep (slab->bulk L_slab extrapolation)\n"
+          << "plan = docs/plans/jellium-slab-extend-Lz.md\n"
           << "engine = inq-study\nxc = LDA (ALDA in TDDFT)\n"
           << "date_finished = " << iso_now() << "\nwall_time_s = " << wall << "\n"
-          << "cell_bohr = " << Cfg::LX_BOHR << "x" << Cfg::LY_BOHR << "x" << Cfg::LZ_BOHR << "\n"
+          << "box_preset = " << B.name << "\n"
+          << "cell_bohr = " << Sh::LX_BOHR << "x" << Sh::LY_BOHR << "x" << B.LZ_BOHR << "\n"
           << "periodicity = 2\nspacing_bohr = " << SPACING << "\n"
-          << "slab_half_width = " << Cfg::SLAB_HALF_WIDTH
-          << "  edge_width = " << Cfg::EDGE_WIDTH_BOHR << "\n"
-          << "n_electrons = " << Cfg::N_ELECTRONS << "  n0_a0m3 = " << Cfg::N0
+          << "slab_half_width = " << B.SLAB_HALF
+          << "  slab_thickness = " << B.l_slab()
+          << "  edge_width = " << Sh::EDGE_WIDTH_BOHR << "\n"
+          << "n_electrons = " << B.N_ELECTRONS << "  n0_a0m3 = " << B.n0()
           << "  r_s = " << rs << "\n"
-          << "n_states = " << n_states << "  extra_states = " << Cfg::EXTRA_STATES << "\n"
+          << "n_states = " << n_states << "  extra_states = " << B.EXTRA_STATES << "\n"
           << "wp_enabled = yes\nwp_state_index = " << wp_idx << "\n"
           << "wp_sigma_bohr = " << SIGMA_WP << "\n"
           << "wp_sigma_note = wavepacket sigma (psi width); density std = this/sqrt2 "
@@ -608,23 +490,23 @@ int main() {
           << "wp_k0_bohr_inv = " << K0 << "  wp_velocity = " << K0 << "\n"
           << "wp_drift_energy_ev = " << 0.5*K0*K0*HA << "\n"
           << "wp_localisation_energy_ev = " << 3.0/(4.0*SIGMA_WP*SIGMA_WP)*HA << "\n"
-          << "launch_z = " << LAUNCH_Z << "\n"
+          << "launch_z = " << LAUNCH_Z << "  standoff_bohr = " << (-B.SLAB_HALF - LAUNCH_Z) << "\n"
           << "norm_after = " << report.norm_after << "  max_overlap = " << report.max_overlap << "\n"
           << "cap = " << (CAP_ON ? "on" : "off") << "  cap_eta_ha = " << CAP_ETA
           << "  cap_width_bohr = " << CAP_L << " per face\n"
           << "cap_mid_frac = " << CAP_MID_FRAC << "  cap_width_frac = " << CAP_WIDTH_FRAC << "\n"
-          << "cap_band_hi_bohr = [" << z_cap_in << "," << Cfg::LZ_BOHR/2.0 << "]\n"
-          << "cap_band_lo_bohr = [" << -Cfg::LZ_BOHR/2.0 << "," << -z_cap_in << "]\n"
+          << "cap_band_hi_bohr = [" << z_cap_in << "," << B.LZ_BOHR/2.0 << "]\n"
+          << "cap_band_lo_bohr = [" << -B.LZ_BOHR/2.0 << "," << -z_cap_in << "]\n"
           << "cap_note = energy_total NOT conserved (non-Hermitian); gate on norm instead\n"
           << "start_step = " << START << "  rt_num_steps = " << N_STEPS
           << "  dt_au = " << DT << "  total_time_au = " << (DT*N_STEPS) << "\n"
           << "save_every = " << SAVE_EVERY << "  wf_every = " << WF_EVERY
           << "  stats_every = 1  ckpt_every = " << CKPT_EVERY << "\n"
           << "spread_rate_bohr_per_au = " << 1.0/(std::sqrt(2.0)*SIGMA_WP) << "\n"
-          << "t_transverse_overlap_au = 4.12  (6 sigma_d = L_xy = 35; step "
-          << int(4.12/DT) << ")\n"
-          << "analysis_note = fit S over the pre-overlap window; later steps are "
-             "recorded but the packet is delocalised\n"
+          << "t_transverse_overlap_au = " << t_ov << "  (6 sigma_d = L_xy = "
+          << Sh::LX_BOHR << "; step " << (t_ov > 0.0 ? int(t_ov/DT) : 0) << ")\n"
+          << "analysis_note = deposit S = [E_total(t_f) - E_GS - E_PS(t_f)] / "
+          << B.l_slab() << " Bohr, norm-corrected; per-box E_GS from the gs run\n"
           << "gs_dir = " << GS_DIR << "\nrun_completed = true\n";
     }
     std::cout << "\nDone. Wall time " << wall << " s.\n";
