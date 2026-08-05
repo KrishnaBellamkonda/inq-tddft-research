@@ -7,7 +7,48 @@ account `mphil-nikiforakis-skcb2-sl2-gpu`.
 
 ---
 
-## STATUS 2026-08-05 (later) — MACHINERY BUILT + VALIDATED, PILOT-GATED CHAIN SUBMITTED
+## STATUS 2026-08-05 17:00 — PILOT PASSED AUTONOMOUSLY; PRODUCTION RUNNING; FIRST S(L) RESULT
+
+**Chain state:** GS ×4 COMPLETED (3–9 min each, all gates passed); smoke
+COMPLETED exit 0 (**first compile of all binaries clean, all 8 t=0 gates
+passed**); pilot ×8 COMPLETED; **pilot gate PASSED 13:56 UTC (job 32886169)**
+→ production auto-released. wp array: 3/12 done (all of s0p5_L15), 3 running;
+cl array + vac PENDING on **AssocGrpGRESMinutes** — the account's GPU-minutes
+quota is throttling, not an error; jobs start as budget frees (the sigma56
+re-run 32880125 is also consuming it). Measured s/step 1.75–4.89 → production
+projection 70 GPU·h (matches plan).
+
+**First physics (v = 3.0, corrected deposit, eV/Bohr; PILOT_REPORT.md):**
+
+| σ_WP | half | S(15) | S(25 anchor) | S(35) |
+|---|---|---|---|---|
+| 5 | classical | 0.131 | 0.133 | 0.133 |
+| 5 | WP | 0.309 | 0.396 | 0.445 |
+| 0.5 | classical | 0.373 | 0.381 | 0.387 |
+| 0.5 | WP | 0.189 | 0.167 | 0.160 |
+
+- σ=5 classical is L-INDEPENDENT (already bulk-like; surface term ~0).
+- σ=5 WP RISES with L — the WP/classical gap GROWS with thickness (2.4× at
+  L=15 → 3.3× at L=35); naive 1/L fit → S_bulk(WP) ≈ 0.55 vs classical 0.13,
+  i.e. the excess is NOT a 1/L surface term (single-velocity, provisional;
+  linearity residual at the L=25 point ~2 %).
+- Bulk-likeness WARN fired exactly as predicted: L=15 boxes n(0) −3.2/−3.6 %
+  off n0, interior Friedel peak-to-peak ~23 % of n0 (L=35: ~18–20 % — the
+  oscillation is large at r_s=4.18 everywhere; the single-point n(0) check is
+  luck-of-phase, peak-to-peak is the honest metric).
+- Classical plateau-not-settled notes are the expected receding E_PS tail
+  (endpoint is corrected); σ=5 WP plateaus are settled.
+
+**Fix during this check (commit 708deca):** the E_PS(t_f) cut is now
+CLASSICAL-ONLY in `lzb_stopping.measure`. The pilot exposed that subtracting
+E_PS from the σ=0.5 WP runs — whose dispersed packet SURVIVES (norm ~3e-2)
+with a large NEGATIVE E_PS — inflated S ~2.5× and made the trace spuriously
+non-monotone vs its no-cut anchor. On the fixed convention all four traces are
+monotone in L. At σ=5 the cut was a no-op (norm ~4e-10) so nothing else moved.
+
+---
+
+## STATUS 2026-08-05 (earlier) — MACHINERY BUILT + VALIDATED, PILOT-GATED CHAIN SUBMITTED
 
 **User instructions this milestone:** "Submit this plan too and ensure
 everything is autonomous. … do one or two runs of velocity for all the Lz.
