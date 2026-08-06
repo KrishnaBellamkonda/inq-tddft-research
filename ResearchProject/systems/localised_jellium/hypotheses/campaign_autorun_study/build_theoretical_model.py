@@ -204,7 +204,7 @@ npz  = np.where(np.abs(zb) < half, n0, 0.0)   # background n_+(z), sharp slab
 z_si = zb*a0; dz = z_si[1]-z_si[0]            # m
 ne_si, np_si = ne_z/a0**3, npz/a0**3          # number density 1/m^3
 def phi_stack(rho_charge, zq_m):              # rho_charge: C/m^3 array on z_si
-    return np.array([-1/(2*eps0)*np.trapz(rho_charge*np.abs(zqi - z_si), z_si) for zqi in zq_m])
+    return np.array([-1/(2*eps0)*np.trapezoid(rho_charge*np.abs(zqi - z_si), z_si) for zqi in zq_m])
 zq = (r_bohr + half)*a0
 U_e  = to_eV(q_proj*phi_stack(-e*ne_si, zq))          # projectile vs electron sheet-stack
 U_p  = to_eV(q_proj*phi_stack(+e*np_si, zq))          # projectile vs background sheet-stack
@@ -250,7 +250,7 @@ def U_classical(zq_m, rc):
     out = []
     for zqi in zq_m:
         dzs = np.abs(zqi - z_si); m = dzs < rc
-        out.append(e**2/(2*eps0)*np.trapz(np.where(m, ne_si*(rc - dzs), 0.0), z_si))
+        out.append(e**2/(2*eps0)*np.trapezoid(np.where(m, ne_si*(rc - dzs), 0.0), z_si))
     return to_eV(np.array(out))                   # projectile(-e) vs electrons(-e): repulsive, +
 rr = np.linspace(0, 90, 300); zqf = (rr + half)*a0
 U_cut = U_classical(zqf, rcut)                    # with the true 50-Bohr cutoff

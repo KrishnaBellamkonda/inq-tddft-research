@@ -102,6 +102,16 @@ else
   NAME="n${NE}_v$(echo "$V" | tr '.' 'p')"
 fi
 
+# CAP'd variants get a _cap suffix so they cannot overwrite this study's CAP-FREE
+# results, which are the whole point of slab_ks_wrap and are already complete.
+# (User decision 2026-08-01: the density S(v) plot must contain ONLY CAP'd runs.
+# E_absorbed = E_total(t_f) - E_GS is uninformative without an absorber: with the
+# packet still in the box it just returns the projectile's own energy, identically
+# 58.82 eV at BOTH densities, carrying no stopping information whatsoever.)
+if [ "${LJ_CAP_ETA:-0}" != "0" ]; then
+  NAME="${NAME}_cap"
+fi
+
 GS_DIR="$GS_ROOT/slab_n${NE}_L35x35x85_dx0p4_per2"
 if [ ! -d "$GS_DIR" ]; then
   echo "FATAL: ground state missing at $GS_DIR — run-slab-ks-gs.slurm must succeed first." >&2

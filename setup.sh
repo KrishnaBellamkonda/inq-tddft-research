@@ -56,7 +56,11 @@ cmake -S "$ROOT/inq" -B "$ROOT/inq/build" \
   -DENABLE_CUDA=ON \
   -DCMAKE_CUDA_ARCHITECTURES="$CUDA_ARCH" \
   -DCMAKE_CUDA_COMPILER="$NVCC"
-cmake --build "$ROOT/inq/build" --parallel
+# Bounded parallelism: an unbounded --parallel launches one nvcc per core, and
+# each `cicc` on INQ's template-heavy TUs takes several GB. On a CSD3 login node
+# (76 cores, 20 GB per-user cap) that OOM-kills the build with
+# "nvcc error : 'cicc' died due to signal 9". Raise BUILD_JOBS on a compute node.
+cmake --build "$ROOT/inq/build" --parallel "${BUILD_JOBS:-4}"
 cmake --install "$ROOT/inq/build"
 
 # 4. inqview (Python post-processing) into the active environment

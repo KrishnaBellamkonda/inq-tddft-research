@@ -103,6 +103,63 @@ def sigma_tag(sigma: float) -> str:
     return "" if abs(sigma - 0.5) < 1e-9 else "s" + f"{sigma:.1f}".replace(".", "p") + "_"
 
 
+# --------------------------------------------------------------------------
+# Launch distance (effective-sigma hypothesis, 2026-08-01)
+# --------------------------------------------------------------------------
+# The sigma campaigns above vary sigma at a FIXED launch z = -24. That cannot
+# separate the launch width from the ARRIVAL width, because the packet disperses
+# en route: at sigma = 0.5 it is 4.7-8.1 Bohr wide by the time it reaches the
+# slab, so its "sigma = 0.5" label describes a packet that no longer exists when
+# the physics happens.
+#
+# The NEAR-LAUNCH campaign holds sigma = 0.5 and moves the launch to z = -14
+# (1.5 Bohr outside the face), delivering the packet essentially undispersed at
+# sigma/sqrt2 = 0.354 Bohr. Same sigma, different arrival width.
+#
+# Run dirs are prefixed nl_ (composing with the sigma tag exactly as the
+# dispatcher does: TAG="${NLTAG}${TAG}"), so every far-launch name is unchanged.
+# Plan: docs/plans/effective-sigma-near-launch.md
+LAUNCH_Z_FAR = -24.0
+LAUNCH_Z_NEAR = -14.0          # accepted by the injection scan, job 32528019
+_NL_TAG = ""
+
+
+def launch_tag(launch_z: float) -> str:
+    """'' for the far launch (z = -24), 'nl_' for any near-launch campaign."""
+    return "" if abs(launch_z - LAUNCH_Z_FAR) < 1e-9 else "nl_"
+
+
+def set_launch(launch_z: float) -> None:
+    """
+    Point the module at one launch distance. Orthogonal to set_campaign(): the
+    two tags compose, so set_campaign(0.5) + set_launch(-14) resolves nl_v2p0.
+    Idempotent.
+    """
+    global LAUNCH_Z, _NL_TAG
+    LAUNCH_Z = float(launch_z)
+    _NL_TAG = launch_tag(LAUNCH_Z)
+
+
+def current_launch_z() -> float:
+    return LAUNCH_Z
+
+
+def arrival_time(v: float, launch_z: float | None = None) -> float:
+    """
+    Free-flight time from launch to the near slab face (a.u.), = (|z| - 12.5)/v.
+
+    Worth comparing against transverse_overlap_time(). At sigma = 0.5 the packet's
+    periodic images overlap at 4.12 a.u., but the FAR launch does not even reach
+    the slab until 5.75 a.u. at v = 2.0 — i.e. the far-launch sigma = 0.5 packet
+    is already transversely contaminated before it touches the slab. The near
+    launch arrives at 0.75 a.u., comfortably inside the clean window. This is an
+    independent reason the near-launch geometry is better posed, separate from
+    the dispersion argument that motivated it.
+    """
+    z = LAUNCH_Z if launch_z is None else launch_z
+    return float((abs(z) - SLAB_HALF) / v)
+
+
 def transverse_overlap_time(sigma: float, l_xy: float = LX) -> float:
     """
     When the packet's own periodic images start to overlap: 6 sigma_d(t) = L_xy.
@@ -133,14 +190,24 @@ def current_sigma() -> float:
     return SIGMA_WP
 
 
-def name_for(v: float, sigma: float | None = None) -> str:
+def name_for(v: float, sigma: float | None = None,
+             launch_z: float | None = None) -> str:
+    """Run directory name. Composes the launch tag and the sigma tag in the same
+    order the dispatcher does (nl_ + s<sigma>_ + v<velocity>)."""
     tag = _SIGMA_TAG if sigma is None else sigma_tag(sigma)
-    return tag + "v" + f"{v:.1f}".replace(".", "p")
+    nl = _NL_TAG if launch_z is None else launch_tag(launch_z)
+    return nl + tag + "v" + f"{v:.1f}".replace(".", "p")
 
 
-def vac_name_for(v: float, sigma: float | None = None) -> str:
-    """Matching CAP-only vacuum control for a production point."""
-    return "vac_" + name_for(v, sigma)
+def vac_name_for(v: float, sigma: float | None = None,
+                 launch_z: float | None = None) -> str:
+    """Matching CAP-only vacuum control for a production point.
+
+    The control MUST share the launch z: its job is a step-for-step subtractable
+    CAP-only <p_z>(t), and a packet launched elsewhere reaches the +z CAP at a
+    different time.
+    """
+    return "vac_" + name_for(v, sigma, launch_z)
 
 
 def campaign_label(sigma: float | None = None) -> str:
@@ -148,9 +215,9 @@ def campaign_label(sigma: float | None = None) -> str:
     return f"sigma_WP = {s:g} Bohr"
 
 
-def has_campaign(sigma: float) -> bool:
+def has_campaign(sigma: float, launch_z: float | None = None) -> bool:
     """True when at least one velocity of this campaign has produced observables."""
-    return any((WP_RESULTS / name_for(v, sigma) / "raw" / "observables"
+    return any((WP_RESULTS / name_for(v, sigma, launch_z) / "raw" / "observables"
                 / "wp_momentum_stats.csv").exists() for v in VELOCITIES)
 
 

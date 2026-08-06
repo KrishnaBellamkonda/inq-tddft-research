@@ -36,8 +36,10 @@ def code(t: str) -> nbf.NotebookNode:
 
 
 # --------------------------------------------------------------------------- #
-def build_run(v: float, sigma: float = 0.5) -> nbf.NotebookNode:
+def build_run(v: float, sigma: float = 0.5,
+              launch_z: float = W.LAUNCH_Z_FAR) -> nbf.NotebookNode:
     W.set_campaign(sigma)
+    W.set_launch(launch_z)
     name = W.name_for(v)
     nsteps = W.N_STEPS[v]
     alias = W.aliasing_bias_pct(v)
@@ -113,6 +115,10 @@ import wp_hd_stopping as W
 # (which is sigma-dependent via the transverse-image-overlap time) and every
 # sigma-derived label downstream. Must come before anything else that uses W.
 W.set_campaign({sigma})
+# Select the LAUNCH DISTANCE. Orthogonal to the sigma campaign and composes with
+# it (nl_ + s<sigma>_ + v<velocity>). Omitting this would silently resolve the
+# FAR-launch run of the same sigma, because the near-launch tag defaults to "".
+W.set_launch({launch_z})
 
 V = {v}
 NAME = W.name_for(V)
@@ -523,10 +529,12 @@ Fill in the numbers above, then read them against these caveats:
 
 
 # --------------------------------------------------------------------------- #
-def build_synthesis(sigma: float = 0.5) -> nbf.NotebookNode:
+def build_synthesis(sigma: float = 0.5,
+                    launch_z: float = W.LAUNCH_Z_FAR) -> nbf.NotebookNode:
     W.set_campaign(sigma)
-    is_legacy = abs(sigma - 0.5) < 1e-9
-    sfx = "" if is_legacy else "_" + W.sigma_tag(sigma).rstrip("_")
+    W.set_launch(launch_z)
+    is_legacy = abs(sigma - 0.5) < 1e-9 and abs(launch_z - W.LAUNCH_Z_FAR) < 1e-9
+    sfx = "" if is_legacy else "_" + _campaign_tag(sigma, launch_z)
     _why4 = ("""The quantum curve has **four** points (v = 2.0, 2.5, 3.0, 3.5). v = 4.0 and 4.5
 were excluded: σ_WP = 0.5 fixes the packet's momentum width at σ_p = 1.414 Bohr⁻¹,
 whose k-distribution folds at k_Nyq = π/dx, biasing σ_pz² by +17.9 % and +55.1 %
@@ -548,7 +556,9 @@ import numpy as np, pandas as pd, matplotlib.pyplot as plt
 sys.path.insert(0, "{HERE}")
 import wp_hd_stopping as W
 W.set_campaign({sigma})
-print("campaign:", W.campaign_label(), " fit window t <=", W.FIT_T1, "a.u.")
+W.set_launch({launch_z})
+print("campaign:", W.campaign_label(), "launch z =", W.current_launch_z(),
+      " fit window t <=", W.FIT_T1, "a.u.")
 
 rows = []
 for v in W.VELOCITIES:
@@ -810,8 +820,13 @@ def execute(nb: nbf.NotebookNode, out: Path) -> int:
     return n_err
 
 
-def _synth_name(sigma: float) -> str:
-    tag = W.sigma_tag(sigma).rstrip("_")
+def _campaign_tag(sigma: float, launch_z: float = W.LAUNCH_Z_FAR) -> str:
+    """'' far+0.5, 's2p0' far+2.0, 'nl' near+0.5, 'nl_s2p0' near+2.0."""
+    return (W.launch_tag(launch_z) + W.sigma_tag(sigma)).rstrip("_")
+
+
+def _synth_name(sigma: float, launch_z: float = W.LAUNCH_Z_FAR) -> str:
+    tag = _campaign_tag(sigma, launch_z)
     return "synthesis.ipynb" if not tag else f"synthesis_{tag}.ipynb"
 
 
@@ -830,34 +845,45 @@ def main() -> int:
         return 2
     arg, errs = sys.argv[1], 0
 
+    launch_z = W.LAUNCH_Z_FAR
+    if arg.startswith("nl:"):                        # near-launch campaign
+        launch_z, arg = W.LAUNCH_Z_NEAR, arg[3:]
+
     if ":" in arg:                                   # <sigma>:<v>
         s_str, v_str = arg.split(":", 1)
         sigma, v = float(s_str), float(v_str)
-        W.set_campaign(sigma)
-        return 1 if execute(build_run(v, sigma),
+        W.set_campaign(sigma); W.set_launch(launch_z)
+        return 1 if execute(build_run(v, sigma, launch_z),
                             HERE / f"run_{W.name_for(v)}.ipynb") else 0
 
     if arg == "sweep":
         return 1 if execute(build_sigma_sweep(), HERE / "sigma_sweep.ipynb") else 0
 
-    if arg not in ("all", "synthesis"):              # bare velocity -> legacy campaign
+    if arg not in ("all", "synthesis"):              # bare velocity -> sigma 0.5
         v = float(arg)
-        W.set_campaign(0.5)
-        return 1 if execute(build_run(v, 0.5),
+        W.set_campaign(0.5); W.set_launch(launch_z)
+        return 1 if execute(build_run(v, 0.5, launch_z),
                             HERE / f"run_{W.name_for(v)}.ipynb") else 0
 
     # Campaign-wide targets. Only campaigns with results on disk are built, so a
     # partially-finished sweep still yields everything it can (the notebook stage
     # is chained afterANY for exactly this reason).
-    present = [s for s in W.SIGMAS if W.has_campaign(s)]
-    print(f"campaigns with results on disk: {present or 'NONE'}")
-    for sigma in present:
+    # A campaign is a (launch distance, sigma) pair. The far-launch sigma sweep
+    # and the near-launch effective-sigma test are both enumerated here, so the
+    # chained notebook stage picks up whichever have results without being told.
+    campaigns = [(lz, s) for lz in (W.LAUNCH_Z_FAR, W.LAUNCH_Z_NEAR)
+                 for s in W.SIGMAS if W.has_campaign(s, lz)]
+    print("campaigns with results on disk: "
+          + (", ".join(f"z={lz:g},sigma={s:g}" for lz, s in campaigns) or "NONE"))
+    for launch_z, sigma in campaigns:
         if arg == "all":
             W.set_campaign(sigma)
+            W.set_launch(launch_z)
             for v in W.VELOCITIES:
-                errs += execute(build_run(v, sigma),
+                errs += execute(build_run(v, sigma, launch_z),
                                 HERE / f"run_{W.name_for(v)}.ipynb")
-        errs += execute(build_synthesis(sigma), HERE / _synth_name(sigma))
+        errs += execute(build_synthesis(sigma, launch_z),
+                        HERE / _synth_name(sigma, launch_z))
 
     # The cross-sigma figure is the point of the sweep — always attempted last, so
     # it sees every campaign the run above just refreshed.
