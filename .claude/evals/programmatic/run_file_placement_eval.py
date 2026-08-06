@@ -3,7 +3,10 @@
 Feeds each spec path to classify() and asserts warn/allow. Pure stdlib.
     python3 .claude/evals/programmatic/run_file_placement_eval.py
 """
-from __future__ import annotations
+# NOTE: no `from __future__ import annotations` — these evals are invoked with
+# bare `python3` (see docstring above), which on CSD3/RHEL8 is 3.6.8 where that
+# import is a hard SyntaxError. All annotations here are plain names; keep them
+# 3.6-compatible (no list[str] / X | Y).
 
 import os
 import sys

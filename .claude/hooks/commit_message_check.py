@@ -12,8 +12,14 @@ Enforces the DETERMINISTIC half of the rule only (forbidden words + subject
 format/length). Action-word *classification* (which of the 9) is reasoning and
 stays in the rule, not here — this hook only checks the action is one of the 9.
 """
-from __future__ import annotations
-
+# NOTE: deliberately NO `from __future__ import annotations`. Hooks are launched
+# with whatever bare `python3` is on PATH, and on this machine (RHEL8/CSD3) that is
+# /usr/bin/python3 == 3.6.8, where that future import is a hard SyntaxError
+# ("future feature annotations is not defined") -> exit 1 -> Claude Code reports
+# "PreToolUse:Bash hook failed with non-blocking status code" and the guard is
+# SILENTLY DISABLED. Every annotation here is a plain name (str/bool/Result), so
+# the import buys nothing. Keep this module stdlib-only and 3.6-compatible; do not
+# use PEP 585 (list[str]) or PEP 604 (X | Y) annotations. Verified 2026-07-30.
 import json
 import re
 import sys
@@ -39,12 +45,20 @@ def _first_forbidden(message: str):
     for m in _FORBIDDEN.finditer(message):
         before = message[m.start() - 1] if m.start() > 0 else ""
         after = message[m.end()] if m.end() < len(message) else ""
-        if before in _PATH_BEFORE or after in _PATH_AFTER:
+        # The `before and` / `after and` guards are LOAD-BEARING. When the match sits
+        # at the very start/end of the message there is no neighbouring character and
+        # these are "", and `"" in "-/_"` is True in Python (the empty string is a
+        # substring of everything) — so without the guards a message ENDING in a
+        # forbidden word ("chore(repo): made by Claude") was silently ALLOWED. Absence
+        # of a neighbour is prose context, not path context. Fixed 2026-07-30.
+        if (before and before in _PATH_BEFORE) or (after and after in _PATH_AFTER):
             continue            # part of a path/identifier — allowed
         return m
     return None
 _SUBJECT = re.compile(r"^(?:" + "|".join(ACTIONS) + r")\([^()]+\): .+")
 _MAX_SUBJECT = 72
+# Matches the invocation itself, tolerating extra spacing (`git   commit`).
+_GIT_COMMIT = re.compile(r"\bgit\s+commit\b")
 
 
 class Result:
@@ -85,15 +99,30 @@ def check(message: str) -> Result:
 def _extract_commit_message(command: str):
     """Best-effort message extraction from a `git commit` shell command.
     Returns the message string, or None if it cannot be determined."""
-    if "git commit" not in command:
+    m = _GIT_COMMIT.search(command)
+    if not m:
         return None
-    # heredoc: git commit -F - <<'EOF' ... EOF   (also -m - / commit -F-)
-    here = re.search(r"<<-?\s*['\"]?(\w+)['\"]?\n(.*?)\n\1", command, re.DOTALL)
-    if here:
-        return here.group(2)
+    # Only consider text BELONGING to the git-commit invocation, i.e. after it.
+    tail = command[m.end():]
+    # heredoc: git commit -F - <<'EOF' ... EOF   (also -F-)
+    #
+    # The -F/--file requirement is LOAD-BEARING. Previously any heredoc anywhere in a
+    # command that merely CONTAINED the substring "git commit" was read as the commit
+    # message, so writing documentation about commits —
+    #   cat >> handover.md <<'EOF' ... every `git commit` was unchecked ... EOF
+    # — had its whole body treated as a commit message and was BLOCKED on the first
+    # occurrence of a forbidden word. That false positive fires constantly in this repo,
+    # which documents the commit rule at length. A real heredoc commit always passes the
+    # message via -F, so requiring the flag on the invocation's own first line
+    # distinguishes the two. Found and fixed 2026-07-30 (it blocked this very handover).
+    first_line = tail.split("\n", 1)[0]
+    if re.search(r"(?:^|\s)(?:-F|--file)[=\s]*-?", first_line):
+        here = re.search(r"<<-?\s*['\"]?(\w+)['\"]?\n(.*?)\n\1", tail, re.DOTALL)
+        if here:
+            return here.group(2)
     # -m "msg" / -m 'msg'  (concatenate multiple -m into subject\n\nbody).
     # One capturing group → findall yields the quoted string; strip the quotes.
-    parts = re.findall(r"-m\s+(\"(?:\\.|[^\"])*\"|'[^']*')", command)
+    parts = re.findall(r"-m\s+(\"(?:\\.|[^\"])*\"|'[^']*')", tail)
     if parts:
         return "\n\n".join(p[1:-1] for p in parts)
     return None

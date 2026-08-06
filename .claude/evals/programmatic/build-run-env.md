@@ -8,9 +8,17 @@ Evaluator: **programmatic** — assert the wiring exists.
 ## Cases
 
 1. `.claude/settings.json` contains an `env` block.
-2. The `env` block defines the two additive, safe vars with canonical values:
-   - `INQ_SHARE_PATH = /local/data/public/skcb2/tddft/inq/install/share`
-   - `PSEUDOPOD_SHARE_PATH = /local/data/public/skcb2/tddft/inq/install/share/pseudopod`
+2. The `env` block defines the two additive, safe vars, pointing at the INQ install
+   inside **this** repo — i.e. `<repo-root>/inq/install/share` and
+   `<repo-root>/inq/install/share/pseudopod`.
+
+   The runner DERIVES these from its own location rather than hardcoding them
+   (updated 2026-07-30). They were previously pinned to the previous device's
+   literal `/local/data/public/skcb2/tddft/...`, which after the CSD3 migration
+   asserted a path that does not exist, so the eval failed for the wrong reason.
+   `settings.json` still stores an absolute path (it is machine-specific config);
+   deriving in the runner means a repo move now fails this eval LOUDLY instead of
+   leaving a stale value in place unnoticed.
 3. Consistency: the `build-run` SKILL.md text matches reality — it states these
    two vars are in the `settings.json` env, and that PATH entries (`shared/bin`,
    `pyenv/shims`) come from `~/.bashrc` (the Bash shell sources the user profile),

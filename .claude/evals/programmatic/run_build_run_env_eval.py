@@ -3,7 +3,10 @@
 Checks settings.json env wiring + build-run skill consistency. Pure stdlib.
     python3 .claude/evals/programmatic/run_build_run_env_eval.py
 """
-from __future__ import annotations
+# NOTE: no `from __future__ import annotations` — these evals are invoked with
+# bare `python3` (see docstring above), which on CSD3/RHEL8 is 3.6.8 where that
+# import is a hard SyntaxError. All annotations here are plain names; keep them
+# 3.6-compatible (no list[str] / X | Y).
 
 import json
 import os
@@ -12,9 +15,16 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..")
 SETTINGS = os.path.join(REPO, ".claude/settings.json")
 SKILL = os.path.join(REPO, ".claude/skills/build-run/SKILL.md")
 
+# DERIVED from REPO, never hardcoded. These were previously the previous device's
+# literal paths ("/local/data/public/skcb2/tddft/..."), so after the CSD3 migration
+# the eval asserted a location that does not exist here. Deriving has a second
+# benefit: settings.json still holds an absolute path (it is machine config), so if
+# the repo is ever moved again this eval FAILS LOUDLY on the mismatch instead of the
+# stale value going unnoticed. That is the intended early warning.
+_SHARE = os.path.join(REPO, "inq/install/share")
 WANT = {
-    "INQ_SHARE_PATH": "/local/data/public/skcb2/tddft/inq/install/share",
-    "PSEUDOPOD_SHARE_PATH": "/local/data/public/skcb2/tddft/inq/install/share/pseudopod",
+    "INQ_SHARE_PATH": _SHARE,
+    "PSEUDOPOD_SHARE_PATH": os.path.join(_SHARE, "pseudopod"),
 }
 
 

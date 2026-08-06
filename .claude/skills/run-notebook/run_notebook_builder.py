@@ -312,7 +312,8 @@ def gs_profile_fig(v, out, title, slab_half=12.5):
     nz = v.data.sum(axis=(0, 1))                             # sum over x,y
     fig, ax = plt.subplots(figsize=(6.4, 4.0))
     ax.plot(z, nz, "C0-", lw=1.4)
-    ax.axvspan(-slab_half, slab_half, color="0.9", zorder=0)
+    if slab_half:                       # bulk runs (slab_half None/0) have no slab
+        ax.axvspan(-slab_half, slab_half, color="0.9", zorder=0)
     ax.set_xlabel("z (Bohr)"); ax.set_ylabel(r"$\int n\,dx\,dy$ (e/Bohr)")
     ax.set_title(title); ax.grid(alpha=0.25)
     fig.tight_layout(); fig.savefig(out, dpi=150); plt.close(fig)
@@ -677,7 +678,14 @@ def build(results_dir, out_ipynb, baseline=None, run_cpp=None,
           cap_inner=None, decomp_prefix=None, rs=None, proj_sigma=0.3536,
           measured_s=None, measured_v=None, launch_z=None, v0=None,
           lindhard_mode="both", e_gs_ha=None, l_slab=25.0, gif_seconds=None,
-          twin_wp=None, bar_gif_seconds=0.45):
+          twin_wp=None, bar_gif_seconds=0.45, slab_half=12.5):
+    """``slab_half`` — half-thickness (Bohr) of the localised-jellium slab, used to
+    draw the dashed slab-face guides on every z-resolved figure. Pass **None** for a
+    BULK run (uniform jellium filling the cell), which has no slab: the guides are
+    then omitted rather than drawn at a fictitious position. Added 2026-07-30 for
+    the bulk_ks_stopping twin pair — before this the 12.5 Bohr default was
+    hard-coded and would have annotated a bulk run with a slab that does not
+    exist."""
     import nbformat as nbf
     from nbformat.v4 import new_notebook, new_markdown_cell, new_code_cell
     from nbconvert.preprocessors import ExecutePreprocessor
@@ -709,9 +717,11 @@ def build(results_dir, out_ipynb, baseline=None, run_cpp=None,
                                ("delta0", "carpet_delta0", "Δn = n(t) − n(0)"),
                                ("dstep", "carpet_dstep", "Δn = n(t+dt) − n(t)")]:
             f = figdir / f"{tag}.png"
-            carpet(ser, kind, f, f"{name}: {ttl}", dt, cap_inner=cap_inner); made[tag] = f
+            carpet(ser, kind, f, f"{name}: {ttl}", dt, cap_inner=cap_inner,
+                   slab_half=slab_half); made[tag] = f
         g = figdir / "lead_density.gif"
-        lead_gif(ser, g, f"{name} total density", dt, cap_inner=cap_inner); made["gif"] = g
+        lead_gif(ser, g, f"{name} total density", dt, cap_inner=cap_inner,
+                 slab_half=slab_half); made["gif"] = g
         if baseline:
             bser = load_series(Path(baseline).resolve() / "raw" / "vti" / "density_system")
             if bser is not None:
@@ -727,9 +737,11 @@ def build(results_dir, out_ipynb, baseline=None, run_cpp=None,
             sv = load_static_density(rd)
             if sv is not None:
                 f1 = figdir / "gs_density_xz.png"
-                gs_density_fig(sv, f1, f"{name}: converged density (xz mid-y)"); static["gs_xz"] = f1
+                gs_density_fig(sv, f1, f"{name}: converged density (xz mid-y)",
+                               slab_half=slab_half); static["gs_xz"] = f1
                 f2 = figdir / "gs_nz.png"
-                gs_profile_fig(sv, f2, f"{name}: transverse-integrated n(z)"); static["gs_nz"] = f2
+                gs_profile_fig(sv, f2, f"{name}: transverse-integrated n(z)",
+                               slab_half=slab_half); static["gs_nz"] = f2
         except Exception as e:
             print(f"[warn] static GS density skipped: {e}")
     sp_md = single_point_energy_md(rd, e_gs_ha) if ser is None else None
@@ -754,9 +766,10 @@ def build(results_dir, out_ipynb, baseline=None, run_cpp=None,
             _box_half = None
             cb = str(summ.get("cell_bohr", ""))
             if "x" in cb:
-                _box_half = float(cb.split("x")[-1]) / 2.0
+                # strip any trailing prose, e.g. "46 x 46 x 80 (orthorhombic)"
+                _box_half = float(cb.split("x")[-1].split("(")[0].strip()) / 2.0
             heur = compute_heuristics(
-                str(rd), rs=rs, v0=v0, z0=launch_z, slab_half=12.5,
+                str(rd), rs=rs, v0=v0, z0=launch_z, slab_half=(slab_half or 0.0),
                 box_half=(_box_half or 35.0),
                 sigma_wp=(proj_sigma * np.sqrt(2.0) if rtype == "wp" else None))
         except Exception as e:
@@ -800,19 +813,45 @@ def build(results_dir, out_ipynb, baseline=None, run_cpp=None,
     proj = {"wp": "Gaussian wavepacket (σ_wp; see config)",
             "classical": "classical Gaussian-charge electron (matched UPF)",
             "baseline": "no projectile (CAP-on-bath baseline)"}[rtype]
-    cap = "no CAP" if str(summ.get("cap_eta_ha", "")).strip() in ("0", "0.0", "-0") else \
-          f"two-sided CAP η={summ.get('cap_eta_ha','?')} Ha, {summ.get('cap_width_bohr','?')}/side"
+    # CAP: an ABSENT cap_eta_ha means the run HAS NO absorbing potential — it must
+    # NOT fall through to "two-sided CAP η=? Ha, ?/side", which asserts a feature the
+    # run does not have (hit by bulk_ks_stopping, 2026-07-30). Only claim a CAP when
+    # a non-zero eta was actually recorded.
+    _eta = str(summ.get("cap_eta_ha", "")).strip()
+    _has_cap = bool(_eta) and _eta not in ("0", "0.0", "-0", "0.00", "?")
+    cap = (f"two-sided CAP η={_eta} Ha, {summ.get('cap_width_bohr','?')}/side"
+           if _has_cap else "no CAP")
+
+    # Geometry from the run itself — never hard-code "cubic": bulk/orthorhombic runs
+    # exist (46 x 46 x 80). cell_geometry is the explicit key; otherwise infer from
+    # cell_bohr ("50^3" => cubic, "46 x 46 x 80" => orthorhombic).
+    _geom = str(summ.get("cell_geometry", "")).strip()
+    if not _geom:
+        _cellstr = str(summ.get("cell_bohr", ""))
+        _geom = ("cubic" if "^" in _cellstr else
+                 "orthorhombic" if "x" in _cellstr else "")
+    _cell_desc = f"{_geom} jellium" if _geom else "jellium"
+    if summ.get("cell_bohr"):
+        _cell_desc += f" ({str(summ['cell_bohr']).strip()} Bohr)"
+
+    # r_s / v0: prefer the values passed on the command line, then the summary.
+    # NEVER fall back to a hard-coded number — a fabricated r_s in the very first
+    # line of the notebook is worse than saying it was not recorded.
+    _rs = (f"r_s = {rs:g}" if rs is not None
+           else (f"r_s = {summ['r_s_bohr']}" if summ.get("r_s_bohr")
+                 else "r_s not recorded"))
+    _v0 = (f"{v0:g}" if v0 is not None else str(summ.get("v0_au", "not recorded")))
 
     # 1. title + question
     md(f"""# Run-notebook — `{name}`
 
-**One-run deep dive.** {rtype.upper()} run in cubic jellium ({summ.get('rs','r_s 5.69')}),
-{cap}. Projectile: {proj}, v0={summ.get('v0_au','?')} a.u.
+**One-run deep dive.** {rtype.upper()} run in {_cell_desc}, {_rs},
+{cap}. Projectile: {proj}, v0={_v0} a.u.
 
 **What this run shows:** the full per-run battery — density evolution, energetics, the
 projectile's transport/stopping, collective response, momentum, and KS excitation — so
-this single run can be read in depth. PROVISIONAL until the inq-study engine regression
-(Task #7). σ-convention is unified (σ = σ_wp; charge std = σ/√2 — see CONTEXT.md).""")
+this single run can be read in depth. σ-convention is unified
+(σ = σ_wp; charge std = σ/√2 — see CONTEXT.md).""")
 
     # 1b. Context / aim / hypothesis — run-SPECIFIC narrative from a SIDECAR file so it
     #     is not baked into this generic builder and survives rebuilds. Edit
@@ -883,9 +922,22 @@ Transverse-integrated linear density vs (z, t). Top: total n(z,t); then the two 
         _KINDL = {"density": "n(x,z,t)  [linear | log; total/bath share the slab scale]",
                   "delta0": "Δn = n(t) − n(0)  (induced response) [linear | symlog]",
                   "dstep": "Δn = n(t+dt) − n(t)  (instantaneous flux) [linear | symlog]"}
+        # Guide-line description must reflect what was ACTUALLY drawn. These were
+        # hard-coded as "|z|=12.5" and "CAP inner faces (|z|=25)", which is a
+        # factual error for any other geometry and, worse, asserts a CAP exists
+        # in CAP-FREE runs (e.g. the slab_ks_wrap wrap-around study, whose entire
+        # premise is that there is no absorber). Derived from the actual
+        # parameters instead; the CAP clause disappears when cap_inner is None.
+        _guides = []
+        if slab_half:
+            _guides.append(f"Slab faces (|z|={slab_half:g})")
+        if cap_inner:
+            _guides.append(f"CAP inner faces (|z|={cap_inner:g})")
+        _guide_txt = (" and ".join(_guides) + " dashed. ") if _guides else \
+                     "No slab or CAP guides (bulk, absorber-free run). "
         md("## Density-GIF battery (xz slices)\n"
            "Three kinds — absolute density, cumulative Δ-vs-initial, and per-step Δ — for "
-           "each density channel. Slab faces (|z|=12.5) and CAP inner faces (|z|=25) dashed. "
+           "each density channel. " + _guide_txt +
            "**Every GIF shows LINEAR | LOG side by side** (shared-colorbar rule): density uses "
            "a shared linear+log scale (low densities visible), and the Δ kinds use a symmetric "
            "diverging linear + symlog scale (the symlog panel exposes the low-|Δn| wake tail).")
@@ -1035,14 +1087,25 @@ Transverse-integrated linear density vs (z, t). Top: total n(z,t); then the two 
     # WP transit / ballistic exit time (user request) ----------------------
     if rtype == "wp" and v0 is not None and launch_z is not None:
         f = figdir / "wp_exit_time.png"
-        t_exit = wp_exit_time_fig(rd, f, v0, launch_z, slab_half=12.5,
+        # A BULK run has no slab, so the meaningful far target is the +z BOX face.
+        _cb = str(summ.get("cell_bohr", ""))
+        _bh = None
+        try:
+            if "x" in _cb:
+                _bh = float(_cb.split("x")[-1].split("(")[0].strip()) / 2.0
+        except Exception:
+            _bh = None
+        z_far = slab_half if slab_half else (_bh or 40.0)
+        _what = "far slab face" if slab_half else "+z box face"
+        t_exit = wp_exit_time_fig(rd, f, v0, launch_z, slab_half=z_far,
                                   cap_inner=cap_inner, dt=dt)
         md(f"""## WP transit & ballistic exit time
 Travelling at the mean momentum $v={v0:.3f}$ a.u., a packet launched at
-$z={launch_z}$ Bohr reaches the **far slab face** ($z=+12.5$) after
-$t_\\mathrm{{exit}} = (12.5-({launch_z}))/v = ${t_exit:.1f}$ a.u. — marked below on the
-measured WP centroid $\\langle z\\rangle(t)$. (The centroid lags the ballistic line
-once the CAP starts removing the leading edge; `norm_check` shows the WP draining.)""")
+$z={launch_z}$ Bohr reaches the **{_what}** ($z=+{z_far:g}$) after
+$t_\\mathrm{{exit}} = ({z_far:g}-({launch_z}))/v = ${t_exit:.1f}$ a.u. — marked below on
+the measured WP centroid $\\langle z\\rangle(t)$. The ballistic line assumes constant
+velocity; departures from it are the projectile's actual deceleration (and, in runs
+with an absorbing potential, leading-edge removal — `norm_check` then shows draining).""")
         img(f, "WP centroid z(t) vs the ballistic-exit estimate")
 
     # WP quantum stopping power — energy method (auto-measured) ------------------
@@ -1274,6 +1337,10 @@ if __name__ == "__main__":
     ap.add_argument("--twin-wp", default=None,
                     help="the WP twin run's results dir; adds a WP−classical energy-diff "
                          "bar GIF (shared stores) to the Energetics section (classical run)")
+    ap.add_argument("--slab-half", type=float, default=12.5,
+                    help="slab half-thickness (Bohr) for the dashed slab-face guides; "
+                         "pass 0 for a BULK run (uniform jellium, no slab) so the "
+                         "guides are omitted instead of drawn at a fictitious z")
     ap.add_argument("--bar-gif-seconds", type=float, default=0.45,
                     help="seconds per frame for the WP−classical energy-diff bar GIF "
                          "(default 0.45 — deliberately slow so the bars can be read)")
@@ -1283,4 +1350,5 @@ if __name__ == "__main__":
           proj_sigma=a.proj_sigma, measured_s=a.measured_s, measured_v=a.measured_v,
           launch_z=a.launch_z, v0=a.v0, lindhard_mode=a.lindhard,
           e_gs_ha=a.e_gs_ha, l_slab=a.l_slab, gif_seconds=a.gif_seconds,
-          twin_wp=a.twin_wp, bar_gif_seconds=a.bar_gif_seconds)
+          twin_wp=a.twin_wp, bar_gif_seconds=a.bar_gif_seconds,
+          slab_half=(a.slab_half if a.slab_half else None))

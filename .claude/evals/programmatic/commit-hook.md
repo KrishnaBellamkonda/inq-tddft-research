@@ -50,3 +50,23 @@ false-accept of a forbidden word is a hard fail (the rule's primary purpose).
 The hook is advisory at the tool layer (it cannot intercept a raw shell
 `git commit` the user runs via `!`); the eval tests the hook's verdict
 function, not git internals.
+
+## Boundary cases (added 2026-07-30 after a real escape)
+
+The forbidden-word check exempts matches in path/identifier context by inspecting
+the neighbouring character. Because `"" in "-/_"` is True in Python, a match at the
+very start or END of the message compared against an ABSENT neighbour and was
+wrongly exempted — so `chore(repo): made by Claude` was silently ALLOWED. All 22
+pre-existing cases happened to place the forbidden word before another character,
+so the suite passed throughout.
+
+The suite therefore now pins, and must keep pinning:
+
+- REJECT: forbidden word as the LAST token of the subject and of the body
+  (`made by Claude`, `thanks anthropic`, `built with ai`).
+- ACCEPT: genuine path context that ALSO ends the message stays exempt
+  (`tidy .claude`, `describe docs/claude/`) — the fix must not over-block.
+- A word at index 0 is a defensive sentinel only: it lands in the action-word slot
+  and the subject-format rule rejects it either way.
+
+Count is now 28 (13 reject, 12 accept, 3 extract).

@@ -284,9 +284,54 @@ Report estimated frames: `N_STEPS / WRITE_EVERY`.
 | Observable | Output | Writer |
 |------------|--------|--------|
 | observables.csv | energy_total/kinetic/hartree/xc, current_xyz, dipole_xyz | ObservablesWriter |
+| **interactions.csv** | **E_SS, E_PP, E_PS, E_SB, E_PB, E_BB — pairwise P/S/B decomposition** | **`inqkit::jellium::compute_coulomb{,_wp}`** |
 | eigenvalues/ | GS KS eigenvalues + occupations | eigenvalue_dump |
 | density_delta L2 | Integrated density fluctuation σ²ₙ(t) | DensityDelta |
 | run_summary.txt | Run metadata (stub at start, final at end) | direct ofstream |
+
+**`interactions.csv` is MANDATORY for every run with a projectile, in every
+system** (user decision, 2026-08-01). Full contract, closure gates, and the
+bulk-vs-slab background caveat: `.claude/rules/decomposed-interaction-energies.md`.
+
+Why it is Tier 1 and not optional: **INQ's own scalars cannot compare a classical
+projectile against a wavepacket**, because the two sit in different ledger terms —
+the classical projectile is an external potential (`energy_external` non-zero,
+never in `n`), the wavepacket is an occupied orbital (`energy_external`
+identically 0, its energy folded into `kinetic`/`hartree`/`xc` alongside the bath).
+Comparing `energy_hartree` between them compares
+`E_SS` against `E_SS + E_PS + E_PP`. The pairwise terms are
+representation-independent and ARE comparable.
+
+`E_PP` (projectile self-Hartree) is the uncancelled LDA self-interaction of a
+wavepacket. It has no classical counterpart, is invisible in every INQ scalar, and
+is the leading candidate for the unexplained ~2.2 factor in the bulk-jellium
+classical/WP stopping ratio. Without this column it is not measurable.
+
+Wiring, every callback (two Poisson solves — negligible; do NOT thin to the VTI
+cadence):
+
+```cpp
+#include <inqkit/jellium/interaction_energies.hpp>
+#include <inqkit/jellium/projectile_background_energy.hpp>   // gaussian_density
+
+// phi_plus: poisson(n+) for a slab; IDENTICALLY ZERO for BULK (uniform
+// background -> pure G=0, which INQ drops) => E_SB = E_PB = E_BB = 0 there.
+auto ct = inqkit::jellium::compute_coulomb_wp(el.density(), n_wp, phiplus);   // WP
+auto ct = inqkit::jellium::compute_coulomb(el.density(), n_proj, phiplus);    // classical
+```
+
+Classical `n_P` must be rebuilt at the ion's CURRENT position each step with
+`gaussian_density(basis, center, sigma_pot)`, `sigma_pot = sigma_WP/√2`
+(`.claude/rules/sigma-wp-convention.md`) — using `sigma_WP` directly is wrong by
+√2 and silently mis-scales E_PP and E_PS.
+
+**Gate the closure, do not assume it:** classical `E_SS == energy_hartree`;
+WP `E_SS + E_PS + E_PP == energy_hartree`. Verified to 1.4e-17 Ha on a completed
+bulk run (2026-08-01). Reference wirings:
+`systems/jellium/scripts/bulk_ks_stopping_sigma3/{wp,classical}/run.cpp` (bulk,
+zero φ₊) and
+`systems/localised_jellium/scripts/localised_jellium_dynamics/{phase5_wp,proj_dyn}/run.cpp`
+(slab, real background).
 
 ### 3b. Auto-enable Tier 2 (standard for simulation type)
 

@@ -11,13 +11,22 @@ Roles:
 
 The rule's allowlist is the source of truth; this mirrors its hard constraints.
 """
-from __future__ import annotations
-
+# NOTE: deliberately NO `from __future__ import annotations` — see the same note in
+# commit_message_check.py. Bare `python3` here is 3.6.8, where it is a SyntaxError.
+# Keep 3.6-compatible: no PEP 585 (list[str]) / PEP 604 (X | Y) annotations.
 import json
 import os
 import sys
 
-REPO = "/local/data/public/skcb2/tddft"
+# Repo root, derived — NEVER hardcoded. This was previously the previous device's
+# absolute path ("/local/data/public/skcb2/tddft"), which after the CSD3 migration
+# matched nothing: _to_rel() returned None for every in-repo file, so this whole
+# check was a silent no-op that always allowed. Prefer CLAUDE_PROJECT_DIR (set by
+# Claude Code); fall back to walking up from this file, which lives at
+# <repo>/.claude/hooks/file_placement_check.py -> three dirnames to the root.
+REPO = os.environ.get("CLAUDE_PROJECT_DIR") or os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+REPO = os.path.abspath(REPO).rstrip(os.sep)
 
 ALLOW = "allow"
 WARN = "warn"

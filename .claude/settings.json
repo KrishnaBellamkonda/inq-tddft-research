@@ -1,5 +1,9 @@
 {
   "model": "fable",
+  "env": {
+    "INQ_SHARE_PATH": "/rds/user/skcb2/hpc-work/tddft/inq-tddft-research/inq/install/share",
+    "PSEUDOPOD_SHARE_PATH": "/rds/user/skcb2/hpc-work/tddft/inq-tddft-research/inq/install/share/pseudopod"
+  },
   "hooks": {
     "PreToolUse": [
       {
@@ -7,7 +11,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /local/data/public/skcb2/tddft/.claude/hooks/commit_message_check.py"
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/commit_message_check.py\""
           }
         ]
       }
