@@ -554,3 +554,41 @@ was ever pushed.
 **Not done / unchanged:** vacuum CAP-control runs (`cap_check/results/vac_*`)
 are not exported — the deposit estimator does not use them; re-run
 `export_sweep_data.py` with an extended run list if they are wanted too.
+
+---
+
+## 2026-08-03 — disk cleanup: raw VTI frames of the 16 GIF'd runs purged
+
+**What was deleted (user-approved policy: "remove VTIs where the density GIFs
+have already been made using run notebooks").** The `raw/vti/` trees (~229 GB,
+~19,600 files) of all 16 production runs under
+`/rds/user/skcb2/hpc-work/tddft/inq-tddft-research/ResearchProject/systems/localised_jellium/scripts/wp_highdensity_sv/wp/results/`:
+`{,nl_,s2p0_,s3p0_}v{2p0,2p5,3p0,3p5}`.
+
+**Pre-deletion gate (verified per run, all 16 passed):** the matching
+`hypotheses/wp_highdensity_sv/run_<run>.ipynb` contains 9 embedded `image/gif`
+outputs (the full density-GIF battery) and its file mtime postdates the newest
+VTI file of that run — the animations are base64-embedded and survive without
+the sidecar files.
+
+**What was KEPT (verified after deletion):**
+- every run's rolling `checkpoint/` + `rt_state.txt` (`last_step` 2070–3623) —
+  all runs remain extendable per the final-timestep-checkpoint rule;
+- all `raw/observables/*.csv` (incl. segment-suffixed resume files), the
+  exported `hypotheses/wp_highdensity_sv/sweep_data/`, summary CSVs, figures,
+  and all notebooks;
+- the four smoke runs' VTIs (110 files — no run notebooks, fail the GIF gate);
+- everything in `sigma56_sv` (active campaign, other conversation), the
+  cylindrical_jellium system + `vacuum/wp_selfinteraction` (active SIC
+  campaign), `vacuum/wp_traversal_energy` (no notebooks/GIFs built), and the
+  jellium sigma1 bulk sets (GIF battery never built).
+
+**Irreversible consequence:** run notebooks and twin GIFs for these 16 runs can
+no longer be REBUILT from raw fields; the embedded notebook outputs are the
+record. Extending a run (resume) regenerates VTIs only for the new segment.
+Filesystem after purge: 746G/1.0T used (279G free).
+
+**Addendum (2026-08-03, same cleanup):** also deleted the five interior
+`ckpt_step*` snapshots of `wp/results/s3p0_v2p0` (~10 GB, steps 724–3620); its
+final state remains in the rolling `checkpoint/` (`last_step=3623`, verified) so
+the run is still extendable.

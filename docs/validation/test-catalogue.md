@@ -93,11 +93,24 @@ validation dossiers in this folder.
 | `T0.4 annulus integrates to n0·π(Rout²−Rin²)·Lz` *(cylindrical-jellium)* | Build annulus n₊ (R_in=3, R_out=7, w=0, tube∥z, L=20) | ∫n₊ = n₀·π(R_out²−R_in²)·L_z = 25.13 (ε=0.08; two curved radial surfaces) — PASS |
 | `T0.5 annulus = outer cyl − inner cyl (bore carved)` *(cylindrical-jellium)* | ∫annulus(3,7) + ∫cyl(0,3) vs ∫cyl(0,7); solid cyl = annulus(R_in=0,w=0) | additivity identity holds (ε=0.05): inner complement carves the correct bore, no sign/radius error — PASS |
 | `T0.6 erfc-smoothed (w=1) annulus conserves charge` *(cylindrical-jellium)* | Production-config annulus (w≈1, 4-Bohr wall ≫ w) | ∫n₊ ≈ sharp-edge target within ε=0.10 (erfc edges shift ≲ few %; caller rescales n₀ for exact neutrality) — PASS |
+| `T0.7 filled cylinder carries full n0 ON the axis (w>0)` *(proximity-ladder)* | `cylinder_mask` at d = 0…R with w = 0.5 | mask = 1.0 on the axis (**not** 0.5), uniform to 1e-6 across the interior, ½ on the outer edge, <1e-6 outside. Guards the `annulus(R_in=0, w>0)` trap: the erfc step is centred ON its edge, so `background_mask(0,0,w) = ½` would put n₊ = n₀/2 exactly where the projectile flies — PASS |
+| `T0.8 hollow tube still carves its bore (w>0)` *(proximity-ladder)* | `annulus_mask` at the production geometry R_in=10, R_out=14, w=0.5 | axis <1e-12, ½ on the bore edge, 1.0 mid-wall, ½ on the outer edge — the new `cylinder` shape does not leak into the hollow path — PASS |
+| `T0.9 cylinder integrates to n0·πR²·Lz (builder branch)` *(proximity-ladder)* | `make_localised_background` with `background_shape::cylinder` (R=7, L=20) | ∫n₊ = n₀πR²L_z = 30.79 (ε=0.08, one curved surface); and result is independent of `inner_radius`, which the shape ignores — PASS |
+| `f_bore(0) gate tolerance is grid-aware` *(proximity-ladder)* | `rayleigh_tol_pc` in `proximity_ladder/wp/run.cpp`, checked standalone against the four rungs' MEASURED t=0 deviations (2026-08-03 smoke stage) | tol = 1 % floor ⊕ `100·(df/dR)/f·(dx/2)` gives 1.00/1.10/2.42/7.34 % at r10/r08/r06/r04; measured 0.00/0.087/0.919/1.799 % all pass with 12.7×/2.6×/4.1× margin. **Still rejects a real defect**: a packet mis-sized by 25 % in σ deviates 25.2 % vs 7.34 % tol → CAUGHT (3.4× margin). Replaces a fixed ±1 % that was 120× more demanding at r04 than r10 and had false-aborted a correct run — PASS |
 
 > Annular `background_shape` (cylindrical-jellium campaign): the erfc edge profile,
 > ½-height crossovers at both radial edges, and axial uniformity are proven
 > ANALYTICALLY by the `formula-validation` agent (VERDICT: CONFIRM, 2026-06-28);
 > T0.4–T0.6 above validate the grid builder via decomposition-safe integrals.
+>
+> `background_shape::cylinder` (proximity-ladder campaign, 2026-08-02): a FILLED
+> tube is a separate shape, never `annulus` with R_in = 0. **T0.5 could not have
+> caught this** — it probes R_in = 0 at w = 0, where `background_mask(d,0,0) = 0`
+> for all physical d ≥ 0 and the composition is accidentally right. The defect
+> existed only in the SOFTENED branch, i.e. only in production (w = 0.5), and was
+> maximal exactly on the tube axis where a channeling projectile flies. T0.7–T0.9
+> close that gap. Ladder ground states additionally gate on it at runtime (gate 3b:
+> background n₊/n₀ on the axis must read ~1 filled / ~0 hollow).
 
 ---
 
@@ -333,6 +346,39 @@ The package split landed: the xfail flipped to live parametrized cases.
   identity), `theme` (figure_one_col size, role→cmap); the free-space-WP
   integration fixture; and the IV-M12 `subtract=` baseline test.
 
+## Wavepacket orthogonalisation loss (near-launch campaign, 2026-08-01)
+
+New `InjectionReport` fields (`norm_pre_ortho`, `norm_pre_renorm`,
+`removed_weight`, `sum_overlap_sq`, `overlap_by_state`,
+`ortho_closure_residual()`). They exist because `norm_after` is measured AFTER
+renormalisation and is ≈1 by construction, so it cannot express how much of the
+packet the Gram–Schmidt projection removed — which is the whole question when a
+wavepacket is launched inside a slab's electronic spill-out.
+Plan: `docs/plans/effective-sigma-near-launch.md`.
+
+| Test | File | Tier | Known-case oracle | Status |
+|---|---|---|---|---|
+| `removed_weight` at k₀=0 | `inq-stack/tests/include/inqkit/wavepacket/test_wp_ortho_loss_engine.cpp` | engine | **analytic** 8π^{3/2}σ³e^{−σ²k₀²}/V for a constant occupied state = 0.044546624; got 0.0445464505 (4e-6 rel, tol 2 %) | PASS |
+| `removed_weight` at k₀=1 | same | engine | same closed form × e^{−4} = 8.158999e-4; got 8.159026e-4 (3e-6 rel, tol 5 %) — pins the e^{−σ²k₀²} suppression | PASS |
+| ortho closure identity | same | engine | Σᵢ\|⟨ψᵢ\|ψ_wp⟩\|² == ‖ψ‖²_pre − ‖ψ‖²_post (KS states mutually orthonormal); residual **0.0 bit-exact**, tol 1e-10·lhs | PASS |
+| `max_overlap` consistency | same | engine | with one state below the WP slot, max_overlap == √(sum_overlap_sq): 0.2110603006 both routes | PASS |
+| back-compat of `norm_after` | same | engine | ortho ⇒ norm_after==1 (renormalised) while removed_weight>0.01; no-ortho ⇒ removed_weight==0 and norm_pre_renorm==norm_pre_ortho | PASS |
+
+18 assertions / 4 test cases, all PASS (job 32528040, A100).
+State 0 is overwritten with the constant 1/√V by hand, so the oracle depends on
+no SCF result — it tests inqkit's bookkeeping only.
+
+**Live regression on real data** (job 32528019): the `inject_scan` program
+re-injected the far-launch packet at z = −24 and reproduced the completed
+campaign's recorded `max_overlap = 3.691564855e-4`
+(`wp/results/v2p0/raw/observables/wp_config.txt`) to 12 significant figures.
+
+| Python-side | File | Tier | Known-case oracle | Status |
+|---|---|---|---|---|
+| `kz_marginal` + `gaussian_fit_quality` | `inq-stack/python/inqview/visualisation/field_io.py` | pure (numpy, on committed run data) | far-launch t=0 packet is an undeformed Gaussian: recovered ⟨k_z⟩ = 1.999791 vs 2.0 (−0.01 %), σ_kz = 1.414473 vs 1/(√2σ)=1.414214 (+0.018 %), skew −0.005, excess kurtosis +0.022, R² vs **analytic** = 1.000000 | PASS |
+
+---
+
 ## Absorbing boundary — mask absorber (free_wp, 2026-06-13)
 
 | Test | File | Tier | Known-case oracle | Status |
@@ -479,3 +525,127 @@ Campaign `docs/campaigns/localised_jellium_parameter_study_2/`; validation note
 | OrbitalKineticStats (extensive kinetic) | `systems/vacuum/hypotheses/cap_norm_investigation/extensive_kinetic/` | sim+identity | vacuum double-sided-CAP pair (dcap_extkin/dcap_baseline, 700 steps): per-step identity Σocc·T_i/norm_i == energies.csv:kinetic EXACT (0.0 Ha, all 701 steps); t=0 kin_bare == analytic ½k₀²+3/(4σ₀²) = 14.777 Ha; E_corr = total−kin+kin_bare tracks E0·norm to 0.00 eV at norm 3.5e-6; post-hoc e_kin_ha·norm agrees to 2.5e-9 eV; cost 0.42 ms/step (0.14%, 1 orbital) | PASS |
 | Gaussian projectile self-energy (direct ledger) | `inq-stack/tests/include/inqkit/jellium/test_projectile_self_energy.cpp` | unit (pure) | e_pp = 1/(2σ√π) analytic self-Coulomb == numeric radial quadrature to 1e-4 (σ=0.354/0.5/1.0); σ_pot=0.354 → 0.798 Ha. Guards the compute_coulomb_direct constant | PASS (4 assertions) |
 | Direct-potential projectile (no kink / no sheet) | `systems/localised_jellium/hypotheses/classical_highdensity_sv/dyn_direct/run_v4p5_direct.ipynb` | sim+analysis | v=4.5 replica, direct erf/r perturbation+force+ledger vs old charge run: (T3) all curvature maxima IN-SLAB (z≈−8) not at wall (old z=42.2); (T2) e_ps positive & monotone→0 (5.8→3.1→0.59 Ha) vs old sheet drift to −15; e_pp const 0.7979 Ha (std 2e-16); (T5) conservation drift 3.3e-3 eV, across-wall std 1.3e-5 eV; (T4/finding) sheet inflated in-slab KE-loss OLD 5.27 vs NEW 3.97 eV (v=2 pilot pair 23.1 vs 19.2), so old S(v) over-estimated ~20–35%; S(v=4.5)_direct=0.18 (old 0.28) | PASS |
+
+---
+
+# Annular-tube channeling twin — KS-orbital stopping in the bore (2026-08-01)
+
+Plan `docs/plans/cylindrical-channeling-ks-stopping.md`; handover
+`docs/handovers/cylindrical-channeling-ks-stopping.md`; engine
+`ResearchProject/systems/cylindrical_jellium/hypotheses/channeling_twin/channeling_stopping.py`.
+
+| Test | Path | Tier | Asserts against | Status |
+|---|---|---|---|---|
+| `radial_occupancy` shells + moments | `inq-stack/tests/include/inqkit/observables/test_radial_occupancy_engine.cpp` | engine (C++) | RAYLEIGH law for an on-axis Gaussian: f_bore = 1−exp(−R²/2σ_d²), ⟨r⊥⟩ = σ_d√(π/2), ⟨r⊥²⟩ = 2σ_d²; exact 3-shell partition to 1e-12; minimum-image case (tail wraps a transverse face → 0.98, non-periodic impl gives ~0.6); off-axis ⟨r⊥²⟩ = μ²+2σ_d² exact | WRITTEN, not yet compiled |
+| minimum-image Hellmann–Feynman force | `inq-stack/tests/include/inqkit/dynamics/test_projectile_force_minimum_image_engine.cpp` | engine (C++) | closed form for φ_drag = cos(2πz/L): E_R = e^{−k²σ²/2}cos(kZ), F_z = e^{−k²σ²/2}k sin(kZ). Deep inside the cell both kernels agree and hit it; straddling the face ONLY the min-image one does (the clipped one is asserted to deviate >5 %); axis-general form == the z wrapper; transverse force = 0 | WRITTEN, not yet compiled |
+| channeling stopping engine | `.../hypotheses/channeling_twin/tests/test_channeling_stopping.py` | analysis (unit) | constant-S closed form (dp/dt = −S ⇒ p linear ⇒ trapezoid s₄ EXACT): classical S and all four S_ij recover the input to **1e-8**; s₃ (circular, unwrapped) == s₄ across a face crossing; window follows the MEASURED f_bore (breach at t=10 → window ends at 10, beating the 23.3 formula); freeze detection separates frozen from +50 % growth; (T1−T2)(0) == 3/(4σ²) = 1.2755 eV; all three verdict branches incl. "clean channeling but S still differs → look at E_PP"; resume-segment concat de-duplicates the boundary step | **PASS (8/8)** |
+| comparison-notebook cell guards | `.../hypotheses/channeling_twin/tests/test_comparison_notebook_cells.py` | static | every generated code cell compiles; NO non-raw string literal containing a backslash (a valid Python escape silently eats the LaTeX command — `"$\approx$"` → BEL, cost one full notebook execution to find); no mathtext command matplotlib lacks (`\le` vs `\leq`); balanced `$` spans; the RESULT/PREMISE/MECHANISM figure blocks and the mandatory density GIF are still emitted and DISPLAYED | **PASS (5/5)** |
+| comparison notebook end-to-end | `.../hypotheses/channeling_twin/build_comparison_notebook.py` | build smoke | executed against a synthetic twin encoding S = 0.20 eV/Bohr: 23 cells, **0 error outputs**, 9 inline figures, verdict returned `AIM MET`, both halves recovered S = 0.200 to 1e-8 (synthetic artefacts deleted afterwards) | **PASS** |
+| cutoff/aliasing guard (pre-run, mandatory) | `.claude/skills/tddft-simulations/cutoff_guard.py` | validator | WP (σ_WP = 4, 50 eV, dx = 0.5): aliased tail **0.00 %** (σ_p = 0.1768, k_Nyq = 6.2832); classical: E_cut = 537 eV ≥ 1.10 × 50 eV | **PASS (both halves)** |
+| GS gates (in-binary) | `.../scripts/channeling_twin/gs/run.cpp` | sim gate | ∫n dV = N exactly (neutrality; G=0 cancellation requires it); num_states = N/2 + extra (the RT binaries must load the same system); **bore depletion n̄_bore/n̄_wall < 0.5** (if the bore is not electron-poor there is no channel). No E_GS reproduction gate — this is a NEW system with no published reference, and inventing one would be worse than omitting it | NOT YET RUN |
+| WP t=0 analytic gates (in-binary) | `.../scripts/channeling_twin/wp/run.cpp` | sim gate | norm = 1; ⟨p_z⟩ = k₀ (1 %); σ_pz² = 1/(2σ²) (5 %); T1 = (k₀²+3σ_p²)/2 (2 %); T1−T2 = 3/(4σ²) (5 %); **CIRCULAR** centroid = launch_z ±0.05 and circular spread = σ_WP/√2 (5 %) — the naive ⟨z⟩ is NOT gated because the packet straddles the face at t=0 by construction; f_bore(0) vs the Rayleigh value (1 %); ⟨r⊥⟩(0) = σ_d√(π/2) (5 %) | NOT YET RUN |
+| twin parity gate | `.claude/skills/twin-run-generation/check_twin.py --dynamic` | validator | periodicity/Lz/spacing/N/sigma_wp/launch_z/gs_dir identical; `projectile` field DIFFERS; full energy-decomposition columns in both; projectile.csv carries proj_z/energy_proj_ke/energy_proj_bg_ideal | NOT YET RUN |
+| run correctness gates (in-binary) | both `run.cpp` | sim gate | WP: no CAP ⇒ H Hermitian and t-independent ⇒ `energy_total` drift < 1e-3 eV. Classical: `E_electronic + KE_proj + U_proj_bg` drift < 0.05 eV (a drift means force and perturbation disagree). Both: pairwise ledger closes to INQ's own `energy_hartree`/`energy_external` | NOT YET RUN |
+
+---
+
+# Bulk-jellium KS-orbital twin — interaction energies + phase space (2026-08-01)
+
+Plan `docs/plans/bulk-jellium-ks-stopping.md`; handover
+`docs/handovers/bulk-jellium-ks-stopping.md`; engine
+`ResearchProject/systems/jellium/hypotheses/bulk_ks_stopping/ks_stopping.py`.
+
+| Test | Path | Tier | Asserts against | Status |
+|---|---|---|---|---|
+| `local_stopping` rolling-OLS S(z) | `.../hypotheses/bulk_ks_stopping/tests/test_ks_stopping.py` | analysis (unit) | planted CONSTANT slope recovered to 1e-9 everywhere in the interior; planted LINEAR ramp S(s)=a+bs recovered to 1e-6 at the window centre; edges are FILLED with the nearest interior value, not extrapolated (an extrapolated edge manufactures a fake "S spikes at impact"); all-NaN when fewer than 2·half_width+1 samples | **PASS (4/4)** |
+| `Interactions` clipping detector | `.../hypotheses/bulk_ks_stopping/tests/test_ks_stopping.py` | analysis (unit) | onset = start of the **trailing contiguous** clipped run, NOT the global min — launch rows sit ~4e-9 under 1.0 from discretising the Gaussian on the grid, and a global min mislabels t=0 as the onset (the bug actually made on 2026-08-01); `clip_time` = inf when never clipped; a WP half never reports clipping whatever its norm does; `in_window()` truncates a requested window back to the onset | **PASS (5/5)** |
+| `PairPhase.divergence` | `.../hypotheses/bulk_ks_stopping/tests/test_ks_stopping.py` | analysis (unit) | two velocity histories separating linearly cross 5 % of v₀ at the analytically known time (±0.02); identical histories return NaN, not a spurious index 0; the gap is ABSOLUTE — a slower wavepacket triggers at the same time as a faster one | **PASS (3/3)** |
+| notebook cell guards (ALL 12 builders) | `.../hypotheses/bulk_ks_stopping/tests/test_notebook_cells.py` | static | Covers 8 run + 4 phase notebooks. Every generated code cell compiles (catches `\r` from `\rangle`/`\rm` and `\n` from an f-string annotation — both are line terminators; these broke 5 phase cells AND all 8 run-notebook array tasks, 2026-08-01, the same bug as the channeling-twin builder the same day). NO control character in a cell literal, read from the **AST** (the silent variants `\a \b \f \v` compile but render wrong). **Every `$...$` span parsed by matplotlib's own MathTextParser** — caught `\frac12mv^2`, valid Python AND valid TeX but not valid mathtext, which no blocklist would have had. Balanced `$`; interaction-energy section present in every run notebook; density GIF emitted AND `display()`ed. **6 negative self-tests prove each guard FIRES on the real defect, +1 that correct cells do not trip** | **PASS (79/79)** |
+| interaction-energy closure (per run, in-notebook + standalone) | `ResearchProject/systems/jellium/scripts/verify_interactions_closure.py`, and section 7 of each run notebook | sim gate | classical `E_SS == energy_hartree`; WP `E_SS+E_PS+E_PP == energy_hartree` (vs INQ's own scalar — the internal identity is exact by construction and proves nothing alone); `E_SB = E_PB = E_BB = 0` (bulk: uniform background ⇒ φ₊ ≡ 0); classical E_PP constant on unclipped rows | **PASS, 8/8 halves** (max resid 5e-13 Ha) |
+| phase-notebook analysis smoke, all 4 pairs | `<scratchpad>/validate_phase_cells.py` | build smoke | every analysis cell run headless against real data for all four families; σ-matching gate `ΔE_PP(0) < 1e-3 eV`; rigid-cloud gate; every fit window CLEAR of its clipping onset; local S cross-checks the established windowed fits (classical 0.363 vs 0.377, WP-drift 0.054 vs `S_24` 0.057) | **PASS (4/4 families, 0 failures)** |
+
+### 100 eV high-density case study (`bulk_ks_stopping_rs4/case_study_100eV`, 2026-08-02)
+
+Run: `venv/bin/python -m pytest ResearchProject/systems/jellium/hypotheses/bulk_ks_stopping/tests/test_case_study.py -q` → **21 passed**
+(campaign suite total **123**, was 102). Builder:
+`.../hypotheses/bulk_ks_stopping_rs4/case_study_100eV/make_case_study.py`.
+
+| Test | Tier | Asserts against | Status |
+|---|---|---|---|
+| `Meta` provenance parsing (4 tests) | analysis (unit) | cell/N_e/σ/z₀/dt/fit-window parsed from SYNTHETIC `run_summary.txt`+`wp_config.txt` with planted values; r_s recovers an analytically planted 2.000 Bohr to 1e-4; ω_p = √(4πn); a missing run half raises rather than producing mislabelled figures. Every figure title and the results file are built from these, so a parsing slip mislabels all 16 silently | **PASS (4/4)** |
+| Ehrenfest centroid integration (2 tests) | analysis (unit) | z₀+∫⟨p_z⟩dt is EXACT (1e-12) for constant p_z and (1e-10) for a linear ramp — trapezoid is exact on both, so any deviation is an indexing/dt bug, not discretisation. This is the position axis the user specifically asked for in place of the density centroid | **PASS (2/2)** |
+| T₂ vs T₁ contraction (2 tests) | analysis (unit) | T₂ = ⟨p⟩²/2m uses the MEAN of all three components (planted px,py,pz); with zero spread planted, T₁−T₂ ≡ 0. Confusing ⟨p⟩² with ⟨p²⟩ would not look wrong on any plot | **PASS (2/2)** |
+| figure-margin guard (3 tests) | static/layout | `verify_margins()` passes clean art, **FIRES on ink in row 0** (negative self-test — the real defect: a fixed canvas crops an overrunning title and still reports success; it hit 15 of 16 figures in the first cut), and reports a blank figure | **PASS (3/3)** |
+| title auto-shrink (2 tests) | static/layout | a 200-char title is shrunk below 9 pt and reported; a short title is left untouched (positive control, so the helper cannot "fix" what is already fine) | **PASS (2/2)** |
+| mathtext + control-char guards (3 tests) | static | all 34 `$...$` spans in the builder parsed by matplotlib's own `MathTextParser`; **negative self-test** that `$\frac12 mv^2$` still raises (valid Python AND valid TeX, invalid mathtext); no `\a \b \f \v` control chars in any string literal, read from the AST | **PASS (3/3)** |
+| S additivity on the real run | analysis (integration) | S(T₁) = S(T₂) + S(T_var) to 1e-10 — OLS slope is linear in the ordinate, so a failure means the three fits used different windows or path coordinates, which is exactly how a plausible-but-wrong S is produced | **PASS** |
+| zero-point spread + beam energy (2 tests) | physics (integration) | T₁−T₂ at t=0 equals 3/(4σ_ψ²) = **5.102 eV** at σ_ψ=2 (ψ-width convention, `.claude/rules/sigma-wp-convention.md`); **T₂(0)**, not T₁(0), equals the nominal 100 eV. Pins the correction to the 2026-08-01 handover, which quoted 2.55 eV from the density-width convention | **PASS (2/2)** |
+| σ-matching validated FROM the data | physics (integration) | E_PP(0) agrees between the two halves (0.176996 Ha) because the classical UPF is generated at σ_pot = σ_WP/√2 — a check ON the convention, not an input to it; and the classical E_PP is constant to <1e-9 Ha (a rigid cloud cannot spread) | **PASS (2/2)** |
+
+### Channeling twin — refined analysis (`hypotheses/channeling_twin`, 2026-08-02)
+
+Run: `cd ResearchProject/systems/cylindrical_jellium/hypotheses/channeling_twin && venv/bin/python -m pytest tests/ -q` → **36 passed**.
+
+| Test | File | Pins |
+|---|---|---|
+| `test_t2_minus_t1_is_exactly_the_variance_term` | `tests/test_refined.py` | `T2 - T1 == var(p)/2m` to 1e-12 — the drift/spread split the study rests on |
+| `test_t2_reconstruction_matches_inq_kinetic_energy` | ” | our moment reconstruction == engine `e_kin_ha` |
+| `test_label_swap_is_the_users_convention_not_the_engines` | ” | `T1` is the SMALLER (drift) branch; fails if renamed back to `ks_stopping.py`'s convention |
+| `test_p_integral_path_recovers_a_known_track` | ” | cumulative trapezoid exact for the track that generated it |
+| `test_classical_energy_budget_closes` | ” | `d(E_bath) + d(KE_proj) == 0` |
+| `test_interaction_deltas_start_at_zero` | ” | delta columns zero at t=0 for both halves |
+| `test_fit_recovers_a_planted_stopping_power` | ” | constant-deceleration fixture ⇒ `dT1/ds = a` exactly; recovers S to 1e-6 |
+| `test_fit_returns_nan_not_garbage_on_an_empty_window` | ” | empty window ⇒ NaN, not a spurious slope |
+| `test_momentum_slices_keeps_the_whole_k_axis` | ” | **REGRESSION**: `_concat_segments` collapsed the 128-bin k axis to 1 bin |
+| `test_momentum_slices_rejects_a_collapsed_k_axis` | ” | the guard raises rather than returning a one-bin frame |
+| `test_nearest_slices_snaps_and_does_not_interpolate` | ” | distributions are snapped, never blended |
+| `test_production_wp_identity_and_free_reference` | ” | identities hold on real GPU data; `T2-T1(0) == 3/(4σ²)` |
+| `test_production_classical_budget_closes` | ” | real integrator: closure < 1e-3 eV, ΔKE = −5.1256 eV |
+| `test_production_momentum_distribution_is_a_distribution` | ” | 128 bins/step, peaked at k₀ = 1.917 |
+| `test_production_unwrapped_path_starts_at_the_launch_point` | ” | **REGRESSION**: `proj_z_unwrapped` one-step lag |
+| 8 static notebook guards | `tests/test_refined_notebook_cells.py` | cells parse; no FORM FEED/CR leaked from `\frac`/`\rangle` in non-raw strings; mathtext subset; balanced `$`; required sections; T1/T2 table present; window defaults to unset |
+
+### 2-D momentum map (`inqview.visualisation.field_io.kz_kperp_map`, 2026-08-02)
+
+Run: `venv/bin/python -m pytest inq-stack/tests/python/inqview/visualisation/test_kz_kperp_map.py -q` -> **7 passed**.
+
+| Test | Pins |
+|---|---|
+| `test_map_is_normalised_and_shaped_correctly` | sum = 1, non-negative, k_z sorted |
+| `test_longitudinal_marginal_recovers_the_drift` | `<k_z>` and `var(k_z)` EXACT (rel 1e-6) — k_z is never binned |
+| `test_transverse_marginal_is_rayleigh_not_gaussian` | shell Jacobian present: mode at `sigma_p`, NOT 0; bias sign pinned so a lost Jacobian (which halves `<k_perp^2>`) fails |
+| `test_agrees_with_the_existing_1d_kz_marginal` | cross-check vs independently-tested `kz_marginal` |
+| `test_drift_moves_weight_along_kz_only` | deceleration visible on k_z, invisible on k_perp — the discrimination the function exists for |
+| `test_binning_default_is_one_transverse_grid_spacing` | no bins finer than the grid supports |
+| `test_rejects_an_empty_field` | raises rather than returning NaNs |
+
+### Channeling twin refined analysis — additions (2026-08-02)
+
+| Test | Pins |
+|---|---|
+| `test_kz_asymmetry_is_exactly_neutral_on_a_symmetric_distribution` | CDF interpolation; the naive `kz>mean` count returns 0.454 on an exactly symmetric packet |
+| `test_kz_asymmetry_detects_a_planted_skew` | correct SIGN of skew and of `frac_above_mean` |
+| `test_kz_asymmetry_accepts_a_2d_map` | marginalises a full map |
+| `test_impulse_ratio_is_one_for_identical_twins` | ratio == 1 for identical deceleration |
+| `test_impulse_ratio_scales_with_a_weakened_drag` | halved impulse -> 0.5, not 0.25 (guards against ratioing the ENERGY) |
+| `test_combined_projectile_coupling_is_the_sum_of_the_two_terms` | `dE_PS + dE_PB`, zero at t=0 |
+| `test_production_momentum_map_round_trips_to_recorded_moments` | map vs `wp_momentum_stats.csv`; catches a wrong FFT ordering |
+| `test_production_combined_coupling_agrees_far_better_than_its_parts` | sum < 0.35 eV while `E_PS` alone > 2.0 eV |
+
+### WP self-interaction correction (`inqkit::SelfInteractionCorrection`, 2026-08-02)
+
+Plan: `docs/plans/wp-self-interaction-correction.md` (§4). Engine test runs in
+the chan-tests SLURM gate; the run-level tiers are jobs in the
+`submit-channeling-sic.sh` chain, each `afterok`-gating the next.
+
+| Test | Pins |
+|---|---|
+| `test_wp_sic_engine` / kick semantics | real multiplicative kick: density and ⟨p_z⟩ invariant at any dt_eff (zero-force, ∫n∇v_H[n]=0); large dt_eff MUST inflate var(p_z) (phase gradient is real momentum); norm exact; no projection in vacuum |
+| `test_wp_sic_engine` / Q projection | after an exaggerated leak, ⟨ψ_j\|ψ_wp⟩ ≤ 1e-10 restored, norm 1, `max_overlap_pre`>0 and `norm_removed`>0 reported, bath columns bit-untouched |
+| `test_wp_sic_engine` / D1 run-consistency | `u_self == energy_hartree` and `exc_self == energy_xc` (1e-9 rel) for a 1-electron system where n_total = n_wp; polarised-PZ exchange (×2^{1/3}) asserted OUTSIDE tolerance — the spin-consistency defect the review found |
+| Tier V vacuum `sic_pzrun` (run-level, HARD) | var(p_z) drift < 0.1 %; σ_dens(t_end) within 0.5 % of √(σ²/2+t²/2σ²); \|⟨p_z⟩−k0\| < 1e-4; E_corrected drift PASS<1e-5 eV / WARN<1e-3; binary exits 4 on failure → afterok blocks Tier B + production |
+| Tier V vacuum `sic_h` (run-level) | zero-force + E_corrected ladder; σ under-spread EXPECTED (xc self-binding remains) — reported, discriminates the xc share of the SIE |
+| Tier B jellium 200-step (run-level, HARD) | cum_norm_removed < 1e-3; max_overlap_pre < 1e-3; \|ΔE_corrected\| < 0.02 eV; first contact of the projection with a real occupied manifold (vacuum has none) |
+| Production (run-level, SOFT) | same three, WARN-and-report (checkpoint-dont-block); E_total drift explicitly NOT a gate under SIC — the conserved quantity is E_corrected (plan §0/D2) |
+| vacuum analysis layer, SIC arm (`vacuum/hypotheses/wp_selfinteraction/tests/test_selfinteraction.py`, 3 new, 2026-08-02) | `load_all` skips absent theories but REQUIRES the reference; header-only `sic.csv` ⇒ no SIC data (`u_self is None`); a corrected run planted ON the free solution surfaces its diagnostics, passes the reference's own `numerics_gate` (the Tier V criterion), reports ~0 % excess in `summary_table`, and the hartree/lda xc-difference row survives the extra rows — 13/13 PASS |
+| report-2 self-Hartree figure layer (`docs/reports/report2/drafts/draft1/figures/self_hartree/tests/test_selfhartree_data.py`, 19 new, 2026-08-05) | The analytic one-electron self-energy kernel behind `sec:results-self-hartree`, against values known BEFORE it was written: `U = 1/(2a√π)` closed form; `|E_x|/U = 0.67840955` exactly and width-independently over four decades of `a` (derived analytically, cross-checked by radial quadrature of ∫n^{4/3} to 4e-16) — the structural claim the whole subsection rests on; `E_c` deliberately NOT ∝ 1/a (if it ever were, figure SH(b) would be a flat line); reproduction of the cylindrical study's independently measured σ_WP = 4 terms (2.7139 / −1.8412 / −0.6320 eV); and agreement with INQ's OWN `exc_self_ha` from all six vacuum `sic_pzrun` runs to 1e-9 rel (parametrised per σ) — i.e. the plotted curve IS the functional, not a model of it. Plus the run-data invariants the figures depend on: scaled-box `E_PP(0)·σ` constant to 1e-9 Ha and within 0.5 % of the analytic `[1/√(2π) − ξ/36]`; fixed-box `A` recovering the analytic Gaussian coefficient to 0.5 % with `C` in (0.3, 1.0) eV; classical `E_PP` constant (rigid cloud, bound 1e-2 eV vs the observed 4e-9); `E_PP(0)` equal across twin halves (validates σ_pot = σ_WP/√2); `a(0) = σ_WP/√2`; SIC-PZ returning the packet to free evolution (<1e-6); the fixed-time reading REFUSING to extrapolate below σ_WP = 4; and the two clocks running in opposite directions (the paragraph-3 claim, asserted on the data) — 19/19 PASS |

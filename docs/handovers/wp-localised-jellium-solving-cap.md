@@ -561,3 +561,13 @@ S_orb = **0.07 eV/Bohr** (endpoint AND mid-slab gradient). S_orb ≈ ⅓·S_free
 QUANTIFIES the standing caveat: the WP orbital's KE loss misses ~2/3 of the
 deposition (Hartree/xc channels) — total-energy deposition remains the
 primary quantum stopping measure. New figs: fig_wp_position/ke_time/ke_position.
+
+---
+
+## 2026-08-03 — disk cleanup: vacuum dispersion VTIs purged
+
+User-approved: deleted `raw/vti/` for all nine
+`vacuum/scripts/wp_traversal_energy/results/dispersion/disp_sig{1,2,3}_E{1,10,100}`
+runs (~49 GB). These runs had NO run notebooks or GIFs — the field visuals are
+forfeited; dispersion CSVs/analysis outputs and everything else under
+`results/` are untouched (verified zero `.vti` remaining).

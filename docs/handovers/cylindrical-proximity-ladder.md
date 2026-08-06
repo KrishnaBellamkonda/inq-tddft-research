@@ -5,6 +5,75 @@ Predecessor: `docs/handovers/cylindrical-channeling-ks-stopping.md` (rung r10, c
 
 ---
 
+## 2026-08-03 — results read-out: S(T1) and S(T2) vs coupling (SUPERSEDES the earlier S table)
+
+### What changed and why it matters
+
+The earlier ladder table quoted S over the channeling twin's inherited windows
+(`T1 9-25`, `T2 21-30`, `T2 5-20`) and T2 looked ERRATIC. That verdict was WRONG
+and is retracted. Scanning the LOCAL slope -dE/ds(t) at every rung shows:
+
+- S is ~0 at t=2 and peaks at t~8-11 in every estimator/rung — **wake build-up**
+  (r_s=3 -> omega_p = sqrt(4 pi n) = 0.333 a.u., quarter period 4.7 a.u.). No
+  steady-state S exists before t ~ 10.
+- **S(T2) is NEGATIVE early** and crosses zero at t = 5.1 / 14.1 / 11.5 / 5.2
+  (r10/r08/r06/r04); at r00 it never goes negative. `T2 5-20` straddles that sign
+  change at every rung; `T2 21-30` sits in the late decay. Both averaged across a
+  sign change — hence the apparent erraticism.
+
+**One window is now used for all three estimators and all five rungs:
+t = [11, 20] a.u.** After wake build-up; before the light-projectile velocity
+criterion fails anywhere (classical drops below 0.85 v0 at t=20.6 at r00).
+VERIFIED over the window: min v/v0 = 0.855 (classical), 0.917 (WP).
+
+### The result (S in eV/Bohr, fit t=11-20)
+
+| rung | R_in | f_wall | S(T1) | S(T2) | S_cl | T1/cl | T2/cl | r2(T2) |
+|---|---|---|---|---|---|---|---|---|
+| r10 | 2.5 sigma | 0.12 | 0.091 | 0.014 | 0.108 | 0.84 | 0.13 | 0.92 |
+| r08 | 2.0 sigma | 0.37 | 0.123 | 0.026 | 0.179 | 0.69 | 0.15 | 0.66 |
+| r06 | 1.5 sigma | 0.71 | 0.143 | 0.093 | 0.268 | 0.53 | 0.35 | 0.89 |
+| r04 | 1.0 sigma | 0.93 | 0.162 | 0.175 | 0.366 | 0.44 | 0.48 | 0.99 |
+| r00 | filled    | 1.00 | 0.222 | 0.218 | 0.483 | 0.46 | 0.45 | 0.99 |
+
+**The headline: the two definitions BRACKET the classical answer at weak coupling
+(0.84 vs 0.13, a factor 6.7) and CONVERGE at strong coupling (0.45 vs 0.46, 3%).**
+Both stay below classical: the converged deficit is ~0.46, i.e. the fully
+immersed wavepacket loses energy at less than half the classical rate, and the
+agreement of two independent definitions rules out an estimator artefact.
+
+**Mechanism, and it is linear:** the gap is exactly var(p)/2m. Fraction of the
+drift loss diverted into momentum spread = 54 / 43 / 21 / 7.0 / 1.8 % across the
+ladder. At weak coupling the projectile shears its own tail in momentum space
+more than it decelerates; fully immersed the force acts on the whole packet.
+
+Caveat kept in view: r08's T2 fit has r2 = 0.66 because its zero crossing (14.1)
+is inside the window — read its 0.15 as "small", not as a value.
+
+### Files (all committed-ready, none committed yet)
+
+- `ResearchProject/systems/cylindrical_jellium/hypotheses/proximity_ladder/build_results_figures.py`
+  — 5 figures + `results_summary.csv` + `window.json` into `figures/results/`.
+- `.../hypotheses/proximity_ladder/build_results_notebook.py` -> `results.ipynb`
+  (21 cells, 0 errors, 5 PNG + 2 embedded density GIFs, executed 2026-08-03).
+- Figures: `F1_energy_loss_vs_path`, `F2_local_stopping_vs_time`,
+  `F3_stopping_vs_coupling`, `F4_ratio_convergence`, `F5_variance_mechanism`.
+
+`build_ladder_figures.py` and `phase_analysis.ipynb` are UNCHANGED and still
+carry the old windows — they are the per-rung/campaign-internal record. The
+results read-out is `results.ipynb`. If the old S table is ever quoted, quote
+this one instead.
+
+### Still not done
+
+- `r04n160` same-N control (~2 GPU-h) — separates "wall is closer" from "more
+  wall" (electron count runs 160 -> 326 to hold density fixed).
+- SIC run at r00 to bracket the self-interaction bound against r10's 20.9%.
+- `docs/validation/test-catalogue.md` still uncommitted (mixed with another
+  session's 169 insertions) — user decision.
+
+---
+
 ## 2026-08-02 — campaign designed, validated and launched unattended
 
 ### State: the whole campaign is queued as one dependency-chained graph

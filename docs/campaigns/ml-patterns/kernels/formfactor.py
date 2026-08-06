@@ -96,7 +96,7 @@ def F_ONCV_from_upf(path: str, q: np.ndarray, z: float | None = None):
         if qi == 0:
             F[i] = 1.0
             continue
-        integ = np.trapz(resid * np.sin(qi * r), r)
+        integ = np.trapezoid(resid * np.sin(qi * r), r)
         F[i] = 1.0 + (qi / z) * integ
     return F
 
