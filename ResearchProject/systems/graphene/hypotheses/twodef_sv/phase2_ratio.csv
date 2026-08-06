@@ -1,0 +1,4 @@
+E_eV,dE_classical_eV,dE_wp_eV,ratio_wp_over_classical,note
+25,11.104762424633092,nan,nan,WP centroid never crossed +W (backscatter/absorbed)
+100,12.321771229553509,85.41639126540413,6.932152015656216,norm 1.000->0.962 across window
+300,9.368542027905102,111.70415067734298,11.923322790741766,norm 1.000->1.000 across window

@@ -1,0 +1,7 @@
+quantity,energy,value,units,verbatim_source_quote
+lambda_inel,~0 eV,approx 3,graphene layers,'a monotonic decrease from lambda_inel ~ 3 layers near 0 eV'
+lambda_inel,25 eV,approx 1,graphene layers,'to lambda_inel ~ 1 layer at 25 eV'
+lambda_el max (2LG),0-5 eV,up to approx 80,graphene layers,'up to lambda_el ~ 80 layers for 2LG'
+lambda_el max (3LG/4LG),0-5 eV,approx 20-30,graphene layers,'lambda_el ~ 20-30 layers for 3LG and 4LG'
+R max band (2LG+),5-15 eV,reflectivity max / transmission min,-,above-vacuum interlayer bandgap; ABSENT for 1LG
+reflection minima count,0-5 eV,n-1 for nLG,-,interlayer transmission resonances

@@ -1,0 +1,33 @@
+SUBJECT: [graphene twodef] P2 - twin sanity: ratio 2.8 at 300 eV, reflection-dominated at 25 eV (hypothesis refuted)
+ATTACH: phase2_ledger.png phase2_ratio.png
+STATUS: NOT YET SENT - Gmail credentials missing on CSD3
+  (~/.config/inqview/gmail_credentials.json). User: run
+  `venv/bin/python -m inqview.email setup` once, then send via
+  hypotheses/twodef_sv/send_phase2_email.py
+
+HYPOTHESIS
+  Phase 2 twin sanity (bilayer graphene, two-definitions campaign): a matched
+  classical Gaussian projectile and a sigma_WP = 2.0 wavepacket deposit the
+  SAME energy per bilayer transit (WP/classical ~ 1); bulk jellium gave ~2.2.
+
+WHAT WAS DONE
+  - 3 twin pairs on AB bilayer graphene (3x2 supercell, LDA, Ehrenfest ions,
+    CAP eta=1 Ha / W=20 Bohr from the Phase 1 vacuum scan): E = 25/100/300 eV,
+    normal incidence at the entry-layer hexagon centre (atom-atop in layer 2).
+  - Classical v1 (INQ point-ion) FAILED by ion-ion slingshot; reworked to the
+    corpus direct erf/r potential design; v2 shows clean stopping.
+  - WP deposit from the flux ledger: E_wp(0) minus KE carried out through the
+    CAP and by the surviving fraction (lower bound; front-biased).
+
+PLOT (attached: phase2_ledger.png; supporting: phase2_ratio.png)
+  Left: deposited energy vs E (classical 11/12/9.4 eV at 25/100/300 eV, broad
+  maximum near 100 eV). Right: WP/classical ratio vs the bulk-jellium 2.2 line.
+
+CONCLUSION
+  REFUTED, with structure. Ratio ~2.8 at 300 eV (transmission regime, near the
+  bulk 2.2 excess); lower bound 0.58 at 100 eV; at 25 eV the WP largely
+  REFLECTS and the scalar ledger breaks down (energy_total rose 7.8 eV,
+  non-Hermitian bookkeeping) - E25 needs field-level analysis. Inference: the
+  two representations diverge qualitatively in a thin real target; the
+  bulk-like excess re-emerges only in the transmission regime.
+  Next: phase notebooks + Phase 3 (monolayer + full grid + sites).
