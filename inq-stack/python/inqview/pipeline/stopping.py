@@ -94,7 +94,19 @@ def run(results_dir: Path, *, run_name: str, rebuild: bool, **opts) -> dict:
         track = pd.read_csv(track_csv)
         # Align on step (electron_track has every step; observables has every
         # WRITE_EVERY). Inner-join on step.
-        merged = pd.merge(obs, track[["step", "z", "fz"]], on="step",
+        #
+        # fz is OPTIONAL (2026-07-30). The force columns are not part of the
+        # minimum electron_track schema: a run may legitimately record only the
+        # kinematics (step, t, x/y/z, vx/vy/vz) plus its own ke_ion_ha. The
+        # kinetic-energy-vs-z panel below needs only `z`, so a missing fz must
+        # degrade to skipping the force panel, NOT crash the whole phase — which
+        # is what a hard `track[["step","z","fz"]]` selection did (KeyError
+        # "['fz'] not in index", bulk_ks_stopping/classical).
+        # Deliberately NOT defaulted to zeros: forces that were never recorded
+        # are absent, not zero, and a flat F_z(z)=0 curve would read as physics.
+        has_fz = "fz" in track.columns
+        cols = ["step", "z"] + (["fz"] if has_fz else [])
+        merged = pd.merge(obs, track[cols], on="step",
                           how="inner", suffixes=("", "_ion"))
         z_col   = "z"
         z_label = "projectile z (Bohr) [from electron_track.csv]"
@@ -125,8 +137,12 @@ def run(results_dir: Path, *, run_name: str, rebuild: bool, **opts) -> dict:
         plt.close(fig)
         out["outputs"].append(out_png)
 
-    # ----- 2. Stopping force vs z (classical only) ----------------------
-    if classical:
+    # ----- 2. Stopping force vs z (classical only, needs fz) ------------
+    if classical and not has_fz:
+        out.setdefault("notes", []).append(
+            "stopping_force_vs_z skipped: electron_track.csv has no fz column "
+            "(this run recorded projectile kinematics + ke_ion_ha but not forces)")
+    if classical and has_fz:
         out_force = out_dir / "stopping_force_vs_z.png"
         if _common.need_rebuild(out_force, rebuild):
             fig, ax = plt.subplots(figsize=(8, 4.5))

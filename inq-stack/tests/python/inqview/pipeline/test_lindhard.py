@@ -55,7 +55,10 @@ def test_static_limit():
 # =============================================================================
 def test_plasmon_zero_q_limit():
     """Bohm-Gross dispersion → plasma frequency at q=0."""
-    omega_pl_q0 = float(L.plasmon_omega(np.array([1e-6]), KF, order="bohm_gross"))
+    # plasmon_omega returns an NDArray; index before float(). NumPy 2.0 removed
+    # the implicit 1-element-array -> scalar conversion (deprecated in 1.25), so
+    # float(array([x])) is a TypeError on numpy >= 2.
+    omega_pl_q0 = float(L.plasmon_omega(np.array([1e-6]), KF, order="bohm_gross")[0])
     assert omega_pl_q0 == pytest.approx(OMEGA_P, rel=1e-4)
 
 
@@ -81,7 +84,7 @@ def test_f_sum_rule(q_test):
     """
     omega_grid = np.linspace(0.001, 4.0 * OMEGA_P, 800)
     L_arr = L.loss_function(q_test, omega_grid, KF, eta=2e-3)
-    integral = np.trapz(omega_grid * L_arr, omega_grid)
+    integral = np.trapezoid(omega_grid * L_arr, omega_grid)
     expected = 0.5 * np.pi * OMEGA_P ** 2
     # 5 % tolerance — f-sum rule is exact only in the q→0 limit and over the
     # full ω axis; the finite ω-cutoff and finite q produce few-percent error.

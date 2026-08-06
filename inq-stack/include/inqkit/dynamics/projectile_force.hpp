@@ -31,23 +31,53 @@ namespace inqkit {
 namespace dynamics {
 
 // E_R at a shifted center: ∫ n_proj(·-center)·φ_drag.
+//
+// minimum_image: build the blob from the MINIMUM-IMAGE displacement so it wraps
+//   around the cell faces instead of being CLIPPED by them. Defaults to false so
+//   every previously published run keeps its exact behaviour.
+//
+//   WHY IT MATTERS. `gaussian_density` uses a plain Cartesian displacement, so a
+//   projectile within a few σ_pot of a face loses the part of its charge that
+//   falls outside the grid: ∫n_proj drops to Φ((L/2−b)/σ) and the FORCE computed
+//   from it is wrong for as long as the blob straddles. That is not a small
+//   correction at wide σ — a σ_pot = 2.83 Gaussian launched 2 Bohr from the face
+//   keeps only 76 % of its charge. Worse, the loss is ASYMMETRIC in the ±δ finite
+//   difference (the +δ blob is clipped harder than the −δ one), so the spurious
+//   term does not cancel and shows up as a fake force at launch.
+//
+//   Pass the SAME flag here that the paired moving_gaussian_projectile_perturbation
+//   was constructed with; a min-image potential driven by a clipped force is an
+//   inconsistent pairing that neither this header nor the perturbation can detect.
 template <class Field>
-double drag_energy(Field const & phi_drag, inq::vector3<double> center, double sigma_pot) {
-	auto nproj = inqkit::jellium::gaussian_density(phi_drag.basis(), center, sigma_pot);
+double drag_energy(Field const & phi_drag, inq::vector3<double> center, double sigma_pot,
+                   bool minimum_image = false) {
+	auto nproj = minimum_image
+		? inqkit::jellium::gaussian_density_minimum_image(phi_drag.basis(), center, sigma_pot)
+		: inqkit::jellium::gaussian_density(phi_drag.basis(), center, sigma_pot);
 	return inq::operations::integral_product(nproj, phi_drag);
 }
 
-// F_z = −dE_R/dR_z via a symmetric finite difference (step delta, Bohr).
-// phi_drag = poisson(n_e − n_+) supplied by the caller (recomputed each step).
+// F_a = −dE_R/dR_a along Cartesian axis `axis` (0/1/2), via a symmetric finite
+// difference (step delta, Bohr). phi_drag = poisson(n_e − n_+) supplied by the
+// caller (recomputed each step).
+template <class Field>
+double projectile_force_axis(Field const & phi_drag, inq::vector3<double> center,
+                             double sigma_pot, int axis, double delta = 0.05,
+                             bool minimum_image = false) {
+	auto cp = center, cm = center;
+	cp[axis] += delta;
+	cm[axis] -= delta;
+	const double e_plus  = drag_energy(phi_drag, cp, sigma_pot, minimum_image);
+	const double e_minus = drag_energy(phi_drag, cm, sigma_pot, minimum_image);
+	return -(e_plus - e_minus) / (2.0 * delta);
+}
+
+// F_z = −dE_R/dR_z. Convenience wrapper on projectile_force_axis (axis 2).
 template <class Field>
 double projectile_force_z(Field const & phi_drag, inq::vector3<double> center,
-                          double sigma_pot, double delta = 0.05) {
-	auto cp = center, cm = center;
-	cp[2] += delta;
-	cm[2] -= delta;
-	const double e_plus  = drag_energy(phi_drag, cp, sigma_pot);
-	const double e_minus = drag_energy(phi_drag, cm, sigma_pot);
-	return -(e_plus - e_minus) / (2.0 * delta);
+                          double sigma_pot, double delta = 0.05,
+                          bool minimum_image = false) {
+	return projectile_force_axis(phi_drag, center, sigma_pot, 2, delta, minimum_image);
 }
 
 // ---------------------------------------------------------------------------

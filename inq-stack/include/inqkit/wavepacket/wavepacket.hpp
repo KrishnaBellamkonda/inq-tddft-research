@@ -127,6 +127,7 @@ class WavePacket {
   */
   double kx_ = 0, ky_ = 0, kz_ = 0;
   bool do_ortho_ = false;
+  bool minimum_image_ = false;
   double ortho_tol_ = 1e-6;
   // Longitudinal (z) focusing: launch a wider, converging packet whose waist
   // (density std sigma_/sqrt2) forms a focal distance ahead (e.g. the slab face).
@@ -151,6 +152,44 @@ public:
     kx_ = kx;
     ky_ = ky;
     kz_ = kz;
+    return *this;
+  }
+
+  // Build the packet from the MINIMUM-IMAGE displacement, so it WRAPS around the
+  // cell faces instead of being CLIPPED by them. Defaults to false: every
+  // previously published run keeps its exact behaviour.
+  //
+  // WHY THIS EXISTS (2026-08-01, channeling twin). It is often said that a
+  // wavepacket needs no special boundary treatment because a KS orbital lives on
+  // a plain 3-D FFT basis and wraps exactly. That is true of the PROPAGATION and
+  // false of the INJECTION: the kernel below builds the Gaussian from a plain
+  // Cartesian displacement, so a packet launched within a couple of sigma of a
+  // face is TRUNCATED, and normalisation then hides it in the norm.
+  //
+  // The damage is not subtle. A sigma_WP = 4 packet launched 2 Bohr (0.71 density
+  // sigma) from the -z face failed six of its own t=0 analytic gates, and every
+  // failure was in z alone while x and y were perfect:
+  //     <p_z>        1.882 vs 1.917   (-1.8 %)
+  //     var(p_z)     0.473 vs 0.0313  (+1413 %)  <- the sharp real-space edge
+  //     T1 - T2      0.268 vs 0.0469  (+471 %)
+  //     centroid z  -26.97 vs -28     (truncating the left tail pulls the mean right)
+  //     sigma_z      2.133 vs 2.828   (-24.6 %)  (a narrower, truncated packet)
+  // i.e. the run would have measured a packet that was not the one it claimed,
+  // with a momentum spread fifteen times too large -- fatal for any observable
+  // built on var(p).
+  //
+  // In a classical/wavepacket TWIN this also breaks the pair: the classical half
+  // uses gaussian_density_minimum_image, so a clipped wavepacket differs from its
+  // twin precisely at the boundary the study introduces on purpose.
+  //
+  // The PHASE is built from the same minimum-image displacement, not from the raw
+  // coordinate. Wrapping the amplitude while leaving the phase as exp(i k.r) puts
+  // a jump of exp(i k.L) across the seam whenever k.L is not a multiple of 2 pi
+  // (here k0*L_z = 115.0 rad = 18.3 x 2 pi -- a 1.9 rad discontinuity). Using
+  // exp(i k.d) makes the local momentum k everywhere and differs from the old
+  // form only by the global constant exp(i k.b).
+  WavePacket &minimum_image(bool on = true) {
+    minimum_image_ = on;
     return *this;
   }
 
@@ -278,6 +317,7 @@ WavePacket::inject_into_last_extra_state(inq::systems::electrons &electrons,
   // functions.
   auto phicub_ = begin(phi.hypercubic());
   auto point_op_ = basis.point_op();
+  const bool min_img = minimum_image_;
 
   gpu::run(basis.local_sizes()[2], basis.local_sizes()[1],
            basis.local_sizes()[0], [=] GPU_LAMBDA(auto iz, auto iy, auto ix) {
@@ -286,15 +326,48 @@ WavePacket::inject_into_last_extra_state(inq::systems::electrons &electrons,
              double ry = rvec[1];
              double rz = rvec[2];
              double dx_ = rx - bx, dy_ = ry - by, dz_ = rz - bz;
+             if(min_img) {
+               // Fold the separation into [-L/2, L/2) per lattice direction (the
+               // same window as systems::cell::position_in_cell), so the packet
+               // wraps around every face instead of being clipped by it.
+               inq::vector3<double> dsep{dx_, dy_, dz_};
+               auto fr = point_op_.cell().to_contravariant(dsep);
+               for(int idir = 0; idir < 3; idir++) {
+                 fr[idir] -= floor(fr[idir]);
+                 if(fr[idir] >= 0.5) fr[idir] -= 1.0;
+               }
+               auto dc = point_op_.cell().to_cartesian(fr);
+               dx_ = dc[0]; dy_ = dc[1]; dz_ = dc[2];
+             }
              // anisotropic when focusing (sigz != sig); spherical otherwise
              double amp = norm_fac *
                  exp(-(dx_ * dx_ + dy_ * dy_) / (2.0 * sig * sig) -
                      dz_ * dz_ / (2.0 * sigz * sigz));
-             // converging quadratic phase on z (chirp = 0 when not focusing)
-             double ph = kxv * rx + kyv * ry + kzv * rz + chirp * dz_ * dz_;
+             // converging quadratic phase on z (chirp = 0 when not focusing).
+             // In minimum-image mode the phase MUST use the same wrapped
+             // displacement, or the wrapped lobe carries a exp(i k.L) jump.
+             double ph = min_img ? (kxv * dx_ + kyv * dy_ + kzv * dz_ + chirp * dz_ * dz_)
+                                 : (kxv * rx  + kyv * ry  + kzv * rz  + chirp * dz_ * dz_);
              phicub_[ix][iy][iz][ist_w] = complex(amp * cos(ph), amp * sin(ph));
            });
   INQKIT_GPU_SYNC();
+
+  // ── 2b. Norm of the RAW Gaussian, before any orthogonalisation ────────────
+  // The analytic norm_fac normalises the CONTINUUM Gaussian; on a finite grid
+  // the discrete norm is only ~1. removed_weight must therefore be a RATIO
+  // against this measured value, not against a hard 1.0, or the discretisation
+  // error would masquerade as orthogonalisation loss.
+  {
+    auto mat_ = begin(phi.matrix());
+    auto res = gpu::run(1, gpu::reduce(n_pts), 0.0,
+                        [dV, mat_, ist_ = ist_wp] GPU_LAMBDA(auto, auto ip) {
+                          auto v = mat_[ip][ist_];
+                          return dV * (inq::real(v) * inq::real(v) +
+                                       inq::imag(v) * inq::imag(v));
+                        });
+    INQKIT_GPU_SYNC();
+    report.norm_pre_ortho = std::sqrt(res[0]);
+  }
 
   // ── 3. Orthogonalise against occupied states (modified Gram-Schmidt on GPU)
   // ─
@@ -313,8 +386,11 @@ WavePacket::inject_into_last_extra_state(inq::systems::electrons &electrons,
      * the first pass sees. The overlap reduction is GPU-accelerated; the loop
      * over states is serial (each subtraction depends on the previous). */
     const int n_ortho_passes = 2;
+    double pass_sum_sq = 0.0;   // sum_i |<psi_i|psi_wp>|^2, FIRST pass only
     for (int pass = 0; pass < n_ortho_passes; ++pass) {
     double pass_max = 0.0;
+    double this_pass_sum_sq = 0.0;
+    if (pass == 0) report.overlap_by_state.assign(ist_wp, 0.0);
     for (int i = 0; i < ist_wp; ++i) {
       // Real part of <psi_i | psi_wp>
       auto res_re =
@@ -340,7 +416,10 @@ WavePacket::inject_into_last_extra_state(inq::systems::electrons &electrons,
       INQKIT_GPU_SYNC();
       double ov_im = res_im[0];
 
-      pass_max = std::max(pass_max, std::sqrt(ov_re * ov_re + ov_im * ov_im));
+      const double ov_sq = ov_re * ov_re + ov_im * ov_im;
+      pass_max = std::max(pass_max, std::sqrt(ov_sq));
+      this_pass_sum_sq += ov_sq;
+      if (pass == 0) report.overlap_by_state[i] = std::sqrt(ov_sq);
 
       // Subtract projection: psi_wp -= (ov_re + i*ov_im) * psi_i
       double re_ = ov_re, im_ = ov_im;
@@ -358,11 +437,12 @@ WavePacket::inject_into_last_extra_state(inq::systems::electrons &electrons,
                });
       INQKIT_GPU_SYNC();
     }
-    if (pass == 0) max_ov_initial = pass_max;
+    if (pass == 0) { max_ov_initial = pass_max; pass_sum_sq = this_pass_sum_sq; }
     max_ov_residual = pass_max;
     }  // end iterated-GS pass loop
 
     report.max_overlap = max_ov_initial;
+    report.sum_overlap_sq = pass_sum_sq;
     report.orthogonalised = true;
 
     // Renormalise after projection
@@ -374,6 +454,14 @@ WavePacket::inject_into_last_extra_state(inq::systems::electrons &electrons,
                                          inq::imag(v) * inq::imag(v));
                           });
       INQKIT_GPU_SYNC();
+      // res[0] = ||psi||^2 AFTER the projection but BEFORE rescaling — the one
+      // moment at which the orthogonalisation loss is still visible. Capture it
+      // here; one line later it is scaled away for good.
+      report.norm_pre_renorm = std::sqrt(res[0]);
+      if (report.norm_pre_ortho > 0.0) {
+        const double ratio = report.norm_pre_renorm / report.norm_pre_ortho;
+        report.removed_weight = 1.0 - ratio * ratio;
+      }
       double scale = 1.0 / std::sqrt(res[0]);
 
       gpu::run(basis.local_sizes()[2], basis.local_sizes()[1],
@@ -388,6 +476,11 @@ WavePacket::inject_into_last_extra_state(inq::systems::electrons &electrons,
 
     report.passed_tolerance = (max_ov_residual < ortho_tol_ * 10.0);
   } else {
+    // No orthogonalisation requested: nothing was removed, and the packet is
+    // left exactly as constructed (not even renormalised).
+    report.norm_pre_renorm = report.norm_pre_ortho;
+    report.removed_weight  = 0.0;
+    report.sum_overlap_sq  = 0.0;
     report.passed_tolerance = true;
   }
 

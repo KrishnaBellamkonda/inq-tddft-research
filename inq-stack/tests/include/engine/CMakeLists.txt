@@ -120,6 +120,11 @@ inqkit_add_engine_test(test_wp_real_space_compute_engine
   test_engine_main.cpp
   ../inqkit/observables/test_wp_real_space_compute_engine.cpp)
 
+# W1 (bulk-jellium KS stopping): periodic-aware circular centroid / spread.
+inqkit_add_engine_test(test_wp_circular_centroid_engine
+  test_engine_main.cpp
+  ../inqkit/observables/test_wp_circular_centroid_engine.cpp)
+
 inqkit_add_engine_test(test_momentum_distribution_engine
   test_engine_main.cpp
   ../inqkit/observables/test_momentum_distribution_engine.cpp)
@@ -133,6 +138,13 @@ inqkit_add_engine_test(test_free_wp_engine
   test_engine_main.cpp
   ../inqkit/wavepacket/test_free_wp_engine.cpp)
 
+# Orthogonalisation LOSS bookkeeping (docs/plans/effective-sigma-near-launch.md):
+# removed_weight vs the closed form 8 pi^{3/2} sigma^3 exp(-sigma^2 k0^2)/V for a
+# constant occupied state, plus the sum_overlap_sq <-> norm^2 closure identity.
+inqkit_add_engine_test(test_wp_ortho_loss_engine
+  test_engine_main.cpp
+  ../inqkit/wavepacket/test_wp_ortho_loss_engine.cpp)
+
 # Feature: per-orbital norm diagnostic (every KS orbital ∫|ψ|²≈1).
 inqkit_add_engine_test(test_state_norm_engine
   test_engine_main.cpp
@@ -142,3 +154,50 @@ inqkit_add_engine_test(test_state_norm_engine
 inqkit_add_engine_test(test_localised_background_engine
   test_engine_main.cpp
   ../inqkit/jellium/test_localised_background_engine.cpp)
+
+# Wrap-around slab KS stopping (docs/plans/slab-ks-orbital-stopping-wrap.md):
+# in-slab occupancy f(t) that turns the centroid path into an in-slab path.
+inqkit_add_engine_test(test_slab_occupancy_engine
+  test_engine_main.cpp
+  ../inqkit/observables/test_slab_occupancy_engine.cpp)
+
+# ... and the minimum-image Gaussian charge, so the classical twin wraps the way
+# the wavepacket already does instead of being clipped by the cell face.
+inqkit_add_engine_test(test_gaussian_minimum_image_engine
+  test_engine_main.cpp
+  ../inqkit/jellium/test_gaussian_minimum_image_engine.cpp)
+
+# Annular-tube channeling KS stopping
+# (docs/plans/cylindrical-channeling-ks-stopping.md): radial occupancy f_bore(t),
+# the measurement that makes "the packet is still channeling" falsifiable.
+inqkit_add_engine_test(test_radial_occupancy_engine
+  test_engine_main.cpp
+  ../inqkit/observables/test_radial_occupancy_engine.cpp)
+
+# ... and the minimum-image option on the classical Hellmann-Feynman force, so a
+# projectile launched a fraction of a sigma from the cell face is not driven by a
+# clipped (and asymmetrically clipped) charge blob.
+inqkit_add_engine_test(test_projectile_force_minimum_image_engine
+  test_engine_main.cpp
+  ../inqkit/dynamics/test_projectile_force_minimum_image_engine.cpp)
+
+# Generic INQ-field -> RealField3D export (the VTI path for fields that are not
+# the electron density or an orbital: n_+, phi_+, a projectile blob). Pins the
+# FFT-natural -> physical ordering convention, incl. equality with density::total.
+inqkit_add_engine_test(test_inq_field_export_engine
+  test_engine_main.cpp
+  ../inqkit/fields/test_inq_field_export_engine.cpp)
+
+# WavePacket::minimum_image — injection near a cell face must WRAP, not clip.
+# (Propagation always wrapped; injection did not, and normalisation hid it.)
+inqkit_add_engine_test(test_wp_minimum_image_engine
+  test_engine_main.cpp
+  ../inqkit/wavepacket/test_wp_minimum_image_engine.cpp)
+
+# Projectile self-interaction correction (docs/plans/wp-self-interaction-correction.md):
+# kick semantics (density/<p> invariant, var(p) responds), exact Q re-orthogonalisation
+# with the leak reported and bath columns untouched, and D1 run-consistency of the
+# subtracted U[n_wp]/E_xc[n_wp] against INQ's own hartree/xc scalars.
+inqkit_add_engine_test(test_wp_sic_engine
+  test_engine_main.cpp
+  ../inqkit/wavepacket/test_wp_sic_engine.cpp)

@@ -57,6 +57,35 @@ public:
 
 	Vec3   R() const { return R_; }
 	Vec3   V() const { return V_; }
+
+	// Overwrite the position WITHOUT touching the velocity or the stored
+	// acceleration, so the velocity-Verlet sequence continues undisturbed.
+	//
+	// The only intended use is PERIODIC WRAPPING: a projectile that leaves the
+	// cell is re-entered on the opposite face by subtracting one lattice vector,
+	// which is a relabelling of the same physical point, not a dynamical event.
+	// Do NOT use it to teleport a projectile anywhere else — the integrator would
+	// silently absorb the jump into the next drift.
+	void set_R(Vec3 R) { R_ = R; }
+
+	// Wrap the position into the cell-centred window [-L_d/2, +L_d/2) along every
+	// axis whose length is > 0 (pass 0 for an axis that must not wrap). Returns
+	// true if any coordinate actually moved, so the caller can log the event.
+	//
+	// A single call moves at most one lattice vector per axis, which is all that
+	// can be needed when it is called every step and |V| dt << L.
+	bool wrap_into_cell(Vec3 lengths) {
+		bool wrapped = false;
+		auto one = [&](double & x, double L) {
+			if(L <= 0.0) return;
+			if(x >=  0.5 * L) { x -= L; wrapped = true; }
+			else if(x < -0.5 * L) { x += L; wrapped = true; }
+		};
+		one(R_.x, lengths.x);
+		one(R_.y, lengths.y);
+		one(R_.z, lengths.z);
+		return wrapped;
+	}
 	double mass() const { return mass_; }
 	double charge() const { return charge_; }
 	double ke() const { return 0.5 * mass_ * V_.norm2(); }

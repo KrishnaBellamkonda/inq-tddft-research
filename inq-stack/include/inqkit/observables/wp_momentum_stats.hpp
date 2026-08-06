@@ -5,7 +5,7 @@
  * density-weighted integrals are computed over the resulting k-space grid
  * (all quantities in atomic units):
  *
- *   N(t)         = ∫ |ψ̃_wp(k, t)|² dV_k              (Parseval norm; ≈ 1)
+ *   N(t)         = ∫ |ψ̃_wp(k, t)|² dV_k              (Parseval norm; see note)
  *
  *   <p_d>(t)     = (1/N) ∫ k_d |ψ̃_wp(k, t)|² dV_k    (mean momentum, d = x,y,z)
  *
@@ -17,8 +17,15 @@
  *
  * where k_d is the d-th Cartesian component of the reciprocal-space grid
  * point. Dividing every moment by N renders the result independent of INQ's
- * FFT prefactor convention; N itself is written to CSV as norm_check and
- * should remain close to 1.0 throughout a unitary propagation.
+ * FFT prefactor convention; N itself is written to CSV as norm_check.
+ *
+ * NOTE on the magnitude of N (clarified 2026-07-30): N is NOT ~ 1. Unlike the
+ * real-space companion it carries no explicit dV — INQ's FFT prefactor sets its
+ * scale, so it is large and grid-dependent (~4.9e7 on a 120x120x200 grid for a
+ * normalised packet). That is harmless: every moment is divided by it. What
+ * matters is that N stays CONSTANT in time; a drift signals real norm loss from
+ * the orbital. Do NOT gate on N ~ 1 — gate on the real-space norm from
+ * WPRealSpaceStats, which does carry dV and is ~ 1.
  *
  * Note: unlike the real-space companion (WPRealSpaceStats), no explicit
  * volume element dV appears inside the GPU reductions — the FFT prefactor
@@ -48,16 +55,41 @@
  * Known-case validation
  * ---------------------
  * For a Gaussian wave packet injected with inqkit::WavePacket at real-space
- * spread σ_r (Bohr) and initial momentum k₀, the Fourier transform is also
- * Gaussian with momentum spread σ_p = 1/(2σ_r), saturating the
- * Heisenberg uncertainty bound. The expected observables at t = 0 are:
+ * spread σ_r (Bohr) and initial momentum k₀ — i.e. ψ ∝ exp(−r²/2σ_r²) e^{ik₀·r} —
+ * the Fourier transform is also Gaussian,
+ *
+ *   ψ̃(k) ∝ exp(−σ_r² (k − k₀)² / 2)   ⇒   |ψ̃(k)|² ∝ exp(−σ_r² (k − k₀)²)
+ *
+ * so the momentum DENSITY has variance σ²_pd = 1/(2 σ_r²). The expected
+ * observables at t = 0 are therefore:
  *
  *   <p_d>   = k₀_d
- *   σ²_pd   = 1 / (4 σ_r²)
- *   E_kin   = ½ (|k₀|² + 3 σ_p²)
+ *   σ²_pd   = 1 / (2 σ_r²)
+ *   E_kin   = ½ (|k₀|² + 3 σ_p²) = ½ (|k₀|² + 3/(2σ_r²))
  *
- * For σ_r = 5 Bohr and k₀ = (0, 0, 2.711) Bohr⁻¹ this gives
- * σ_p = 0.1 Bohr⁻¹, <p_z> = 2.711 Bohr⁻¹, and E_kin ≈ 3.69 Ha (≈ 100.4 eV).
+ * CORRECTED 2026-07-30. This block previously claimed σ_p = 1/(2σ_r) and
+ * σ²_pd = 1/(4σ_r²). That is WRONG by a factor of 2 in the variance, and it is
+ * wrong in a way that is easy to check: the real-space density |ψ|² ∝
+ * exp(−r²/σ_r²) has standard deviation σ_d = σ_r/√2 (see the companion
+ * WPRealSpaceStats), so the old value would give
+ *
+ *   σ_d · σ_p = (σ_r/√2)·(1/2σ_r) = 0.354 < ½,
+ *
+ * i.e. it VIOLATES the Heisenberg bound. The corrected value gives
+ * σ_d · σ_p = (σ_r/√2)·(1/(√2 σ_r)) = ½ exactly — a minimum-uncertainty packet,
+ * which is what a Gaussian must be. The CODE was always right; only this
+ * docstring was wrong. It was copied into a run's t=0 gate on 2026-07-30 and
+ * aborted a production job (see docs/handovers/bulk-jellium-ks-stopping.md).
+ *
+ * Worked example, σ_r = 2 Bohr, k₀ = (0, 0, 2.7111) Bohr⁻¹:
+ *   σ²_pd  = 1/(2·4) = 0.125          (σ_p = 0.3536 Bohr⁻¹)
+ *   <p_z>  = 2.7111 Bohr⁻¹
+ *   E_kin  = ½(7.3499 + 0.375) = 3.8624 Ha = 105.10 eV
+ *   E_kin − |k₀|²/2 = 3/(4σ_r²) = 0.1875 Ha = 5.102 eV   (localisation energy)
+ * All five verified against a live run (job 32401321, 2026-07-30).
+ *
+ * For σ_r = 5 Bohr and k₀ = (0, 0, 2.711) Bohr⁻¹: σ_p = 0.1414 Bohr⁻¹,
+ * <p_z> = 2.711 Bohr⁻¹, E_kin ≈ 3.705 Ha (≈ 100.8 eV).
  * See Tutorial/wp-momentum-stats-test/ for the reference run.
  *
  * Usage

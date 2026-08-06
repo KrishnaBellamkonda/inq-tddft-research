@@ -263,16 +263,21 @@ def stopping_power(v: float, kF: float, *, qmin: float = 0.0, qmax: float | None
         omega_grid = np.linspace(1e-4, omega_max, nomega)
         L = loss_function(q, omega_grid, kF, eta=eta)
         # ω · Im[-1/ε] integrand
-        integrand[i] = np.trapz(omega_grid * L, omega_grid) / q
+        # integrate.trapezoid, not np.trapz: NumPy 2.0 REMOVED np.trapz (renamed
+        # np.trapezoid), and pyproject declares numpy>=1.24 where np.trapezoid does
+        # not yet exist. scipy>=1.10 is pinned, so integrate.trapezoid is the one
+        # spelling valid on every supported numpy. Verified on numpy 2.4.6 /
+        # scipy 1.17.1, CSD3, 2026-07-30.
+        integrand[i] = integrate.trapezoid(omega_grid * L, omega_grid) / q
 
     # Trapezoid on log-spaced q is fine if we include the 1/q factor (already done)
     # Convert log grid: ∫ f(q)/q dq = ∫ f(q) d(ln q)
-    S = (2.0 / (np.pi * v ** 2)) * np.trapz(integrand, q_grid)
+    S = (2.0 / (np.pi * v ** 2)) * integrate.trapezoid(integrand, q_grid)
     # The expression ∫(dq/q) · g(q) with our log grid: actually we put 1/q
     # into the integrand already; integrating dq on log grid is wrong.
     # Correct form: integrand_log[i] = g(q_i); ∫ d(ln q) = ∫(dq/q).
     # Recompute integrand without /q, then trapz over ln q.
     integrand_logq = integrand * q_grid  # remove the 1/q; we'll integrate over ln q
     lnq = np.log(q_grid)
-    S = (2.0 / (np.pi * v ** 2)) * np.trapz(integrand_logq, lnq)
+    S = (2.0 / (np.pi * v ** 2)) * integrate.trapezoid(integrand_logq, lnq)
     return float(S)

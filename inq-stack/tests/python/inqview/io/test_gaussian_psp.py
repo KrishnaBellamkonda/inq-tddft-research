@@ -7,8 +7,7 @@ Validates, against the analytic Gaussian-charge result:
   (c) V(0) in Hartree equals sqrt(2/pi)/sigma to < 1e-3.
 
 Run:
-    cd /local/data/public/skcb2/tddft && venv/bin/python3 -m pytest \
-      inq-stack/tests/python/inqview/io/test_gaussian_psp.py -v
+    venv/bin/python -m pytest inq-stack/tests/python/inqview/io/test_gaussian_psp.py -v
 """
 from __future__ import annotations
 
@@ -20,9 +19,15 @@ import pytest
 
 from inqview.io import gaussian_psp as G
 
-TEMPLATE = Path(
-    "/local/data/public/skcb2/tddft/ResearchProject/systems/jellium/"
-    "shared/pseudopotentials/electron-ONCV-1.2.upf"
+# Resolved RELATIVE to this file (repo root is five levels up:
+# inq-stack/tests/python/inqview/io/ -> repo root), so the suite follows the repo
+# instead of a machine-specific absolute path. The previous hard-coded
+# /local/data/public/... path silently skipped every test after the CSD3
+# migration — a skip is not a pass.
+_REPO_ROOT = Path(__file__).resolve().parents[5]
+TEMPLATE = (
+    _REPO_ROOT
+    / "ResearchProject/systems/jellium/shared/pseudopotentials/electron-ONCV-1.2.upf"
 )
 
 pytestmark = pytest.mark.skipif(
@@ -100,7 +105,7 @@ def test_fourier_form_factor(tmp_path, sigma_wp):
     for q in qs:
         # FT[R](q) = (4pi/q) * int_0^inf r R(r) sin(qr) dr
         # trapezoidal quadrature (oscillatory integrand: far better than Riemann)
-        integ = np.trapz(r * R * np.sin(q * r), r)
+        integ = np.trapezoid(r * R * np.sin(q * r), r)
         ft_R = (4.0 * math.pi / q) * integ
         ft = 4.0 * math.pi / q**2 + ft_R
         coulomb = 4.0 * math.pi / q**2

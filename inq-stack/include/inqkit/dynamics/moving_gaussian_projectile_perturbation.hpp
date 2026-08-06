@@ -33,8 +33,15 @@ public:
 
 	// proj: live projectile state (must outlive this perturbation).
 	// sigma_pot: charge std = σ_WP/√2.
-	moving_gaussian_projectile_perturbation(Projectile const & proj, double sigma_pot)
-		: proj_(&proj), sigma_(sigma_pot) {}
+	// minimum_image: build the blob from the MINIMUM-IMAGE displacement, so it
+	//   wraps smoothly around the cell faces instead of being clipped by them.
+	//   Defaults to false — every previously published run keeps its exact
+	//   behaviour. Set it for wrap-around runs, where the classical projectile
+	//   re-enters the cell and must do so the way a KS orbital already does on
+	//   the FFT grid (docs/plans/slab-ks-orbital-stopping-wrap.md §4).
+	moving_gaussian_projectile_perturbation(Projectile const & proj, double sigma_pot,
+	                                        bool minimum_image = false)
+		: proj_(&proj), sigma_(sigma_pot), minimum_image_(minimum_image) {}
 
 	auto has_potential() const { return true; }
 
@@ -45,7 +52,9 @@ public:
 		inq::vector3<double> center{R.x, R.y, R.z};
 
 		if(not phi_.has_value() or center != cached_center_) {
-			auto nproj = inqkit::jellium::gaussian_density(potential.basis(), center, sigma_);
+			auto nproj = minimum_image_
+				? inqkit::jellium::gaussian_density_minimum_image(potential.basis(), center, sigma_)
+				: inqkit::jellium::gaussian_density(potential.basis(), center, sigma_);
 			phi_.emplace(inq::solvers::poisson::solve(nproj));   // φ_proj = poisson(n_proj)
 			cached_center_ = center;
 		}
@@ -62,10 +71,12 @@ public:
 	}
 
 	double sigma() const { return sigma_; }
+	bool minimum_image() const { return minimum_image_; }
 
 private:
 	Projectile const * proj_;
 	double sigma_;
+	bool   minimum_image_ = false;
 	mutable std::optional<inq::basis::field<inq::basis::real_space, double>> phi_;
 	mutable inq::vector3<double> cached_center_{0.0, 0.0, 0.0};
 };

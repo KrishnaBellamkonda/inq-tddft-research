@@ -70,3 +70,77 @@ TEST_CASE("Projectile: harmonic oscillator conserves energy (symplectic)", "[pro
 	CHECK((emax - emin) < 1e-3);
 	CHECK_THAT(0.5 * (emax + emin), WithinAbs(E0, 2e-3));
 }
+
+// ---------------------------------------------------------------------------
+// Periodic wrapping (docs/plans/slab-ks-orbital-stopping-wrap.md §4). set_R and
+// wrap_into_cell exist so a classical projectile can re-enter the cell the way a
+// KS orbital already does on the FFT grid.
+// ---------------------------------------------------------------------------
+
+TEST_CASE("Projectile: set_R moves the position and leaves the velocity alone", "[projectile][wrap]") {
+	Projectile p(1.0, -1.0, Vec3{0, 0, 10.0}, Vec3{0, 0, 2.0});
+	p.set_R(Vec3{1.0, -2.0, -30.0});
+	CHECK_THAT(p.R().x, WithinAbs( 1.0, 1e-15));
+	CHECK_THAT(p.R().y, WithinAbs(-2.0, 1e-15));
+	CHECK_THAT(p.R().z, WithinAbs(-30.0, 1e-15));
+	CHECK_THAT(p.V().z, WithinAbs(2.0, 1e-15));      // untouched
+	CHECK_THAT(p.ke(),  WithinAbs(2.0, 1e-15));      // 1/2 * 1 * 2^2
+}
+
+TEST_CASE("Projectile: wrap_into_cell uses the [-L/2, +L/2) window", "[projectile][wrap]") {
+	const Vec3 L{35.0, 35.0, 85.0};
+
+	SECTION("interior point is untouched and reports no wrap") {
+		Projectile p(1.0, -1.0, Vec3{0, 0, -24.0}, Vec3{0, 0, 2.0});
+		CHECK(p.wrap_into_cell(L) == false);
+		CHECK_THAT(p.R().z, WithinAbs(-24.0, 1e-15));
+	}
+	SECTION("past the +z face re-enters at -z, one lattice vector down") {
+		Projectile p(1.0, -1.0, Vec3{0, 0, 43.0}, Vec3{0, 0, 2.0});
+		CHECK(p.wrap_into_cell(L) == true);
+		CHECK_THAT(p.R().z, WithinAbs(43.0 - 85.0, 1e-13));   // = -42.0
+	}
+	SECTION("the window is half-open: +L/2 wraps, -L/2 does not") {
+		Projectile hi(1.0, -1.0, Vec3{0, 0,  42.5}, Vec3{0, 0, 0});
+		Projectile lo(1.0, -1.0, Vec3{0, 0, -42.5}, Vec3{0, 0, 0});
+		CHECK(hi.wrap_into_cell(L) == true);
+		CHECK_THAT(hi.R().z, WithinAbs(-42.5, 1e-13));
+		CHECK(lo.wrap_into_cell(L) == false);
+		CHECK_THAT(lo.R().z, WithinAbs(-42.5, 1e-15));
+	}
+	SECTION("a zero length means that axis never wraps") {
+		Projectile p(1.0, -1.0, Vec3{100.0, 0, 43.0}, Vec3{0, 0, 2.0});
+		CHECK(p.wrap_into_cell(Vec3{0.0, 0.0, 85.0}) == true);
+		CHECK_THAT(p.R().x, WithinAbs(100.0, 1e-15));         // x left alone
+		CHECK_THAT(p.R().z, WithinAbs(-42.0, 1e-13));
+	}
+}
+
+TEST_CASE("Projectile: wrapping every step leaves the unwrapped path intact", "[projectile][wrap]") {
+	// The physical observable is the DISTANCE travelled, which must be unaffected
+	// by relabelling the position across a face. Drift 400 Bohr at constant
+	// velocity through a 85-Bohr cell (4+ wraps) and check the accumulated path
+	// against v*t, while the wrapped coordinate always stays inside the cell.
+	const double Lz = 85.0, v = 2.0, dt = 0.04;
+	const int nsteps = 5000;
+	// The loop reconstructs the path the way POST-PROCESSING will have to: from
+	// the recorded WRAPPED coordinate alone, re-adding one lattice vector
+	// whenever consecutive samples jump backwards by more than half a cell.
+	Projectile p(1.0, -1.0, Vec3{0, 0, -24.0}, Vec3{0, 0, v});
+	double path = 0.0, z_prev = p.R().z;
+	int wraps = 0;
+	for(int n = 0; n < nsteps; ++n) {
+		p.advance(Vec3{0, 0, 0}, dt);
+		if(p.wrap_into_cell(Vec3{0.0, 0.0, Lz})) ++wraps;
+		const double z_now = p.R().z;
+		double dz = z_now - z_prev;
+		if(dz < -0.5 * Lz) dz += Lz;          // unwrap a backwards jump
+		path += dz;
+		z_prev = z_now;
+		CHECK(p.R().z >= -0.5 * Lz);
+		CHECK(p.R().z <   0.5 * Lz);
+	}
+	CHECK(wraps == 4);                                          // 400/85 = 4.7
+	CHECK_THAT(path, WithinAbs(v * nsteps * dt, 1e-9));         // 400 Bohr
+	CHECK_THAT(p.V().z, WithinAbs(v, 1e-12));                   // wrapping is not a force
+}

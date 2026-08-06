@@ -69,6 +69,59 @@ gaussian_density(Basis const & basis, inq::vector3<double> center, double sigma)
 	return n;
 }
 
+// Same normalised Gaussian, but built from the MINIMUM-IMAGE displacement: the
+// separation r − center is taken to fractional coordinates, wrapped into
+// [−0.5, +0.5) per lattice direction (the same window as
+// systems::cell::position_in_cell), and converted back. The blob therefore wraps
+// smoothly around every cell face instead of being clipped by it.
+//
+// WHY THIS EXISTS SEPARATELY (docs/plans/slab-ks-orbital-stopping-wrap.md §4).
+// `gaussian_density` above uses a plain Cartesian displacement, so a projectile
+// sitting on a box face loses the half of its charge that falls outside — the
+// integral drops below 1 and the force is wrong for as long as it straddles. A
+// KS ORBITAL has no such problem: the wavefunction basis is a plain 3-D FFT,
+// periodic in all three directions, so a wavepacket wraps exactly. In a
+// wrap-around classical-vs-wavepacket twin the two projectiles would then differ
+// precisely at the boundary the study deliberately introduces. This function
+// gives the classical charge the same wrap the wavepacket already has.
+//
+// It is a SEPARATE function, not a flag on the original, so every previously
+// published run keeps its exact binary behaviour.
+//
+// The wrap is lattice-general (it goes through the cell's contravariant basis),
+// so it is correct for non-orthogonal cells too. For a blob whose σ is small
+// against every lattice length and which sits well inside the cell, it agrees
+// with `gaussian_density` to machine precision — that equivalence is the test.
+//
+// NOTE ON ELECTROSTATICS. Wrapping the CHARGE does not change the Poisson
+// boundary condition. Under periodicity(2) a blob straddling the z face is
+// solved as two lumps at opposite ends of a z-open box — which is exactly what
+// the Poisson solver also does with the straddling wavepacket density, so the
+// twins stay matched.
+template <class Basis>
+inq::basis::field<Basis, double>
+gaussian_density_minimum_image(Basis const & basis, inq::vector3<double> center, double sigma) {
+	inq::basis::field<Basis, double> n(basis);
+	auto point_op = basis.point_op();
+	auto cub = begin(n.cubic());
+	const double norm    = 1.0 / std::pow(2.0 * M_PI * sigma * sigma, 1.5);
+	const double inv2s2  = 1.0 / (2.0 * sigma * sigma);
+	const double cx = center[0], cy = center[1], cz = center[2];
+	gpu::run(basis.local_sizes()[2], basis.local_sizes()[1], basis.local_sizes()[0],
+		[=] GPU_LAMBDA (auto iz, auto iy, auto ix) {
+			auto r = point_op.rvector_cartesian(ix, iy, iz);
+			inq::vector3<double> d{r[0] - cx, r[1] - cy, r[2] - cz};
+			auto f = point_op.cell().to_contravariant(d);
+			for(int idir = 0; idir < 3; idir++) {
+				f[idir] -= floor(f[idir]);            // -> [0, 1)
+				if(f[idir] >= 0.5) f[idir] -= 1.0;    // -> [-0.5, 0.5)
+			}
+			auto dc = point_op.cell().to_cartesian(f);
+			cub[ix][iy][iz] = norm * exp(-(dc[0]*dc[0] + dc[1]*dc[1] + dc[2]*dc[2]) * inv2s2);
+		});
+	return n;
+}
+
 // E_proj_bg (both estimates) for a projectile at `proj_center` with charge-std
 // `sigma_pot`, against the background of `pert`. `electrons` supplies the density
 // basis + atomic_pot; `ions` holds the projectile (for v_ion).
