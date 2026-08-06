@@ -70,6 +70,30 @@ else
   TAG="s$(echo "$SIGMA" | awk '{printf "%.1f", $1}' | tr '.' 'p')_"
 fi
 
+# LAUNCH DISTANCE — must MATCH the slab runs these baselines are subtracted from.
+# The control's whole job is to supply the CAP-only <p_z>(t) that is differenced
+# out of the slab run step for step; if the packet starts somewhere else it
+# reaches the +z CAP at a different time and the subtraction is meaningless.
+# Default -24.0 leaves every existing vac_* name resolving unchanged.
+# LJ_LAUNCH_Z=auto reads the scan's accepted z, so this can be chained behind
+# the sweep with no human relaying the number.
+LAUNCH_Z="${LJ_LAUNCH_Z:--24.0}"
+if [ "$LAUNCH_Z" = "auto" ]; then
+  SCAN_Z_FILE="$REPO_ROOT/ResearchProject/systems/localised_jellium/scripts/wp_highdensity_sv/inject_scan/results/scan/accepted_launch_z.txt"
+  if [ ! -f "$SCAN_Z_FILE" ]; then
+    echo "FATAL: LJ_LAUNCH_Z=auto but no accepted launch z at $SCAN_Z_FILE" >&2
+    exit 2
+  fi
+  LAUNCH_Z="$(tr -d '[:space:]' < "$SCAN_Z_FILE")"
+  echo "LJ_LAUNCH_Z=auto -> $LAUNCH_Z"
+fi
+if [ "$(awk "BEGIN{print ($LAUNCH_Z == -24.0)}")" = "1" ]; then
+  NLTAG=""
+else
+  NLTAG="nl_"
+fi
+TAG="${NLTAG}${TAG}"
+
 echo "=============================================="
 echo " job    : ${SLURM_JOB_ID:-none}  wp-hd-vac (CAP-only baselines)"
 echo " node   : $(hostname)"
@@ -77,6 +101,7 @@ echo " gpu    : $(nvidia-smi --query-gpu=name,memory.total --format=csv,noheader
 echo " engine : $INQ_SOURCE"
 echo " dx     : $DX  (matches production)"
 echo " sigma  : $SIGMA Bohr   name prefix: '${TAG}'"
+echo " launch : z = $LAUNCH_Z  (must match the slab runs)"
 echo " started: $(date)"
 echo "=============================================="
 
@@ -102,12 +127,12 @@ for i in 0 1 2 3; do
     # wrong grid and were unusable as CAP baselines. cmake rebuilds only what
     # changed, so this costs nothing when the source is already current.
     WPC_OUT="$NAME" WPC_K0="$V" WPC_NSTEPS="$N" WPC_H="$DX" WPC_ETA=-1.0 \
-      WPC_SIGMA="$SIGMA" \
+      WPC_SIGMA="$SIGMA" WPC_LAUNCH_Z="$LAUNCH_Z" \
       WPC_SAVE_EVERY=0 inq-run || echo "WARN: $NAME failed (continuing)"
   else
     env INQ_SHARE_PATH="$INQ_SHARE_PATH" PSEUDOPOD_SHARE_PATH="$PSEUDOPOD_SHARE_PATH" \
         WPC_OUT="$NAME" WPC_K0="$V" WPC_NSTEPS="$N" WPC_H="$DX" WPC_ETA=-1.0 \
-      WPC_SIGMA="$SIGMA" \
+      WPC_SIGMA="$SIGMA" WPC_LAUNCH_Z="$LAUNCH_Z" \
         WPC_SAVE_EVERY=0 ./run || echo "WARN: $NAME failed (continuing)"
   fi
   first=0

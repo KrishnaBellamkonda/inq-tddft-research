@@ -128,6 +128,39 @@ else
   TAG="s$(echo "$SIGMA" | awk '{printf "%.1f", $1}' | tr '.' 'p')_"
 fi
 
+# LAUNCH DISTANCE (effective-sigma hypothesis, docs/plans/effective-sigma-near-launch.md).
+# The far-launch campaigns all start at z = -24 and the packet is 4.7-8.1 Bohr wide
+# by the time it reaches the slab, so their sigma label describes the packet at
+# LAUNCH, not during the physics. The near-launch runs start just outside the slab
+# face so the packet arrives essentially undispersed at sigma/sqrt2 = 0.354 Bohr.
+# The exact z comes from the injection scan (run-wp-hd-scan.slurm), which picks the
+# smallest standoff removing < 3 % of the packet to orthogonalisation.
+#
+# Default -24.0 keeps EVERY existing name and result resolving unchanged; any other
+# value prefixes the run name with nl_ (near-launch).
+#
+# LJ_LAUNCH_Z=auto reads the accepted z from the scan's own artifact, so the
+# sweep can be chained behind the scan with --dependency=afterok and no human
+# relays the number between the two jobs.
+LAUNCH_Z="${LJ_LAUNCH_Z:--24.0}"
+if [ "$LAUNCH_Z" = "auto" ]; then
+  SCAN_Z_FILE="$REPO_ROOT/ResearchProject/systems/localised_jellium/scripts/wp_highdensity_sv/inject_scan/results/scan/accepted_launch_z.txt"
+  if [ ! -f "$SCAN_Z_FILE" ]; then
+    echo "FATAL: LJ_LAUNCH_Z=auto but the scan produced no accepted launch z." >&2
+    echo "       expected: $SCAN_Z_FILE" >&2
+    echo "       Run shared/bin/run-wp-hd-scan.slurm first." >&2
+    exit 2
+  fi
+  LAUNCH_Z="$(tr -d '[:space:]' < "$SCAN_Z_FILE")"
+  echo "LJ_LAUNCH_Z=auto -> $LAUNCH_Z (from $SCAN_Z_FILE)"
+fi
+if [ "$(awk "BEGIN{print ($LAUNCH_Z == -24.0)}")" = "1" ]; then
+  NLTAG=""
+else
+  NLTAG="nl_"
+fi
+TAG="${NLTAG}${TAG}"
+
 if [ "$STAGE" = "smoke" ]; then
   NAME="${TAG}smoke";  V="2.0"; NSTEPS=20; SAVE=5; WF=10; CKPT=10
 else
@@ -144,6 +177,7 @@ echo " node   : $(hostname)"
 echo " gpu    : $(nvidia-smi --query-gpu=name,memory.total --format=csv,noheader 2>&1 | head -1)"
 echo " engine : $INQ_SOURCE"
 echo " sigma  : $SIGMA Bohr (density std $(awk "BEGIN{printf \"%.4f\", $SIGMA/sqrt(2)}"), spread rate $(awk "BEGIN{printf \"%.3f\", 1/(sqrt(2)*$SIGMA)}") Bohr/a.u.)"
+echo " launch : z = $LAUNCH_Z  (standoff $(awk "BEGIN{printf \"%.1f\", -12.5-($LAUNCH_Z)}") Bohr from the face at -12.5)"
 echo " v = k0 : $V     N_steps : $NSTEPS   (t = $(awk "BEGIN{printf \"%.2f\", $NSTEPS*0.04}") a.u.)"
 echo " cadence: density/$SAVE  wavefn/$WF  ckpt/$CKPT  stats/1"
 echo " resume : ${LJ_RESUME:-0}"
@@ -154,7 +188,8 @@ cd "$RUN_DIR"
 
 export LJ_OUT="$NAME" LJ_K0="$V" LJ_N_STEPS="$NSTEPS" LJ_SIGMA="$SIGMA" \
        LJ_SAVE_EVERY="$SAVE" LJ_WF_EVERY="$WF" LJ_CKPT_EVERY="$CKPT" \
-       LJ_GS_DIR="$GS_DIR" LJ_RESUME="${LJ_RESUME:-0}" LJ_SPACING="$SPACING"
+       LJ_GS_DIR="$GS_DIR" LJ_RESUME="${LJ_RESUME:-0}" LJ_SPACING="$SPACING" \
+       LJ_LAUNCH_Z="$LAUNCH_Z"
 
 if [ "$STAGE" = "smoke" ]; then
   # inq-run builds the binary and then exec's it — this is the one-off build.
