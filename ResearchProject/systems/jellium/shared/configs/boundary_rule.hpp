@@ -155,6 +155,96 @@ inline constexpr int n_steps_for_relaxed(double sigma_r_bohr,
     return n_double > static_cast<double>(n_floor) ? n_floor + 1 : n_floor;
 }
 
+// ----- Dispersion-aware IFW (added 2026-07-30) ------------------------------
+//
+// LIMITATION OF ifw_end_z ABOVE: it is a STATIC-sigma rule. It asks where the
+// centroid is when a packet of the LAUNCH width sigma has its 3-sigma tail at
+// the far face, and so ignores the fact that a free Gaussian SPREADS during the
+// flight:
+//
+//     sigma_d(t) = sqrt(sigma^2/2 + t^2/(2 sigma^2))
+//
+// (density std; psi ~ exp(-r^2/2 sigma^2) so sigma_d(0) = sigma/sqrt2). For the
+// short legacy flights (t ~ 5-10 a.u.) the growth was small and the static rule
+// was harmless. It is NOT harmless for a long flight: at sigma = 2 Bohr the
+// packet grows 1.41 -> 7.2 Bohr over 19 a.u., and the static rule over-estimates
+// the interference-free window by 22 % (24.3 a.u. claimed vs 19.0 a.u. actual for
+// the L_z = 80 bulk-jellium KS-stopping run).
+//
+// The dispersion-aware criterion is the same PHYSICS (leading n-sigma tail
+// reaches the far face) with the time-dependent width:
+//
+//     z_launch + v t + n_sigma * sigma_d(t) = L/2
+//
+// Squaring (valid while the right-hand side exceeds v t) gives a quadratic in t:
+//
+//     a t^2 + b t + c = 0,  a = n^2/(2 sigma^2) - v^2
+//                           b = 2 A v
+//                           c = n^2 sigma^2 / 2 - A^2,   A = L/2 - z_launch
+//
+// of which the SMALLER positive root is the crossing. For n_sigma = 3, sigma = 2,
+// L = 80, z_launch = -32, v = 2.7111 this returns t = 18.97 a.u.
+//
+// These helpers are ADDITIVE. The static ifw_end_z / t_ifw_au above are left
+// exactly as they were: legacy runs recorded their N_STEPS from them, and
+// changing those would silently re-date every existing run's IFW annotation.
+// New runs should prefer the dispersive form and say so in their Cfg comment.
+
+// Local constexpr sqrt so this header stays standalone (std::sqrt is not
+// constexpr, and base.hpp's const_sqrt is not guaranteed to be included first).
+inline constexpr double boundary_const_sqrt(double x) {
+    if (x <= 0.0) return 0.0;
+    double g = x > 1.0 ? x : 1.0;
+    for (int i = 0; i < 30; ++i) g = 0.5 * (g + x / g);
+    return g;
+}
+
+// Free-Gaussian density standard deviation at time t (Bohr).
+inline constexpr double sigma_d_at(double sigma_r_bohr, double t_au) {
+    return boundary_const_sqrt(sigma_r_bohr * sigma_r_bohr / 2.0
+                               + t_au * t_au / (2.0 * sigma_r_bohr * sigma_r_bohr));
+}
+
+// Time at which the leading n_sigma tail of the SPREADING packet reaches the
+// far (+z) face. Returns 0.0 if the geometry admits no crossing (already
+// overlapping at t = 0).
+inline constexpr double ifw_end_t_dispersive(double sigma_r_bohr,
+                                             double L_bohr,
+                                             double v_bohr_per_au,
+                                             double launch_z_bohr,
+                                             double n_sigma = 3.0) {
+    const double A = 0.5 * L_bohr - launch_z_bohr;
+    const double a = n_sigma * n_sigma / (2.0 * sigma_r_bohr * sigma_r_bohr)
+                     - v_bohr_per_au * v_bohr_per_au;
+    const double b = 2.0 * A * v_bohr_per_au;
+    const double c = n_sigma * n_sigma * sigma_r_bohr * sigma_r_bohr / 2.0 - A * A;
+
+    if (a == 0.0) return b != 0.0 ? -c / b : 0.0;
+    const double disc = b * b - 4.0 * a * c;
+    if (disc < 0.0) return 0.0;
+    const double sq = boundary_const_sqrt(disc);
+    const double r1 = (-b + sq) / (2.0 * a);
+    const double r2 = (-b - sq) / (2.0 * a);
+    // Smaller strictly-positive root.
+    if (r1 > 0.0 && r2 > 0.0) return r1 < r2 ? r1 : r2;
+    if (r1 > 0.0) return r1;
+    if (r2 > 0.0) return r2;
+    return 0.0;
+}
+
+// Largest transverse-clean time: the periodic images along a transverse axis of
+// length L_perp stay separated while L_perp >= n_images * sigma_d(t). With the
+// default n_images = 6 the packet norm leaking out of the transverse
+// Wigner-Seitz cell is 1 - erf(3/sqrt2)^2 = 0.54 %.
+inline constexpr double transverse_clean_t(double sigma_r_bohr,
+                                           double L_perp_bohr,
+                                           double n_images = 6.0) {
+    const double lim = L_perp_bohr / n_images;
+    const double arg = 2.0 * sigma_r_bohr * sigma_r_bohr
+                       * (lim * lim - sigma_r_bohr * sigma_r_bohr / 2.0);
+    return arg > 0.0 ? boundary_const_sqrt(arg) : 0.0;
+}
+
 // ----- Cadence: write-every for ~300-frame target ---------------------------
 
 // Target N_FRAMES per run across the campaign.
@@ -223,5 +313,34 @@ static_assert(write_every_for(348) == 1,
               "write_every_for(348, 300) should be 1");
 static_assert(write_every_for(1) == 1,
               "write_every_for(1, 300) should clamp to 1");
+
+// ----- Dispersion-aware IFW smoke values ------------------------------------
+// sigma_d(0) = sigma/sqrt2: at sigma = 2 this is 1.41421356...
+static_assert(sigma_d_at(2.0, 0.0) > 1.4142 && sigma_d_at(2.0, 0.0) < 1.4143,
+              "sigma_d_at(2, 0) should be 2/sqrt2 = 1.41421");
+// sigma = 2, t = 19: sqrt(2 + 361/8) = sqrt(47.125) = 6.86477...
+static_assert(sigma_d_at(2.0, 19.0) > 6.8647 && sigma_d_at(2.0, 19.0) < 6.8648,
+              "sigma_d_at(2, 19) should be 6.86477");
+
+// The bulk-jellium KS-stopping geometry: sigma = 2, L_z = 80, v = 2.7111 (100 eV
+// electron), launched at -32 (= -L/2 + 4 sigma). Dispersive IFW = 18.97 a.u.,
+// against the STATIC rule's t_ifw_au = (34 - (-32))/2.7111 = 24.34 a.u. — the
+// 22 % over-estimate this helper exists to correct.
+static_assert(ifw_end_t_dispersive(2.0, 80.0, 2.7111, -32.0) > 18.9
+              && ifw_end_t_dispersive(2.0, 80.0, 2.7111, -32.0) < 19.1,
+              "dispersive IFW for the bulk KS-stopping run should be ~18.97 a.u.");
+static_assert(t_ifw_au(2.0, 80.0, 2.7111) > 24.3
+              && t_ifw_au(2.0, 80.0, 2.7111) < 24.4,
+              "static IFW for the same geometry should be ~24.34 a.u. (too long)");
+
+// Transverse clean time at sigma = 2: L_perp = 46 gives 21.3 a.u. (comfortably
+// past the 18.97 longitudinal bind, so L_z is the binding constraint), while
+// L_perp = 35 would bind first at 16.0 a.u.
+static_assert(transverse_clean_t(2.0, 46.0) > 21.2
+              && transverse_clean_t(2.0, 46.0) < 21.4,
+              "transverse_clean_t(2, 46) should be ~21.3 a.u.");
+static_assert(transverse_clean_t(2.0, 35.0) > 15.9
+              && transverse_clean_t(2.0, 35.0) < 16.1,
+              "transverse_clean_t(2, 35) should be ~16.0 a.u.");
 
 }  // namespace jellium::config::boundary

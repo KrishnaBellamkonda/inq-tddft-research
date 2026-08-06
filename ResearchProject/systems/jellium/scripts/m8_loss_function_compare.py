@@ -122,7 +122,7 @@ for j, mi in enumerate(modes_show):
     for label, v, q, om, L in data:
         sel = (om * HA <= 12) & (om > 0)
         wL = om[sel] * L[mi, sel]
-        area = np.trapz(wL, om[sel] * HA)
+        area = np.trapezoid(wL, om[sel] * HA)
         ax.plot(om[sel] * HA, wL / max(area, 1e-30), lw=1.6, label=label)
     qm = data[0][2][mi]
     ax.axvline(bohm_gross(qm) * HA, color="c", ls="-", lw=1.0)

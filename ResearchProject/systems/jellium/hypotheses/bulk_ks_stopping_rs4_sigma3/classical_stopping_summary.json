@@ -1,0 +1,50 @@
+{
+  "half": "classical",
+  "cfg": {
+    "LX": 40.0,
+    "LY": 40.0,
+    "LZ": 80.0,
+    "N_E": 482,
+    "DX": 0.5,
+    "SIGMA_WP": 3.0,
+    "EKIN_EV": 100.0,
+    "K0": 2.7111,
+    "Z0": -28.0,
+    "DT": 0.04,
+    "N_STEPS": 600,
+    "FIT_T0": 4.0,
+    "FIT_T1": 19.4845,
+    "T_IFW": 19.4845,
+    "T_TRANSVERSE": 26.8142,
+    "COMMON_FIT_T1": 9.37,
+    "R_S": 3.987,
+    "HW_P_EV": 5.919,
+    "V_F": 0.4813,
+    "PLASMA_PERIOD": 28.88
+  },
+  "conservation": {
+    "e_total_initial_ev": 589.186080659743,
+    "e_total_final_ev": 634.8131085768032,
+    "drift_ev": 45.62702791706022,
+    "max_excursion_ev": 45.62702791706022,
+    "projectile_ke_loss_ev": 45.14143361750023,
+    "electronic_gain_ev": 45.62702791706022,
+    "closure_mismatch_ev": 0.4855942995599847,
+    "closure_mismatch_pct": 1.075717496423799
+  },
+  "fits": {
+    "S_cl_shared": {
+      "S_eV_per_Bohr": 0.8195441362553982,
+      "stat": 0.003982398243998017,
+      "syst": 0.11766506126748655,
+      "r2": 0.9909678415704002
+    },
+    "S_cl_initial": {
+      "S_eV_per_Bohr": 0.6698077672114753,
+      "stat": 0.0055706414777343715,
+      "syst": 0.03506555981472442,
+      "r2": 0.9717039305018109,
+      "mean_v": 2.5521810947877914
+    }
+  }
+}

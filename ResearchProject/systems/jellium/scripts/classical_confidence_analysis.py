@@ -89,7 +89,7 @@ ax = axs[0, 1]
 for q, om, L, lab, c in [(qc, omc, Lc, f"classical (T={Tc:.0f}a.u.)", "C3"),
                          (qe, ome, Le, "E15 medium (T=2000a.u.)", "C0")]:
     s = (om * HA <= 12) & (om > 0); wL = om[s] * L[0, s]
-    ax.plot(om[s] * HA, wL / max(np.trapz(wL, om[s] * HA), 1e-30), color=c, lw=1.6, label=lab)
+    ax.plot(om[s] * HA, wL / max(np.trapezoid(wL, om[s] * HA), 1e-30), color=c, lw=1.6, label=lab)
 ax.axvline(omega_p * HA, color="k", ls=":", lw=1.0, label="ω_p")
 ax.axvline(bohm_gross(q1) * HA, color="c", ls="-", lw=1.0, label="Bohm-Gross(q₁)")
 ax.set_xlabel("ω (eV)"); ax.set_ylabel("ω·L(ω) m=1 (area-norm)"); ax.set_xlim(0, 12)

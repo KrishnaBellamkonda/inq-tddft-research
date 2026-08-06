@@ -1,0 +1,92 @@
+ELECTRONIC STOPPING POWER -- 100 eV projectile in high-density bulk jellium
+==============================================================================
+
+family        : bulk_ks_stopping_rs4
+r_s           : 3.987 Bohr   (n = 0.003766 a.u.^-3, 482 electrons in 40 x 40 x 80 Bohr)
+omega_p       : 5.92 eV
+sigma_WP      : 2 Bohr   (classical UPF charge std = sigma_WP/sqrt(2) = 1.414 Bohr)
+projectile KE : 100 eV   (k0 = 2.7111 Bohr^-1, v0 = 2.7111 a.u.)
+dt            : 0.04 a.u.
+fit window    : 4.00 - 18.43 a.u.  (0.0968 - 0.4457 fs)
+
+METHOD
+------------------------------------------------------------------------------
+S = -dT/ds, ordinary least squares over the transient-excluded window
+above, with s the projectile path coordinate:
+  classical    s = z(t) from electron_track.csv
+  wavepacket   s = z_0 + integral of <p_z> dt / m  (Ehrenfest centroid)
+
+Quoted uncertainty = OLS slope standard error (stat) and a
+window-sensitivity systematic (syst) in quadrature. The systematic moves
+BOTH window edges independently by +/-3 a.u. and takes half the full
+spread of the resulting slopes; it prices the judgement call about where
+the transient ends, and it dominates the statistical error.
+
+RESULTS
+------------------------------------------------------------------------------
+  classical (1/2 m v^2): S = 0.88 +/- 0.13 eV/Bohr (stat 0.00, syst 0.13; r2 = 0.991, n = 361, t = 4.0-18.4 a.u.)
+  wavepacket drift T2: S = 0.16 +/- 0.01 eV/Bohr (stat 0.00, syst 0.01; r2 = 0.997, n = 361, t = 4.0-18.4 a.u.)
+  wavepacket total T1: S = 0.12 +/- 0.02 eV/Bohr (stat 0.00, syst 0.02; r2 = 0.993, n = 361, t = 4.0-18.4 a.u.)
+  wavepacket spread T_var: S = -0.04 +/- 0.02 eV/Bohr (stat 0.00, syst 0.02; r2 = 0.902, n = 361, t = 4.0-18.4 a.u.)
+
+  classical / wavepacket(T2) ratio = 5.62 +/- 0.93
+
+READING THESE
+------------------------------------------------------------------------------
+T_2 is the comparable quantity: it is the drift kinetic energy of the
+packet's centre of mass, the direct analogue of 1/2 m v^2. T_1 also
+contains the internal momentum spread, which at t = 0 is the pure
+zero-point value 3/(4 sigma^2) = 5.102 eV --
+energy the packet carries before it has moved. The T_var row is NOT a
+stopping power in the usual sense: it is the rate at which drift energy
+is converted into the packet's own momentum spread, a channel with no
+classical counterpart. A negative S there means the spread is GROWING.
+
+ENERGY BUDGET OVER THE WHOLE RUN (t = 0 to 25.84 a.u.)
+------------------------------------------------------------------------------
+  classical   1/2 m v^2 :  100.000 ->   45.606 eV   (change  -54.394 eV)
+  wavepacket  T_1       :  105.102 ->   99.393 eV   (change   -5.709 eV)
+  wavepacket  T_2       :  100.000 ->   91.301 eV   (change   -8.699 eV)
+  wavepacket  T_var     :    5.102 ->    8.091 eV   (change   +2.989 eV)
+
+INTERACTION ENERGIES (change over the run, eV)
+------------------------------------------------------------------------------
+  term      classical   wavepacket      WP - cl
+  E_SS         26.128        5.327      -20.801
+  E_PP          0.000       -4.619       -4.619
+  E_PS         -5.474       -0.392        5.081
+  E_SB          0.000        0.000        0.000
+  E_PB          0.000        0.000        0.000
+  E_BB          0.000        0.000        0.000
+
+  All SIX pairwise terms are listed. E_SB / E_PB / E_BB are bitwise zero
+  at every step in both halves -- verified, not assumed:
+    classical  max|E_SB|,|E_PB|,|E_BB| = 0.0e+00 Ha
+    wavepacket max|E_SB|,|E_PB|,|E_BB| = 0.0e+00 Ha
+
+  E_PP(t=0) classical = 0.176996 Ha, wavepacket = 0.176996 Ha
+  These agree because the classical Gaussian UPF is generated at
+  sigma_pot = sigma_WP/sqrt(2), so its charge cloud has the wavepacket's
+  t=0 density. That equality is a check on the sigma-matching convention
+  (.claude/rules/sigma-wp-convention.md), not an input to it.
+
+  Bulk jellium has a UNIFORM background, so phi_+ is identically zero and
+  E_SB = E_PB = E_BB = 0 by construction. Absolute E_PP carries the
+  charged-cell G=0 gauge; only the WP-minus-classical differences above
+  are gauge-clean.
+
+VALIDATION
+------------------------------------------------------------------------------
+  Hartree closure vs INQ, classical : 4.99e-13 Ha
+  Hartree closure vs INQ, wavepacket: 4.98e-13 Ha
+  Ehrenfest residual max |<z> - int<p>dt| : 0.0786 Bohr over 68.5 Bohr of travel
+  WP orbital norm range : 0.999989595 to 1.000000000
+  classical cloud clipping onset : never  (fit window ends 18.43 a.u.)
+  shared steps in the difference plot : 324
+
+PROVENANCE
+------------------------------------------------------------------------------
+  wp run        : /rds/user/skcb2/hpc-work/tddft/inq-tddft-research/ResearchProject/systems/jellium/scripts/bulk_ks_stopping_rs4/wp
+  classical run : /rds/user/skcb2/hpc-work/tddft/inq-tddft-research/ResearchProject/systems/jellium/scripts/bulk_ks_stopping_rs4/classical
+  engine        : /rds/user/skcb2/hpc-work/tddft/inq-tddft-research/ResearchProject/systems/jellium/hypotheses/bulk_ks_stopping/ks_stopping.py
+  builder       : /rds/user/skcb2/hpc-work/tddft/inq-tddft-research/ResearchProject/systems/jellium/hypotheses/bulk_ks_stopping_rs4/case_study_100eV/make_case_study.py

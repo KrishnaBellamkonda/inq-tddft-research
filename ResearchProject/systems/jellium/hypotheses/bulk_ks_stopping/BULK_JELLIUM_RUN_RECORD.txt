@@ -1,0 +1,617 @@
+================================================================================
+BULK JELLIUM — ELECTRONIC STOPPING OF A CLASSICAL vs KOHN-SHAM-ORBITAL ELECTRON
+Complete record of what was run, how, and what was extracted.
+================================================================================
+
+Written           : 2026-08-04
+Campaign          : bulk_ks_stopping (six matched twin pairs = 12 rt-TDDFT runs)
+Runs executed     : 2026-07-30 -> 2026-08-01
+Repository        : /rds/user/skcb2/hpc-work/tddft/inq-tddft-research
+Branch / commit   : quantum-stopping-power / 92d1a5f (2026-08-03)
+Machine           : CSD3 (Cambridge), 'ampere' partition, 1x NVIDIA A100 per run,
+                    account mphil-nikiforakis-skcb2-sl2-gpu
+Engine            : INQ (header-only C++17 GPU rt-TDDFT), + project layer 'inqkit'
+Plan              : docs/plans/bulk-jellium-ks-stopping.md
+Rolling handover  : docs/handovers/bulk-jellium-ks-stopping.md
+
+Every number below was read back from the run artefacts on disk
+(run_summary.txt, *.csv, *.json, *.upf) at the time of writing. Configuration
+values are quoted exactly as set; measured/derived results are rounded to 2-3
+significant figures with the full precision left in the JSON files named in
+section 9.
+
+--------------------------------------------------------------------------------
+1. WHAT THE CAMPAIGN IS
+--------------------------------------------------------------------------------
+
+One question: an electron travelling through a homogeneous electron gas is
+represented in two ways that are physically matched in every respect except
+representation --
+
+  (a) CLASSICAL: a point-like classical particle of mass m_e and charge -1,
+      entering the Kohn-Sham Hamiltonian as an EXTERNAL potential (a Gaussian-
+      smeared -1 Coulomb pseudopotential), moving by free Ehrenfest dynamics;
+
+  (b) QUANTUM  : a Gaussian WAVEPACKET occupying one additional Kohn-Sham
+      orbital of the same TDDFT calculation, propagated by the same
+      time-dependent Kohn-Sham equations as the bath.
+
+-- and the electronic stopping power S = -dT/ds is measured for each. The
+matched (a)+(b) pair at fixed density and fixed width is called a TWIN PAIR.
+
+The campaign varies TWO axes and holds the projectile velocity FIXED:
+
+  * bath density : 2 values          (r_s = 3.99 and r_s = 5.70)
+  * packet width : 3 values          (sigma_WP = 1, 2, 3 Bohr)
+  * velocity     : 1 value           (v = 2.71 a.u., i.e. 100 eV) -- NOT swept
+
+  => 2 x 3 = 6 twin pairs = 12 production runs.
+
+THERE IS NO VELOCITY SWEEP IN THIS CAMPAIGN. Every one of the 12 runs is at
+100 eV. (Earlier, separate bulk sweeps at other densities did span 20-1100 eV;
+they are listed in section 12 and must not be mixed with this set.)
+
+--------------------------------------------------------------------------------
+2. THE PHYSICAL SYSTEM
+--------------------------------------------------------------------------------
+
+Model         : bulk jellium (homogeneous interacting electron gas).
+                N valence electrons in a periodic orthorhombic cell, neutralised
+                by a UNIFORM positive background.
+Boundary      : fully periodic in x, y, z. No surfaces, no absorbing boundary,
+                no complex absorbing potential.
+Functional    : LDA for the ground state; ALDA (adiabatic LDA) in the real-time
+                propagation. Spin-unpolarised.
+Background    : uniform => its Hartree potential is pure G = 0, which INQ drops.
+                Consequence used throughout the analysis: phi_+ = 0 identically,
+                so every background interaction term (E_SB, E_PB, E_BB) is
+                exactly zero in bulk (verified bitwise, section 8).
+Electron count: N chosen as a closed-shell "magic number" of the free-electron
+                gas in the given box, so the ground state is non-degenerate at
+                the Fermi level.
+Temperature   : 0.00862 eV smearing (100 K) in the ground state.
+
+DERIVED PROPERTIES OF THE TWO BATHS (computed from N and V; the r_s, omega_p
+values agree with those stamped in the ground-state summaries):
+
+  quantity                    HIGH DENSITY          LOW DENSITY
+  --------------------------  --------------------  --------------------
+  label used in filenames     "rs4"                 (unsuffixed / "rs5p7")
+  N (bath electrons)          482                   218
+  cell volume (Bohr^3)        128000                169280
+  density n (e/Bohr^3)        3.7656e-3             1.2878e-3
+  Wigner-Seitz r_s (Bohr)     3.9874                5.7019
+  Fermi wavevector k_F (1/B)  0.4813                0.3366
+  Fermi energy E_F            0.1158 Ha = 3.15 eV   0.0566 Ha = 1.54 eV
+  Fermi velocity v_F (a.u.)   0.4813                0.3366
+  plasma energy hbar*omega_p  5.92 eV               3.46 eV
+  plasma period 2*pi/omega_p  28.9 a.u.             49.4 a.u.
+  metal analogue              between Li and Al     Li-like
+
+  projectile v / v_F          5.63                  8.05
+
+  NOTE (important for any Lindhard / linear-response comparison in the text):
+  the run is SHORTER than one plasma period in the dilute bath (24-27.7 a.u.
+  against 49.4 a.u.), and comparable to one period in the dense bath. The
+  extracted S is therefore an INITIAL-DRAG (transient) stopping power, not a
+  steady-state wake value. This is stated in every run_summary.txt.
+
+--------------------------------------------------------------------------------
+3. NUMERICAL PARAMETERS
+--------------------------------------------------------------------------------
+
+  parameter                   HIGH DENSITY (r_s=3.99)   LOW DENSITY (r_s=5.70)
+  --------------------------  ------------------------  ----------------------
+  cell (Bohr)                 40 x 40 x 80              46 x 46 x 80
+  cell geometry               orthorhombic, periodic    orthorhombic, periodic
+  real-space grid spacing dx  0.50 Bohr                 0.40 Bohr
+  plane-wave cutoff           19.74 Ha (537 eV)         30.84 Ha (839 eV)
+                              [= pi^2/(2 dx^2)]         [= pi^2/(2 dx^2)]
+  Nyquist wavevector          6.283 1/Bohr              7.854 1/Bohr
+  grid points                 80 x 80 x 160             115 x 115 x 200
+  bath electrons N            482                       218
+  KS states (GS)              261 (241 occupied + 20)   129 (109 occupied + 20)
+  SCF tolerance               1e-6 Ha                   1e-6 Ha
+  time step dt                0.04 a.u.                 0.04 a.u.
+  propagation direction       +z                        +z
+
+  The two densities deliberately use DIFFERENT dx: the denser bath has a larger
+  k_F and needs the finer grid. Both cutoffs are the Nyquist-limited value of
+  their own grid, so neither run is aliased at its own k_F (k_F << k_Nyquist in
+  both cases).
+
+  CAVEAT TO STATE IN A PAPER: the sigma_WP = 1 pairs are the least resolved.
+  The classical charge cloud at that width has sigma_pot = 0.707 Bohr, i.e.
+  only ~1.4 (dense) to ~1.8 (dilute) grid points per sigma. Measured evidence:
+  the sigma_WP = 1 packet's initial density width comes out at 0.730 (dilute)
+  and 0.768 Bohr (dense) instead of the intended 0.707 -- a 3-9% grid-induced
+  broadening that is absent at sigma_WP = 2 and 3 (both reproduce 1.414 and
+  2.121 to 6 digits). Treat sigma_WP = 1 as indicative, not converged.
+
+--------------------------------------------------------------------------------
+4. GROUND STATES (shared by both halves of every pair)
+--------------------------------------------------------------------------------
+
+Both ground states were converged once and reused by all runs at that density,
+so classical and wavepacket halves start from the SAME electronic state.
+
+  checkpoint (dense) : .../systems/jellium/checkpoints/gs_L40x40x80_orth_N482_dx0p50
+  checkpoint (dilute): .../systems/jellium/checkpoints/gs_L46x46x80_orth_N218_dx0p40
+  producer summaries : .../systems/jellium/save_gs/<same name>/results/run_summary.txt
+
+  quantity                 DENSE (r_s=3.99)     DILUTE (r_s=5.70)
+  -----------------------  -------------------  -------------------
+  E_ground_state           -37.2603 Ha          -15.8487 Ha
+  E_kinetic                 33.5985 Ha            7.3966 Ha
+  E_Hartree                 5.79e-4 Ha           2.74e-4 Ha
+  E_xc                     -70.8594 Ha          -23.2456 Ha
+  free-electron expected T  33.5937 Ha            7.3959 Ha
+  T vs free-electron        +0.014 %             +0.009 %
+  validation failures       0                    2 (see below)
+
+  The near-zero Hartree energy (1e-4 Ha out of tens of Ha) is the direct
+  numerical statement that the ground state is homogeneous and neutralised --
+  the single most useful sanity number to quote for a jellium ground state.
+
+  The dilute ground state is recorded as "run_completed = true_with_failures"
+  (2 validation failures) in its own summary. If the dilute ground state is
+  used in a publication figure, re-read that file and state which tolerance
+  was missed; it is NOT documented as benign anywhere in the repo.
+
+--------------------------------------------------------------------------------
+5. THE PROJECTILE -- THE TWO REPRESENTATIONS
+--------------------------------------------------------------------------------
+
+Both carry charge exactly -1 (verified, section 10) and both are launched at
+z0 on the cell axis (x = y = 0) moving in +z.
+
+5a. WAVEPACKET HALF ("wp")
+    * A normalised Gaussian wavepacket
+          psi(r) = (2*pi*sigma_WP^2)^(-3/4) exp(-|r-r0|^2/(4*sigma_WP^2))
+                   * exp(i*k0*z)
+      is injected into ONE EXTRA Kohn-Sham orbital (state index = n_states-1)
+      with occupation 1.0, on top of the doubly-occupied bath orbitals.
+    * SIGMA CONVENTION (project-wide, .claude/rules/sigma-wp-convention.md):
+      sigma_WP is the width of the WAVEFUNCTION psi. The DENSITY |psi|^2 then
+      has standard deviation sigma_WP/sqrt(2). Both are recorded in every
+      run_summary.txt as wp_sigma_bohr and wp_sigma_density.
+    * k0 = sqrt(2*E/hbar^2) = 2.71106334010243 1/Bohr for E = 100 eV.
+    * Orthogonality to the occupied bath was measured, not assumed:
+      max overlap with any occupied state is 9.4e-6 / 3.1e-6 / 2.0e-5 / 2.4e-6
+      for the four sigma_WP >= 2 runs, and 1.3e-3 / 1.6e-3 for the two
+      sigma_WP = 1 runs. Reported per run as 'max_overlap'.
+    * Total electrons in the wavepacket run = N + 1 (e.g. 483 for the dense
+      bath: 241 bath orbitals x 2 + the packet x 1). Verified from
+      occupations_vs_time.csv.
+
+5b. CLASSICAL HALF ("classical")
+    * A classical point charge -1 with mass m_e = 1 a.u., entering as an INQ
+      "ion" carrying a Gaussian-smeared bare Coulomb pseudopotential:
+          UPF file: shared/pseudopotentials/electron_gaussian_wpsigma{1,2,3}p0.upf
+      Verified numerically from the UPF mesh for all three files: the local
+      potential is exactly
+          V_loc(r) = +2 * erf( r / (sqrt(2)*sigma_pot) ) / r   [Rydberg]
+      i.e. the potential of a Gaussian charge distribution of charge -1 and
+      standard deviation sigma_pot, with sigma_pot = sigma_WP / sqrt(2)
+      (max deviation from that closed form: 2.2e-5, 1.1e-5, 7.2e-6 Ry).
+      Provenance: derived from anti-proton-ONCV-1.2.upf (itself from
+      H_ONCV_PBE-1.2, ONCVPSP; Hamann, PRB 88, 085117 (2013)) by flipping the
+      local potential sign, setting z_valence = 0, is_coulomb = T, empty
+      nonlocal block, and extending the radial mesh to r_max = 50 Bohr with
+      5001 uniform points (dr = 0.01) so the unscreened 1/r tail is represented.
+    * WHY sigma_pot = sigma_WP/sqrt(2): it makes the classical charge cloud
+      have the SAME standard deviation as the wavepacket's DENSITY. This is
+      the matching condition that makes the twin pair a controlled comparison.
+      It is validated from the data, not assumed: the projectile self-Hartree
+      energy E_PP at t=0 is identical in the two halves to 2.6e-8 eV
+      (4.8150 vs 4.8150 eV at sigma_WP=2; 3.0082 vs 3.0082 eV at sigma_WP=3).
+      In a paper, report sigma as sigma_WP for BOTH halves; mention sigma_pot
+      only in a methods footnote.
+    * Ion dynamics: FREE EHRENFEST. The projectile is not driven at constant
+      velocity -- it decelerates under the electronic force it induces. This is
+      why S is extracted as an initial drag (section 7).
+
+5c. LAUNCH POSITION (depends on sigma so the packet starts clear of the
+    periodic face; identical in both halves of a pair):
+        sigma_WP = 1  ->  z0 = -36 Bohr
+        sigma_WP = 2  ->  z0 = -32 Bohr
+        sigma_WP = 3  ->  z0 = -28 Bohr
+    (cell is z in [-40, +40].)
+
+--------------------------------------------------------------------------------
+6. THE 12 RUNS
+--------------------------------------------------------------------------------
+
+All at E = 100 eV, k0 = v = 2.7111 a.u., dt = 0.04 a.u., LDA/ALDA, free
+Ehrenfest (classical half) / pure TDKS (wavepacket half).
+
+ #  family                        rho     sigma_WP  z0    steps  t_total  wall    KE lost
+                                  (r_s)   (Bohr)    (B)          (a.u.)   (h:mm)  (eV)
+ -- ----------------------------- ------- --------  ----  -----  -------  ------  --------
+ 1  bulk_ks_stopping_sigma1/wp     5.70      1      -36    692   27.68    1:38      --
+ 2  bulk_ks_stopping_sigma1/cl     5.70      1      -36    692   27.68    2:11     28.5
+ 3  bulk_ks_stopping/wp            5.70      2      -32    646   25.84    1:32      --
+ 4  bulk_ks_stopping/cl            5.70      2      -32    646   25.84    2:00     22.6
+ 5  bulk_ks_stopping_sigma3/wp     5.70      3      -28    600   24.00    1:23      --
+ 6  bulk_ks_stopping_sigma3/cl     5.70      3      -28    600   24.00    1:51     18.6
+ 7  bulk_ks_stopping_rs4_sigma1/wp 3.99      1      -36    692   27.68    0:54      --
+ 8  bulk_ks_stopping_rs4_sigma1/cl 3.99      1      -36    692   27.68    1:32     68.0
+ 9  bulk_ks_stopping_rs4/wp        3.99      2      -32    646   25.84    1:06      --
+10  bulk_ks_stopping_rs4/cl        3.99      2      -32    646   25.84    1:24     54.4
+11  bulk_ks_stopping_rs4_sigma3/wp 3.99      3      -28    600   24.00    1:00      --
+12  bulk_ks_stopping_rs4_sigma3/cl 3.99      3      -28    600   24.00    1:18     45.1
+
+  "KE lost" = projectile kinetic energy lost over the WHOLE run
+  (0.5*m*v0^2 - 0.5*m*v_final^2), classical half only; it is a run-integrated
+  number, NOT the stopping power.
+
+  Run directories (binary + sources + results all live together):
+      .../ResearchProject/systems/jellium/scripts/<family>/{wp,classical}/
+          run.cpp              the run definition (build-once binary)
+          run                  the compiled binary
+          build/               CMake tree
+          results/             everything below in sections 8-9
+  Config headers (all physical parameters, one per family):
+      .../ResearchProject/systems/jellium/shared/configs/
+          bulk_ks_stopping_L46x46x80{,_sigma1,_sigma3}.hpp        (r_s = 5.70)
+          bulk_ks_stopping_L40x40x80_rs4{,_sigma1,_sigma3}.hpp    (r_s = 3.99)
+
+  COMPLETENESS -- read before quoting any sigma_WP = 1 result:
+      10 of 12 runs completed cleanly with matched row counts per pair.
+      * run #7 (r_s=3.99, sigma=1, wavepacket) ABORTED at 88 of 348 expected
+        observable rows. Its classical twin (#8) is complete (348 rows). The
+        pair is therefore NOT a matched pair over the full window.
+      * Neither sigma_WP = 1 pair (#1,2,7,8) has the pairwise interaction-energy
+        decomposition (interactions.csv); that instrumentation was added after
+        those runs. Only the four sigma_WP = 2 and 3 pairs have it.
+      => The publication-grade set is the FOUR sigma_WP = 2 and 3 pairs
+         (runs #3,4,5,6,9,10,11,12). sigma_WP = 1 supports a trend statement
+         only, with the caveats in section 3 and here.
+
+--------------------------------------------------------------------------------
+7. HOW THE ANALYSIS WINDOW WAS CHOSEN
+--------------------------------------------------------------------------------
+
+S is fitted over t in [fit_t0, fit_t1], both stamped into every run_summary.txt
+and re-read by the analysis code (never retyped).
+
+  fit_t0 = 4.0 a.u. in every run -- excludes the initial transient during which
+           the induced polarisation cloud is still forming.
+
+  fit_t1 = min(t_IFW, t_transverse), where
+           t_IFW        = time at which the dispersing packet's leading edge
+                          reaches the periodic face in z (dispersion-aware:
+                          it accounts for sigma(t) growth, not just the
+                          centroid; the static centroid-only rule would give
+                          24.34 a.u. in every run and would be too generous).
+           t_transverse = time at which the packet's TRANSVERSE spread reaches
+                          the x/y faces.
+
+  Resulting windows (a.u.):
+      r_s=5.70: sigma1 4.0-10.80 | sigma2 4.0-18.97 | sigma3 4.0-19.48
+      r_s=3.99: sigma1 4.0- 9.37 | sigma2 4.0-18.43 | sigma3 4.0-19.48
+  A COMMON cross-sigma window of 4.0-9.37 a.u. is also recorded
+  (COMMON_FIT_T1 in the JSON files) for like-for-like comparisons across sigma.
+
+  WHY THE FIT IS AN INITIAL DRAG, NOT A STEADY-STATE VALUE (must be stated):
+    (i)  the plasma period (28.9 / 49.4 a.u.) is comparable to or longer than
+         the run, so no steady-state wake is established; and
+    (ii) the projectile is a LIGHT particle under free Ehrenfest dynamics, so it
+         decelerates measurably (v/v0 at window end: 0.81-0.93 classical,
+         0.96-0.99 wavepacket). A regression over the whole trajectory would
+         average S over every velocity between v0 and the final one.
+    Both points are project rules: .claude/rules/light-projectile-stopping.md.
+    Accordingly the classical half also reports S_cl_initial, restricted to the
+    near-constant-velocity window v >= 0.85*v0, with its mean velocity recorded.
+
+  IN-FLIGHT PACKET WIDTH. The wavepacket disperses substantially over the
+  window; the width at which it actually does its stopping is NOT sigma_WP.
+  Measured density standard deviation sigma_z (Bohr), t=0 -> end of fit window:
+      r_s=5.70: sigma1 0.73->8.34 | sigma2 1.41->8.94 | sigma3 2.12->7.94
+      r_s=3.99: sigma1 0.77->7.34 | sigma2 1.41->8.68 | sigma3 2.12->8.34
+  Any figure plotting S against "sigma" must say whether it means sigma_WP(0)
+  or the in-flight width.
+
+--------------------------------------------------------------------------------
+8. WHAT EACH RUN WROTE (the raw data, per run)
+--------------------------------------------------------------------------------
+
+All under  <family>/<half>/results/ :
+
+  run_summary.txt         Human-readable config + final-state snapshot. The
+                          canonical provenance artefact; every parameter in
+                          sections 3-7 above was read from here.
+  rt_state.txt            Last-step checkpoint metadata (resume support).
+  checkpoint/             Saved real-time electronic state (wavepacket halves
+                          and some classical halves).
+  raw/observables/        The CSVs below.
+
+  (i) observables.csv                 -- BOTH halves, every time step
+      step, time_au,
+      energy_total, energy_kinetic, energy_hartree, energy_xc,
+      energy_external, energy_nonlocal, energy_ion, energy_ion_kinetic,
+      energy_exact_exchange, energy_nvxc, energy_eigenvalues,
+      current_x, current_y, current_z,
+      dipole_x, dipole_y, dipole_z,
+      density_l2
+      Rows: 325 (sigma2), 302 (sigma3), 348 (sigma1) per completed run.
+
+  (ii) electron_track.csv             -- CLASSICAL half only, every step
+      step, time_au, x, y, z, vx, vy, vz, ke_ion_ha
+      This is the primary classical stopping signal.
+
+  (iii) wp_momentum_stats.csv         -- WAVEPACKET half only, every step
+      step, time_au,
+      px_mean, py_mean, pz_mean, px2_mean, py2_mean, pz2_mean,
+      sigma_px2, sigma_py2, sigma_pz2, e_kin_ha, norm_check
+      e_kin_ha = <p^2>/2m of the packet orbital = T1 (see section 9).
+
+  (iv) wp_real_space_stats.csv        -- WAVEPACKET half only, every step
+      step, time_au, x_mean, y_mean, z_mean, x2_mean, y2_mean, z2_mean,
+      sigma_x2, sigma_y2, sigma_z2, norm_check,
+      x_mean_circ, y_mean_circ, z_mean_circ, R_x, R_y, R_z,
+      sigma_x_circ, sigma_y_circ, sigma_z_circ
+      The *_circ columns are the CIRCULAR (phase) estimators of the centroid;
+      they are the ones to use in a periodic cell. The naive z_mean slides to a
+      wrong value while the packet straddles a periodic face.
+
+  (v) interactions.csv                -- the pairwise electrostatic
+      decomposition. PRESENT ONLY in the four sigma_WP = 2 and 3 pairs.
+      Charge groups: P = projectile, S = system/bath electrons,
+                     B = neutralising background.
+        E_SS = 0.5*int n_S phi_S      bath-bath
+        E_PP = 0.5*int n_P phi_P      projectile SELF-Hartree
+        E_PS =     int n_S phi_P      projectile-bath (the stopping interaction)
+        E_SB, E_PB, E_BB              background terms -- IDENTICALLY ZERO in
+                                      bulk (uniform background => phi_+ = 0);
+                                      verified bitwise 0.0 at every step.
+      Wavepacket-half columns : step, time_au, e_ss, e_pp, e_ps, e_sb, e_pb,
+                                e_bb, e_hartree_check, e_external_check,
+                                norm_wp, norm_total
+      Classical-half columns  : step, time_au, proj_z, e_ss, e_pp, e_ps, e_sb,
+                                e_pb, e_bb, e_hartree_inq, norm_slab, norm_proj
+      (The two halves have deliberately different auxiliary columns; the six
+      physical terms are identical in name and meaning.)
+      Rationale and closure identities: .claude/rules/decomposed-interaction-
+      energies.md. Why it is needed: INQ's own scalars are NOT comparable
+      between the two halves -- the classical projectile lives in
+      energy_external while the wavepacket lives inside energy_hartree, so a
+      raw energy_hartree comparison compares a net against a gross quantity.
+      The pairwise terms are representation-independent.
+
+  (vi) occupations_vs_time.csv   step, time_au, kpoint_index, state_index,
+                                 occupation
+  (vii) state_energies.csv       step, time_au, kpoint_index, state_index,
+                                 weight, occupation, E_expect_ha, E_variance_ha2
+  (viii) eigenvalues/            eigenvalues.csv, occupations.csv
+  (ix) wp_config.txt             wavepacket half: the injection parameters and
+                                 the analysis window, machine-readable.
+
+  NOT ON DISK ANY MORE: the real-space density frames (.vti). All VTI output
+  from these 12 runs was purged in the 2026-07-31/2026-08-02/2026-08-03 disk
+  cleanups after the animations were rendered. The derived GIFs and PNGs
+  survive (section 9). Any figure requiring new density fields must be
+  regenerated by re-running -- the runs are checkpointed and reproducible from
+  the run.cpp + config header, but the fields themselves are gone.
+
+--------------------------------------------------------------------------------
+9. WHAT WAS EXTRACTED (the analysis, and where it lives)
+--------------------------------------------------------------------------------
+
+Engine (single implementation, shared by every notebook so all numbers are
+bit-identical):
+    .../systems/jellium/hypotheses/bulk_ks_stopping/ks_stopping.py
+    (the per-family copies in the other hypotheses/ folders are SYMLINKS to
+    this file, not independent copies.)
+
+9a. THE FOUR WAVEPACKET STOPPING-POWER DEFINITIONS
+    Two kinetic-energy definitions x two position definitions:
+        T1 = <p^2>/2m       total orbital kinetic energy    (e_kin_ha)
+        T2 = <p>^2/2m       drift (centre-of-mass) kinetic energy
+        s3 = density centroid of the packet orbital (circular estimator)
+        s4 = z0 + integral of <p_z> dt   (Ehrenfest trajectory)
+    giving S_ij = -d(T_i)/d(s_j), i in {1,2}, j in {3,4}, by OLS over the fit
+    window, in eV/Bohr.
+
+    T1 - T2 = (3/2) * sum_d sigma_pd^2 is the momentum-spread (localisation +
+    scattering) energy. It is NOT available to a classical particle, and its
+    change along the trajectory is the quantum channel the twin pair exists to
+    expose. At t=0 it equals 3/(4*sigma_WP^2) in the psi-width convention these
+    runs use (5.10 eV at sigma_WP = 2, confirmed from the data to 6 digits).
+    => S_23 (drift KE vs Ehrenfest position) is the like-for-like counterpart
+       of the classical number and is the one to quote as "the wavepacket
+       stopping power". S_13 additionally charges the packet for its own
+       dispersion and is systematically lower.
+    s3 and s4 must agree exactly (the KS Hamiltonian here is purely local, so
+    d<z>/dt = <p_z>/m holds); their difference is used as a VALIDATION residual,
+    not as a physical result.
+
+9b. THE CLASSICAL STOPPING-POWER CHANNELS
+    kinetic / S_cl_shared : -d(0.5 m v^2)/dz from electron_track.csv over the
+                            same window as the wavepacket half. The primary
+                            classical number.
+    S_cl_initial          : the same fit restricted to v >= 0.85*v0
+                            (initial drag at v0; mean velocity reported).
+    methodA               : -d(E_total deposited)/dx with the locked
+                            20%-of-time transient cut and free intercept
+                            (the project's stopping-power-extraction skill
+                            kernel, module stopping_power.py).
+    window                : methodA's deposited-energy fit restricted to the
+                            wavepacket window, for like-for-like comparison.
+    The deposit channel and the kinetic channel agreeing is the energy-
+    conservation check; they agree to well under 1% (section 10).
+
+9c. UNCERTAINTIES -- three numbers, three meanings, all in the JSON:
+    stat  = OLS standard error of the slope (how well a line is determined).
+    syst  = half-spread of the slope as the window edges are moved +/- 3 a.u.
+            THIS IS THE DOMINANT AND HONEST UNCERTAINTY -- quote this one.
+    r2    = if far below 1, T(s) is not linear over the window and a single S
+            does not describe it (report curvature instead).
+
+9d. MACHINE-READABLE RESULTS (full precision, one pair of files per family):
+    hypotheses/<family>/classical_stopping_summary.json
+    hypotheses/<family>/wp_stopping_summary.json
+    Each carries: cfg (every physical parameter of that run), conservation
+    (energy bookkeeping), fits (S with stat/syst/r2/n), and for the wavepacket
+    file a classical_reference block.
+
+9e. NOTEBOOKS AND FIGURES PRODUCED
+    hypotheses/<family>/<family>_{classical,wp}.ipynb        per-run deep dive
+    hypotheses/<family>/energy_component_comparison_<family>.ipynb
+    hypotheses/<family>/run_pair_phase_<family>.ipynb        phase-space pair
+    hypotheses/<family>/figures/*.png                        component/pairwise
+                                                             energy panels
+    hypotheses/<family>/four_stopping_powers.png             the S_ij comparison
+    hypotheses/<family>/phase_{portrait,velocity,kinetic,local_S,epp}_*.png
+    hypotheses/<family>/phase_gifs_<family>/                 animations
+    hypotheses/bulk_ks_stopping_microscopy/                  cross-pair study
+        classical_vs_wavepacket_microscopy.ipynb, microscopy.py,
+        wake_rs4.npz, wake_rs5p7.npz, figures/*.png
+    hypotheses/bulk_ks_stopping_rs4/case_study_100eV/        report-ready set:
+        16 PNGs at 600 dpi, stopping_power.txt, case_study.md, make_case_study.py
+    Tests: hypotheses/bulk_ks_stopping/tests/ (125 passing as of 2026-08-02);
+    the per-family tests/ folders are symlinks to this one.
+
+--------------------------------------------------------------------------------
+10. RESULTS AS EXTRACTED (for reference -- full precision in the JSONs)
+--------------------------------------------------------------------------------
+
+10a. STOPPING POWER, eV/Bohr, over each pair's own window
+     (classical = kinetic channel; wavepacket = S_23, the like-for-like one)
+
+  r_s    sigma_WP   S_classical (+/- syst)   S_wavepacket (+/- syst)   ratio
+  -----  --------   ----------------------   -----------------------   -----
+  5.70      1        0.35  +/- 0.099          0.038 +/- 0.0031          9.3
+  5.70      2        0.38  +/- 0.045          0.057 +/- 0.0039          6.6
+  5.70      3        0.34  +/- 0.040          0.063 +/- 0.0057          5.4
+  3.99      1        0.80  +/- 0.18           0.112 +/- 0.0064          7.2
+  3.99      2        0.88  +/- 0.13           0.157 +/- 0.012           5.6
+  3.99      3        0.82  +/- 0.12           0.174 +/- 0.010           4.7
+
+  Same rows, other channels:
+  r_s   sigma  S_cl,initial(v>=0.85v0)  S_cl methodA(20% cut)  S_13 (total KE)
+  ----  -----  -----------------------  ---------------------  --------------
+  5.70    1           0.43                    0.48                -0.018
+  5.70    2           0.36                    0.41                 0.015
+  5.70    3           0.32                    0.36                 0.030
+  3.99    1           0.81                    1.28                 0.054
+  3.99    2           0.72                    1.05                 0.115
+  3.99    3           0.67                    0.91                 0.139
+
+  r^2 of the quoted fits: classical 0.97-0.999; wavepacket S_23 0.9976-0.99998.
+  The S_13 value at r_s=5.70, sigma=1 is negative with r^2 = 0.59 -- that fit
+  is not linear and no single S describes it; do not quote it as a number.
+
+  A CROSS-ESTIMATOR WARNING FOR THE WRITE-UP. The microscopy notebook computes
+  the classical/wavepacket ratio by a DIFFERENT route (time-matched sampling of
+  the local drag) and obtains 8.73 / 5.21 / 4.80 (r_s=5.70, sigma=1/2/3) and
+  7.24 / 4.00 / 3.60 (r_s=3.99). Those are not the ratios in the table above,
+  which come from the windowed OLS fits. Pick ONE estimator for the paper and
+  state which; do not mix rows from the two.
+
+10b. ENERGY BOOKKEEPING (the numerical figure of merit)
+  Classical halves -- projectile KE loss vs electronic energy gain:
+      r_s=5.70 sigma2 : 22.58 lost / 22.63 gained -> closure mismatch 0.22 %
+      r_s=5.70 sigma1 : 28.49 / 28.53              -> 0.16 %
+      r_s=5.70 sigma3 : 18.63 / 18.68              -> 0.23 %
+      r_s=3.99 sigma2 : 54.39 / 54.92              -> 0.96 %
+      r_s=3.99 sigma1 : 68.02 / 68.54              -> 0.76 %
+      r_s=3.99 sigma3 : 45.14 / 45.63              -> 1.08 %
+  Wavepacket halves -- total energy is conserved (no moving ion), drift over
+  the whole run: 2.8e-5 to 1.6e-2 eV, i.e. 1e-7 to 5e-5 of the projectile
+  energy. The largest drift is the sigma=1 pair, the smallest sigma=3.
+
+10c. PAIRWISE INTERACTION ENERGIES (four sigma_WP = 2,3 pairs; end-of-run change)
+  All background terms E_SB = E_PB = E_BB = 0.0 exactly, in all eight halves.
+
+  pair                        E_PP(0)   dE_PP    dE_SS     dE_PS
+                              (eV)      (eV)     (eV)      (eV)
+  r_s=5.70 s=2  wavepacket     4.815    -4.63    +0.90     +0.18
+  r_s=5.70 s=2  classical      4.815    -0.000   +5.44     +0.62
+  r_s=5.70 s=3  wavepacket     3.008    -2.57    +1.28     +0.15
+  r_s=5.70 s=3  classical      3.008    -0.016   +4.74     +0.70
+  r_s=3.99 s=2  wavepacket     4.816    -4.62    +5.33     -0.39
+  r_s=3.99 s=2  classical      4.816    +0.000   +26.13    -5.47
+  r_s=3.99 s=3  wavepacket     3.010    -2.58    +5.45     -0.79
+  r_s=3.99 s=3  classical      3.010    -0.000   +21.65    -4.47
+
+  Reading of these rows:
+  * E_PP(0) is IDENTICAL between the two halves of every pair -- the numerical
+    proof that the sigma_pot = sigma_WP/sqrt(2) matching puts the same charge
+    cloud in both runs.
+  * E_PP is CONSTANT for the classical projectile (rigid cloud, by construction)
+    and COLLAPSES for the wavepacket (-4.6 / -2.6 eV) as the packet disperses.
+    This is the projectile self-Hartree / self-interaction channel; it exists
+    only in the quantum representation and is uncancelled in LDA.
+  * The self-energy scaling E_PP = A/sigma_WP - C was fitted from the two sigmas
+    and recovers A = 10.84 / 10.84 eV.Bohr against the closed-form
+    1/sqrt(2*pi) Ha.Bohr = 10.8556 (-0.14 % / -0.19 %), at both densities. The
+    constant C ~ 0.60 eV is the G=0 gauge offset of the charged periodic cell.
+  * GAUGE CAVEAT: absolute E_SB/E_PB/E_BB carry the charged-cell G=0 gauge.
+    Only closure sums and wavepacket-minus-classical DIFFERENCES are
+    gauge-clean. Never quote an absolute background term across systems.
+
+10d. VALIDATION GATES THAT PASSED (state these in a methods/SI section)
+  * Offline E_SS reproduces INQ's own energy_hartree to 5e-13 Ha (all pairs);
+    an earlier check on a completed run agreed to 1.4e-17 Ha.
+  * Ehrenfest residual (density centroid vs integral of <p_z> dt):
+    0.079 Bohr over 68.5 Bohr of travel (r_s=3.99, sigma=2).
+  * Wavepacket norm: 0.999990 - 1.000000 over the whole run.
+  * S additivity: S(T1) = S(T2) + S(T_var) to 1e-10.
+  * Charge matching, measured not assumed: bath states occupation 2.0, packet
+    state occupation exactly 1.0, occupation sum 483 = 482 + 1 (dense) and
+    219 = 218 + 1 (dilute); classical UPF z_valence = 1.00 with Coulomb tail
+    coefficient 2.000000 Ry = 1 Ha. Both projectiles carry charge exactly -1.
+  * Classical E_PP drift 5.6e-9 eV (confirms the classical cloud is rigid).
+  * Ground-state kinetic energy within 0.014 % / 0.009 % of the free-electron
+    value; ground-state Hartree energy ~1e-4 Ha (homogeneity check).
+
+--------------------------------------------------------------------------------
+11. LIMITATIONS TO STATE EXPLICITLY IN A PAPER
+--------------------------------------------------------------------------------
+
+ 1. ONE VELOCITY. Every result here is at v = 2.71 a.u. (100 eV), i.e.
+    v/v_F = 5.6 (dense) and 8.1 (dilute). No S(v) curve exists in this dataset.
+ 2. INITIAL-DRAG, NOT STEADY-STATE. The run is shorter than (dilute) or
+    comparable to (dense) one plasma period; no steady wake forms.
+ 3. FREE EHRENFEST -- the projectile decelerates (v/v0 down to 0.81 classical
+    by the end of the window). S is quoted at the window-mean velocity, and
+    S_cl_initial is provided for the v >= 0.85 v0 restriction.
+ 4. NOT LINEAR RESPONSE. Local density depletion reaches 68 % (classical) and
+    37 % (wavepacket) of n_0. Any comparison to Lindhard theory must say so.
+ 5. ALDA. The adiabatic local-density kernel has no memory; the wavepacket is
+    a single KS orbital and its self-interaction is uncancelled in LDA (this is
+    a physical feature of the comparison, quantified as E_PP, not a bug -- but
+    it is a named, untested candidate for part of the classical/quantum gap).
+ 6. sigma_WP = 1 is under-resolved (section 3) and one of its four runs is
+    incomplete (section 6).
+ 7. FINITE BOX. 40-46 Bohr transverse; the packet's transverse width reaches
+    6-8 Bohr by the end of the window, and the fit window is truncated at the
+    time the packet would touch a face. Self-interaction across periodic images
+    is not separately quantified.
+ 8. Density VTI frames have been deleted; figures needing fields must be
+    regenerated from a re-run.
+
+--------------------------------------------------------------------------------
+12. WHAT IS *NOT* PART OF THIS CAMPAIGN (do not merge into the same table)
+--------------------------------------------------------------------------------
+
+Earlier bulk-jellium sweeps exist in the same system folder at DIFFERENT
+densities and DIFFERENT numerics. They are separate datasets:
+
+  * r_s = 5.69, L = 50 Bohr cube, N = 162, dx = 0.30-0.40:
+    energies 20, 25, 50, 100, 200, 300, 600 eV plus a 700-1100 eV extension
+    (v = 1.2 - 9.0 a.u.); sigma_WP = 1 across the sweep, with sigma_WP =
+    0.5, 3, 8 additionally at 100 eV.
+    Run definitions: systems/jellium/run_{wp,classical}_n162_L50_E*/.
+  * r_s = 3.41, L = 30 Bohr cube, N = 162 ("highdens"): 50, 100, 200, 300 eV
+    (v = 1.9 - 4.7 a.u.); sigma_WP = 1, plus sigma_WP = 0.5 at 100 eV.
+    Run definitions: systems/jellium/run_*_n162_L30_E*_highdens*/.
+  Both sweeps' raw results were purged in the July 2026 disk cleanup; only the
+  run definitions, configs and derived summaries remain. Their densities
+  (5.69 and 3.41) are NOT the same as this campaign's (5.70 and 3.99) -- 5.69
+  and 5.70 are numerically close but come from different boxes and grids.
+
+================================================================================
+END OF RECORD
+================================================================================

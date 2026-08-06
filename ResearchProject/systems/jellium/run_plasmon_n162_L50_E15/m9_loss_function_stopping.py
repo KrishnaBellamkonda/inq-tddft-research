@@ -93,9 +93,9 @@ def stopping_from_L(v, q_arr, om_arr, Lmat):
         sel = (om_arr > 0) & (om_arr <= wmax)
         if sel.sum() < 2:
             continue
-        inner = np.trapz(om_arr[sel] * Lmat[i, sel], om_arr[sel])  # ∫ ω L dω
+        inner = np.trapezoid(om_arr[sel] * Lmat[i, sel], om_arr[sel])  # ∫ ω L dω
         g_over_q[i] = inner / q                                    # (1/q)·g(q)
-    return (2.0 / (np.pi * v**2)) * np.trapz(g_over_q, q_arr)      # ∫(g/q)dq
+    return (2.0 / (np.pi * v**2)) * np.trapezoid(g_over_q, q_arr)      # ∫(g/q)dq
 
 
 # ---- Stage 2: S(v) curves ----
@@ -108,7 +108,7 @@ S_lin_full = np.array([lindhard.stopping_power(v, kF) for v in v_grid]) * HA   #
 
 # normalise the arb-unit LF curve to the box-matched analytic curve by total area
 mask = S_lin_box > 0
-scale = np.trapz(S_lin_box[mask], v_grid[mask]) / max(np.trapz(S_LF[mask], v_grid[mask]), 1e-30)
+scale = np.trapezoid(S_lin_box[mask], v_grid[mask]) / max(np.trapezoid(S_LF[mask], v_grid[mask]), 1e-30)
 S_LF_norm = S_LF * scale
 
 # ---- Stage 3: classical S(v) points (absolute eV/Bohr) ----

@@ -69,8 +69,8 @@ def S_from_L(v, q, om, Lmat):
     for i, qi in enumerate(q):
         wmax = min(qi * v, OMEGA_CAP); sel = (om > 0) & (om <= wmax)
         if sel.sum() < 2: continue
-        g[i] = np.trapz(om[sel] * Lmat[i, sel], om[sel]) / qi
-    return (2.0 / (np.pi * v**2)) * np.trapz(g, q)
+        g[i] = np.trapezoid(om[sel] * Lmat[i, sel], om[sel]) / qi
+    return (2.0 / (np.pi * v**2)) * np.trapezoid(g, q)
 
 
 q_m, om_au, Lqw = loss_qw(NQ)
@@ -81,7 +81,7 @@ S_LF = np.array([S_from_L(v, q_m, om_au, Lqw) for v in v_grid])
 S_box = np.array([lindhard.stopping_power(v, kF, qmin=q_m[0], qmax=q_m[-1]) for v in v_grid]) * HA
 S_full = np.array([lindhard.stopping_power(v, kF) for v in v_grid]) * HA
 mask = S_box > 0
-scale = np.trapz(S_box[mask], v_grid[mask]) / max(np.trapz(S_LF[mask], v_grid[mask]), 1e-30)
+scale = np.trapezoid(S_box[mask], v_grid[mask]) / max(np.trapezoid(S_LF[mask], v_grid[mask]), 1e-30)
 S_LF *= scale
 
 
