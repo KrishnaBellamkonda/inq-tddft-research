@@ -204,3 +204,8 @@ ResearchProject/literature/
 
 build_pure/
 **/build_pure/
+
+# stray scratch artefacts and backups
+venv.py36.bak/
+*.bak
+/repo
