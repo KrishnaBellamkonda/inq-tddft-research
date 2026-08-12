@@ -203,6 +203,13 @@ def apply_theme() -> None:
         # Scientific notation must render as ×10^n (mathtext superscript), NEVER
         # as "1e-03" on any axis/colorbar offset or tick (user rule FB-003).
         "axes.formatter.use_mathtext": True,
+        "text.usetex": True,
+        "font.serif": ["Computer Modern Roman"],
+        "text.latex.preamble": (
+            r"\usepackage{lmodern}"
+            r"\usepackage{amsmath}"
+            r"\usepackage{amssymb}"
+        ),
     })
 
 
