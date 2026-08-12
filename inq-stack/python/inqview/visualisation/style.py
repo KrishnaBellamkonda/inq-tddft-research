@@ -4,13 +4,22 @@ Promoted from ``report1/_shared_style.py`` + the ``report-figures`` skill +
 ``docs/reports/report1/figures/global_style.md`` into the library. The single
 visual standard for ALL inqview output:
 
-- **semantic cmap roles** — phases ask for a ROLE, never a literal cmap:
-  ``sequential → inferno``, ``diverging → RdBu_r`` (zero-centred),
-  ``phase → twilight_shifted``.
-- **fixed-dimension figure factory** — ``figure_one_col()`` = 3.5×3.0 in with a
-  FIXED axes rectangle (every one-column panel shares an identical data box),
-  ``figure_two_col()`` = 7.0 in wide. Individual plots only; panel composition
-  is a downstream LaTeX concern.
+- **semantic cmap roles** — plots ask for a ROLE, never a literal cmap:
+  ``density → inferno``, ``sequential → inferno``, ``diverging → RdBu_r``,
+  ``momentum → PuOr``, ``phase → twilight_shifted``.
+- **colour palette** — use the named constants (``CLASSICAL``, ``WP``,
+  ``SERIES``, ``GREY_LINE``, ``GREY_SPAN``) and ``pastel_for(color)`` for
+  shading. Never bare hex in plot scripts.
+- **fixed-width figure factory** — ``figure_one_col(height_in)`` = 3.5 in wide,
+  height chosen per plot; ``figure_two_col(height_in)`` = 7.0 in wide. Height
+  is always set to match the LaTeX panel slot (save-at-final-width discipline).
+  Individual plots only; panel composition is a downstream LaTeX concern.
+- **stopping power convention** — S(E) not S(v): x-axis is projectile kinetic
+  energy in eV (``axis_label("energy", symbol="E")``), y-axis
+  ``axis_label("stopping_power")``.
+- **kinetic energy decomposition labels** — use ``LABEL_KE_TOTAL`` and
+  ``LABEL_KE_MEAN`` for the Δ⟨p²⟩/2m and Δ⟨p⟩²/2m terms respectively.
+  Never "T1"/"T2" in any axis label or legend.
 
 Known pitfall (memory ``reference_fixed_dimension_plot_pitfalls``): tight-bbox /
 constrained-layout silently break the fixed width. The factory therefore uses an
@@ -37,9 +46,11 @@ import matplotlib.pyplot as plt
 
 # --- semantic cmap roles (the designed standard) ---------------------------
 ROLE_CMAP: dict[str, str] = {
-    "sequential": "inferno",          # positive-magnitude maps, diffraction intensity
-    "diverging": "RdBu_r",            # signed Δn / difference maps (zero-centred)
-    "phase": "twilight_shifted",      # cyclic data
+    "density":    "inferno",            # positive-definite n(r), ground-state density
+    "sequential": "inferno",           # diffraction intensity, LEED patterns
+    "diverging":  "RdBu_r",            # signed Δn / difference maps (zero-centred)
+    "momentum":   "PuOr",              # wavefunction / momentum / k-space maps
+    "phase":      "twilight_shifted",  # cyclic data
 }
 
 
@@ -52,6 +63,62 @@ def cmap_for(role: str) -> str:
             f"unknown cmap role {role!r}; valid: {sorted(ROLE_CMAP)}"
         ) from None
 
+
+# --- colour palette (extended 2026-08-11) ------------------------------------
+
+# Role colours — use these names in every plot script, never bare hex.
+CLASSICAL: str = "tab:blue"   # classical projectile line / marker
+WP: str        = "tab:red"    # wavepacket projectile line / marker
+
+# Pastel fills — paired with role and series colours for shading / bands.
+_PASTEL: dict[str, str] = {
+    "tab:blue": "#c6d9f0",   # classical fill
+    "tab:red":  "#f9c7c7",   # WP fill
+    "#0072B2":  "#b3d4ed",
+    "#E69F00":  "#fce0a3",
+    "#009E73":  "#a3dcc8",
+    "#CC79A7":  "#e8c5db",
+    "#D55E00":  "#edbeae",
+    "#56B4E9":  "#c4e4f7",
+}
+
+
+def pastel_for(color: str) -> str:
+    """Return the pastel fill colour paired with *color* (for shading/bands)."""
+    try:
+        return _PASTEL[color]
+    except KeyError:
+        raise ValueError(
+            f"no pastel defined for {color!r}; add to _PASTEL"
+        ) from None
+
+
+# Okabe-Ito series — for multi-trace figures where the axis is sigma / velocity
+# / etc. (not a classical-vs-WP binary). Index into this list by trace order.
+SERIES: list[str] = [
+    "#0072B2",   # 0 – dark blue
+    "#E69F00",   # 1 – amber
+    "#009E73",   # 2 – teal green
+    "#CC79A7",   # 3 – mauve
+    "#D55E00",   # 4 – vermillion
+    "#56B4E9",   # 5 – sky blue
+]
+
+# Overlay colours — for reference lines and background highlight bands.
+GREY_LINE: str = "#888888"   # secondary curves, reference lines, annotations
+GREY_SPAN: str = "#DDDDDD"   # axvspan background bands (box-change markers etc.)
+
+# Markers — semantic roles; use mfc="none" for hollow (secondary) variants.
+MARKER: dict[str, str] = {
+    "classical": "s",   # square, filled
+    "wp":        "o",   # circle, filled
+    "reference": "D",   # diamond, filled
+}
+
+# Kinetic energy decomposition labels (never "T1"/"T2" on any axis or legend).
+LABEL_KE_TOTAL: str = r"$\Delta\langle p^2\rangle/2m$"  # total KE change (eV)
+LABEL_KE_MEAN:  str = r"$\Delta\langle p\rangle^2/2m$"  # mean-momentum term (eV)
+LABEL_KE_VAR:   str = r"$\sigma_p^2/2m$"                # variance / spread (eV)
 
 # --- canonical axis units (the single units standard; ADR 0004, Cluster R) --
 # Promoted from the tufte skill's "project annotation rule 5". Every inqview
@@ -139,13 +206,15 @@ def apply_theme() -> None:
     })
 
 
-def figure_one_col(*, with_colorbar: bool = False):
-    """A one-column figure (3.5×3.0 in) with the FIXED axes rectangle.
+def figure_one_col(*, height_in: float = ONE_COL_IN[1],
+                   with_colorbar: bool = False):
+    """A one-column figure (3.5 in wide) at the given height.
 
-    Returns ``(fig, ax)``. With ``with_colorbar`` the axes width shrinks to leave
-    room for a colourbar while the figure size stays fixed.
+    Default height 3.0 in. Pass ``height_in`` to match the LaTeX panel slot
+    (save-at-final-width discipline). Returns ``(fig, ax)``.
+    With ``with_colorbar`` the axes width shrinks to leave room for a colourbar.
     """
-    fig = plt.figure(figsize=ONE_COL_IN)
+    fig = plt.figure(figsize=(ONE_COL_IN[0], height_in))
     left, bottom, width, height = _ONE_COL_AXES_RECT
     if with_colorbar:
         width *= 0.86

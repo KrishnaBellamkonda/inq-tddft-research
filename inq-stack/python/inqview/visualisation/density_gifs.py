@@ -155,6 +155,8 @@ def make_density_gif_battery(
     run_title: Optional[str] = None,
     per_frame_norm_wp: bool = False,
     cap_lines: Optional[tuple] = None,
+    cats_filter: Optional[list] = None,   # restrict to these categories (e.g. ["total"])
+    kinds_filter: Optional[list] = None,  # restrict to these kinds (e.g. ["density"])
 ):
     """Build the density-GIF battery for one run.
 
@@ -208,7 +210,11 @@ def make_density_gif_battery(
     CAT_TTL = {"total": "Total system", "wp": "Wavepacket |ψ|²", "bath": "Bath (slab only)"}
     gifs = []
     for cat, stack in cats.items():
+        if cats_filter is not None and cat not in cats_filter:
+            continue
         for kind in ("density", "delta0", "dstep"):
+            if kinds_filter is not None and kind not in kinds_filter:
+                continue
             if kind == "density":
                 series = stack
                 vmax = density_vmax if cat in ("total", "bath") else None  # wp: own scale
