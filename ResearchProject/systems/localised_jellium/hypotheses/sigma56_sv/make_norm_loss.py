@@ -155,9 +155,9 @@ def draw(df: pd.DataFrame, out: Path) -> None:
                  "excluding the projectile's own electron", fontsize=9)
     ax.legend(fontsize=6.5, frameon=False, ncol=2, loc="upper center",
               bbox_to_anchor=(0.5, -0.17), columnspacing=1.1, handlelength=1.9)
-    fig.savefig(out, dpi=300, bbox_inches="tight")
+    fig.savefig(out, dpi=600, bbox_inches=None)
     REPORT_FIG.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(REPORT_FIG, dpi=300, bbox_inches="tight")
+    fig.savefig(REPORT_FIG, dpi=600, bbox_inches=None)
     plt.close(fig)
     print(f"wrote {out}")
     print(f"wrote {REPORT_FIG}")

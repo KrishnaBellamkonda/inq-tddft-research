@@ -291,7 +291,7 @@ def draw(corrected: bool, out: Path, snap: dict) -> None:
             # remove the N_e/z monopole still in the ledger at t_final
             y = (d["E_absorbed_eV"].to_numpy()
                  - 100.0 / d["z_final"].to_numpy() * HA) / 25.0
-        ax.plot(d["v"], y, ls="--", lw=1.0, color=COLOUR[sigma], marker="o",
+        ax.plot(0.5 * d["v"]**2 * HA, y, ls="--", lw=1.0, color=COLOUR[sigma], marker="o",
                 mfc="none", ms=4.5, label=cl_label(sigma))
 
     for sigma in NEW_SIGMAS:
@@ -299,7 +299,7 @@ def draw(corrected: bool, out: Path, snap: dict) -> None:
         if d.empty:
             continue
         y = d["S_corr"] if corrected else d["S_B"]
-        ax.plot(d["v"], y, ls="--", lw=1.0, color=COLOUR[sigma], marker="s",
+        ax.plot(0.5 * d["v"]**2 * HA, y, ls="--", lw=1.0, color=COLOUR[sigma], marker="s",
                 mfc="none", ms=4.5, label=cl_label(sigma))
 
     # ---- WP: filled, solid ------------------------------------------------
@@ -307,7 +307,7 @@ def draw(corrected: bool, out: Path, snap: dict) -> None:
         d = snap["legacy_wp"][sigma]
         if d.empty:
             continue
-        ax.plot(d["v"], d["S_deposit_corrected"], ls="-", lw=1.0,
+        ax.plot(0.5 * d["v"]**2 * HA, d["S_deposit_corrected"], ls="-", lw=1.0,
                 color=COLOUR[sigma], marker="o", ms=4.5,
                 label=wp_label(sigma, snap["eff_legacy"][sigma]))
 
@@ -315,11 +315,11 @@ def draw(corrected: bool, out: Path, snap: dict) -> None:
         d = snap["new_wp"][sigma]
         if d.empty:
             continue
-        ax.plot(d["v"], d["S_B"], ls="-", lw=1.0, color=COLOUR[sigma],
+        ax.plot(0.5 * d["v"]**2 * HA, d["S_B"], ls="-", lw=1.0, color=COLOUR[sigma],
                 marker="s", ms=4.5,
                 label=wp_label(sigma, snap["eff_new"][sigma]))
 
-    ax.set_xlabel(r"projectile velocity $v$ (a.u.)")
+    ax.set_xlabel(r"projectile energy $E$ (eV)")
     ax.set_ylabel(style.axis_label("stopping_power", symbol="$S_B$"))
     # Legend BELOW the axes, not upper-right as upstream: the sigma_WP entries
     # are ~2x wider than the old sigma_pot ones and the 2-column box then covers
@@ -333,23 +333,17 @@ def draw(corrected: bool, out: Path, snap: dict) -> None:
         ax.legend(fontsize=7, frameon=False, ncol=2, loc="upper center",
                   bbox_to_anchor=(0.5, -0.17), columnspacing=1.1,
                   handlelength=1.9, handletextpad=0.5, borderaxespad=0.0)
-    if not _panel_mode():
-        # Report figures carry NO on-canvas title (house standard §1) -- it also
-        # clips, since a panel figure may not use bbox_inches="tight".
-        ax.set_title("E-absorbed stopping, WP relabelled by effective width"
-                     + ("\n(classical monopole tail removed)" if corrected else ""),
-                     fontsize=9)
     if _panel_mode():
         p = REPORT_FIG.parent / "slab_panel" / REPORT_FIG.name
         p.parent.mkdir(parents=True, exist_ok=True)
         fig.savefig(p, dpi=600)                       # never 'tight' in a panel
         print(f"wrote {p}")
     else:
-        fig.savefig(out, dpi=300, bbox_inches="tight")
+        fig.savefig(out, dpi=600, bbox_inches=None)
         print(f"wrote {out}")
         if not corrected:
             REPORT_FIG.parent.mkdir(parents=True, exist_ok=True)
-            fig.savefig(REPORT_FIG, dpi=300, bbox_inches="tight")
+            fig.savefig(REPORT_FIG, dpi=600, bbox_inches=None)
             print(f"wrote {REPORT_FIG}")
     plt.close(fig)
 
