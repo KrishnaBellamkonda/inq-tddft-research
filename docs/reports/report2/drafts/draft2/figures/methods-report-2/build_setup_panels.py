@@ -25,6 +25,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
+from matplotlib.patches import Patch
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy.special import erfc
 from inqview.visualisation import style
@@ -137,7 +138,7 @@ def build_cylindrical_sweep() -> None:
         {"r_in":  8, "r_out": 14.000, "label": r"$R_{\rm in} = 8$"},
         {"r_in":  6, "r_out": 13.986, "label": r"$R_{\rm in} = 6$"},
         {"r_in":  4, "r_out": 14.000, "label": r"$R_{\rm in} = 4$"},
-        {"r_in":  0, "r_out": 13.986, "label": r"$R_{\rm in} = 0$ (filled)"},
+        {"r_in":  0, "r_out": 13.986, "label": "$R_{\\rm in} = 0$\n(filled)"},
     ]
     R_OUT_REP = 14.0
     PASTEL = ["#5BA4CF", "#63C174", "#F5A623", "#E86565", "#B79FDB"]
@@ -154,7 +155,6 @@ def build_cylindrical_sweep() -> None:
     norm = _log_norm(n_gs, n0)
     im = ax.pcolormesh(XX, YY, n_gs, cmap=style.cmap_for("density"),
                        norm=norm, rasterized=True, shading="auto")
-    _log_cbar(fig, ax, im, r"$n$ (Bohr$^{-3}$)")
 
     theta = np.linspace(0, 2 * np.pi, 500)
     ax.plot(R_OUT_REP * np.cos(theta), R_OUT_REP * np.sin(theta),
@@ -176,9 +176,13 @@ def build_cylindrical_sweep() -> None:
     ax.tick_params(labelsize=8)
     lim = LBOX / 2
     ax.set_xlim(-lim, lim); ax.set_ylim(-lim, lim)
-    ax.legend(fontsize=7, loc="upper right", framealpha=0.55,
-              title=r"proximity ladder", title_fontsize=7)
+    cmap_d = plt.get_cmap(style.cmap_for("density"))
+    density_patch = Patch(facecolor=cmap_d(0.9), label="density")
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles=[density_patch] + handles,
+              fontsize=7, loc="upper right", framealpha=0.55)
 
+    fig.tight_layout(pad=0.4)
     out = HERE / "setup_cylindrical_jellium_sweep.png"
     fig.savefig(out, dpi=600, bbox_inches=None)
     plt.close(fig)
@@ -199,16 +203,28 @@ def build_cylindrical_xz() -> None:
     n_wp = gaussian_wp(XX, ZZ, Z_LAUNCH, SIGMA_WP)
     n_total = np.maximum(n_bg + n_wp, n0 * 1e-6)
 
-    fig, ax = plt.subplots(figsize=(3.8, 3.0))
+    fig, ax = plt.subplots(figsize=style.ONE_COL_IN)
     norm = _log_norm(n_total, n0)
+    cmap_name = style.cmap_for("density")
+    cmap_obj  = plt.get_cmap(cmap_name)
     im = ax.pcolormesh(ZZ.T, XX.T, n_total.T,
-                       cmap=style.cmap_for("density"),
-                       norm=norm, rasterized=True, shading="auto")
-    _log_cbar(fig, ax, im, r"$n$ (Bohr$^{-3}$)")
+                       cmap=cmap_name, norm=norm, rasterized=True, shading="auto")
 
-    for sign in [+1, -1]:
-        ax.axhline(sign * R_IN,  color="white", lw=0.8, ls="--", alpha=0.75)
-        ax.axhline(sign * R_OUT, color="white", lw=0.6, ls=":",  alpha=0.55)
+    # ── WP annotation (text only, no arrow) ──────────────────────────────────
+    ax.text(Z_LAUNCH + 12.5, 0.0, "Wavepacket",
+            fontsize=10, color="white", ha="left", va="center")
+
+    # ── channel-width double-headed arrow at z ≈ 20 Bohr ─────────────────────
+    z_arrow = 20.0
+    ax.annotate("", xy=(z_arrow, R_IN), xytext=(z_arrow, -R_IN),
+                arrowprops=dict(arrowstyle="<->", color="white", lw=1.1,
+                                mutation_scale=6, shrinkA=0, shrinkB=0))
+    ax.text(z_arrow + 1.3, 0.0,
+            r"$2R_\mathrm{in} \approx 20\,\mathrm{Bohr}$",
+            color="white", fontsize=10, ha="left", va="center", rotation=90)
+
+    density_patch = Patch(facecolor=cmap_obj(1.0), label=r"density $n$")
+    ax.legend(handles=[density_patch], fontsize=7, loc="upper right", framealpha=0.75)
 
     ax.set_xlabel(r"$z$ (Bohr)", fontsize=9)
     ax.set_ylabel(r"$x$ (Bohr)", fontsize=9)

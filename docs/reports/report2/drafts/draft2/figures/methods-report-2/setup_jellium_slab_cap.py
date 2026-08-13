@@ -17,6 +17,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
+from matplotlib.patches import Patch
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from inqview.visualisation import style
 from inqview import load_vti
@@ -34,7 +35,7 @@ SIGMA_WP   = 5.0
 Z_LAUNCH   = -40.0
 CAP_ONSET  = 60.0
 
-CAP_COLOR  = "#A8D4E0"   # pastel teal-cyan — complementary to pinkish-orange
+CAP_COLOR  = "#C8B8E8"   # soft lavender — neutral against inferno warm tones
 CAP_ALPHA  = 0.28
 
 LZ_SLABS = [
@@ -67,22 +68,25 @@ def build() -> None:
     vmax    = float(np.percentile(n_total[n_total > VMIN_ABS], 99.8))
     lognorm = LogNorm(vmin=VMIN_ABS, vmax=vmax)
 
-    fig, ax = plt.subplots(figsize=(style.TWO_COL_W_IN, 2.2))
+    fig, ax = plt.subplots(figsize=(style.TWO_COL_W_IN, 2.64))
+    fig.subplots_adjust(left=0.07, right=0.97, bottom=0.11, top=0.97)
 
-    im = ax.pcolormesh(v.z, v.x, n_total,
-                       cmap=style.cmap_for("density"),
-                       norm=lognorm, rasterized=True, shading="auto")
-    _log_cbar(fig, ax, im, r"$n$ (Bohr$^{-3}$)")
+    ax.pcolormesh(v.z, v.x, n_total,
+                  cmap=style.cmap_for("density"),
+                  norm=lognorm, rasterized=True, shading="auto")
 
     # CAP regions — pastel overlay on both sides
     zmin, zmax = v.z.min(), v.z.max()
     ax.axvspan(zmin,      -CAP_ONSET, color=CAP_COLOR, alpha=CAP_ALPHA, zorder=2, lw=0)
     ax.axvspan( CAP_ONSET, zmax,      color=CAP_COLOR, alpha=CAP_ALPHA, zorder=2, lw=0)
 
-    # CAP boundary lines (on top of overlay)
-    for sign in [+1, -1]:
-        ax.axvline(sign * CAP_ONSET, color="white", lw=0.9, ls=":",
-                   alpha=0.85, zorder=3, label="CAP" if sign == 1 else None)
+    # "CAP" text centred in each overlay region
+    xmin_ax, xmax_ax = v.x.min(), v.x.max()
+    y_text = xmin_ax * 0.78          # near the bottom of the x-axis range
+    for z_mid in [(zmin - CAP_ONSET) / 2, (CAP_ONSET + zmax) / 2]:
+        ax.text(z_mid, y_text, "CAP", color="white", fontsize=7.5,
+                ha="center", va="center", fontweight="bold",
+                alpha=0.90, zorder=4)
 
     # slab-width indicators
     for label, half_w, col in LZ_SLABS:
@@ -93,7 +97,13 @@ def build() -> None:
     ax.set_xlabel(r"$z$ (Bohr)", fontsize=9)
     ax.set_ylabel(r"$x$ (Bohr)", fontsize=9)
     ax.tick_params(labelsize=8)
-    ax.legend(fontsize=7, loc="upper right", framealpha=0.75)
+
+    density_proxy = Patch(facecolor=plt.cm.inferno(0.97), edgecolor="none",
+                          label=r"Electron density $n(x,z)$")
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend([density_proxy] + handles,
+              [density_proxy.get_label()] + labels,
+              fontsize=7, loc="upper right", framealpha=0.75)
 
     out = HERE / "setup_jellium_slab_cap.png"
     fig.savefig(out, dpi=600, bbox_inches=None)
