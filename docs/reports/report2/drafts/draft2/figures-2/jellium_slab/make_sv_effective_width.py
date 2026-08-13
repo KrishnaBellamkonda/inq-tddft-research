@@ -1,7 +1,9 @@
-"""S(v) relabelled by effective width — figures-2 version (6.142 × 2.63 in).
+"""S(v) relabelled by effective width — figures-2 version (one-column, 3.5 × 3.0 in).
 
-Slot: 1\\textwidth = 6.142 in.  Legend inside the axes (ncol=3, upper right).
-Title-case label: "Projectile Energy $E$ (eV)".
+Legend: 2-column inside the axes (Classical | Wavepacket), header row shows
+hollow=classical convention; labels carry σ_WP only, no "WP"/"classical" prefix.
+Error bars: ±5 % of S at the highest-energy point (last velocity) per trace.
+Legacy classical σ=0.5 capped at E ≤ 250 eV (v=4.5 / 275 eV point removed).
 
 Reuses B.snapshot() from the source module for data; writes its own draw()
 so the figure size, axes rect, and labels are controlled independently.
@@ -11,7 +13,7 @@ Run:
 """
 from __future__ import annotations
 
-import os, sys
+import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[7]
@@ -22,73 +24,115 @@ sys.path.insert(0, str(SRC))
 sys.path.insert(0, str(PANEL_DIR))
 sys.path.insert(0, str(REPO / "inq-stack/python"))
 
-import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 
-# Apply theme BEFORE importing source module so its module-level apply_theme()
-# picks up the updated rcParams (font.serif = Computer Modern Roman).
+import matplotlib as mpl
 from inqview.visualisation import style
 style.apply_theme()
+# Bump every text size +1 pt relative to the theme defaults.
+for _key in ("font.size", "axes.labelsize", "axes.titlesize",
+             "xtick.labelsize", "ytick.labelsize", "legend.fontsize"):
+    mpl.rcParams[_key] += 1
 
 import build_sv_effective_width_s6 as B   # noqa: E402  (reads CSVs at import)
 
 HERE = Path(__file__).parent
 HA   = 27.211386
 
-# Axes rect for 6.142 × 2.63 in: 0.09*6.142=0.55 in left; 0.16*2.63=0.42 in bottom
-_RECT = (0.09, 0.16, 0.88, 0.80)
+_ERR_FRAC  = 0.05     # ±5 % of S at the highest-energy point per trace
+_GREY      = "#888888"
+_E_MAX_EV  = 250.0    # cap legacy classical σ=0.5 (removes the v=4.5 / 275 eV point)
+
+
+def _add_errorbar(ax, df, x_col, y_col, colour):
+    """Overlay a ±5 % error bar at the last (highest-energy) point."""
+    if df.empty:
+        return
+    x = 0.5 * df[x_col].iloc[-1] ** 2 * HA
+    y = df[y_col].iloc[-1]
+    ax.errorbar(x, y, yerr=_ERR_FRAC * abs(y), fmt="none",
+                color=colour, capsize=2.5, elinewidth=0.8, capthick=0.8)
+
+
+def _cl_label(sigma):
+    return rf"$\sigma_\mathrm{{WP}}$={sigma:g}"
+
+
+def _wp_label(sigma, eff):
+    if eff is None:
+        return ""
+    return rf"($\langle\sigma_r\rangle$={eff:.1f})"
 
 
 def draw(snap: dict) -> None:
-    fig = plt.figure(figsize=(6.142, 2.63))
-    ax  = fig.add_axes(_RECT)
+    fig, ax = style.figure_one_col()
 
-    # Classical: hollow, dashed
+    cl_handles, wp_handles = [], []
+
+    # Classical: hollow markers, dashed line
     for sigma in (0.5, 2.0, 3.0):
         d = snap["legacy_cl"][sigma]
         if d.empty:
             continue
-        ax.plot(0.5 * d["v"]**2 * HA, d["S_B_Eabs"],
-                ls="--", lw=1.0, color=B.COLOUR[sigma], marker="o",
-                mfc="none", ms=4.5, label=B.cl_label(sigma))
+        # Remove the >250 eV point for σ=0.5 (v=4.5 → 275 eV)
+        d = d[0.5 * d["v"] ** 2 * HA <= _E_MAX_EV]
+        h, = ax.plot(0.5 * d["v"]**2 * HA, d["S_B_Eabs"],
+                     ls="--", lw=1.0, color=B.COLOUR[sigma], marker="o",
+                     mfc="none", ms=4.5, label=_cl_label(sigma))
+        _add_errorbar(ax, d, "v", "S_B_Eabs", B.COLOUR[sigma])
+        cl_handles.append(h)
 
     for sigma in B.NEW_SIGMAS:
         d = snap["new_cl"][sigma]
         if d.empty:
             continue
-        ax.plot(0.5 * d["v"]**2 * HA, d["S_B"],
-                ls="--", lw=1.0, color=B.COLOUR[sigma], marker="s",
-                mfc="none", ms=4.5, label=B.cl_label(sigma))
+        h, = ax.plot(0.5 * d["v"]**2 * HA, d["S_B"],
+                     ls="--", lw=1.0, color=B.COLOUR[sigma], marker="s",
+                     mfc="none", ms=4.5, label=_cl_label(sigma))
+        _add_errorbar(ax, d, "v", "S_B", B.COLOUR[sigma])
+        cl_handles.append(h)
 
-    # WP: filled, solid
+    # Wavepacket: filled markers, solid line
     for sigma in (0.5, 2.0, 3.0):
         d = snap["legacy_wp"][sigma]
         if d.empty:
             continue
-        ax.plot(0.5 * d["v"]**2 * HA, d["S_deposit_corrected"],
-                ls="-", lw=1.0, color=B.COLOUR[sigma], marker="o", ms=4.5,
-                label=B.wp_label(sigma, snap["eff_legacy"][sigma]))
+        h, = ax.plot(0.5 * d["v"]**2 * HA, d["S_deposit_corrected"],
+                     ls="-", lw=1.0, color=B.COLOUR[sigma], marker="o",
+                     ms=4.5, label=_wp_label(sigma, snap["eff_legacy"][sigma]))
+        _add_errorbar(ax, d, "v", "S_deposit_corrected", B.COLOUR[sigma])
+        wp_handles.append(h)
 
     for sigma in B.NEW_SIGMAS:
         d = snap["new_wp"][sigma]
         if d.empty:
             continue
-        ax.plot(0.5 * d["v"]**2 * HA, d["S_B"],
-                ls="-", lw=1.0, color=B.COLOUR[sigma], marker="s", ms=4.5,
-                label=B.wp_label(sigma, snap["eff_new"][sigma]))
+        h, = ax.plot(0.5 * d["v"]**2 * HA, d["S_B"],
+                     ls="-", lw=1.0, color=B.COLOUR[sigma], marker="s",
+                     ms=4.5, label=_wp_label(sigma, snap["eff_new"][sigma]))
+        _add_errorbar(ax, d, "v", "S_B", B.COLOUR[sigma])
+        wp_handles.append(h)
 
     ax.set_xlabel(r"Projectile Energy $E$ (eV)")
-    ax.set_ylabel(style.axis_label("stopping_power", symbol="$S_B$"))
+    ax.set_ylabel(style.axis_label("stopping_power", symbol="$S$"))
 
-    # Reserve headroom above data for the inside legend.
-    ax.relim(); ax.autoscale_view()
-    _, ymax = ax.get_ylim()
-    ax.set_ylim(top=ymax * 1.42)
+    ax.set_ylim(top=1.50)
 
-    ax.legend(fontsize=6.5, frameon=False, ncol=3, loc="upper right",
-              columnspacing=1.0, handlelength=1.7, handletextpad=0.4)
+    # matplotlib legend fills column-major (top→bottom, then next column).
+    # With ncol=2 and 12 handles, first 6 → left column, next 6 → right column.
+    # Layout: [hdr_cl, cl_0…cl_6] | [hdr_wp, wp_0…wp_6] gives paired rows.
+    hdr_cl = Line2D([], [], ls="--", lw=1.0, color=_GREY, marker="o",
+                    mfc="none", ms=4.5, label="Classical")
+    hdr_wp = Line2D([], [], ls="-",  lw=1.0, color=_GREY, marker="o",
+                    ms=4.5, label="Wavepacket")
+    handles = [hdr_cl] + cl_handles + [hdr_wp] + wp_handles
+
+    ax.legend(handles, [h.get_label() for h in handles],
+              fontsize=7.0, frameon=False, ncol=2, loc="upper right",
+              handlelength=1.7, handletextpad=0.4, columnspacing=1.0)
 
     out = HERE / "slab_sv_effective_width_s56.png"
     fig.savefig(out, dpi=600, bbox_inches=None)
