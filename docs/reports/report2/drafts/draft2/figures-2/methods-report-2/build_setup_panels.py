@@ -218,8 +218,106 @@ def build_cylindrical_xz() -> None:
     print(f"written: {out}")
 
 
+# ── figure: graphene bilayer xy setup (3.071 × 3.071 in) ─────────────────────
+
+def build_graphene_bilayer() -> None:
+    """xy-plane setup of the AB (Bernal) bilayer graphene target.
+
+    Background = REAL z-integrated GS column density n_col(x,y) (Bohr^-2) from a
+    centred lovelace_test run (GS is identical across the S(E) sweep). Overlaid:
+    the two AB-stacked carbon layers (blue = bottom z=-3.17 Bohr, orange = top
+    z=+3.17 Bohr) with intralayer honeycomb bonds (minimum-image), and the
+    perpendicular projectile impact point at (x,y)=(0,0). Same visual language as
+    setup_cylindrical_jellium_sweep.png (square, equal aspect, feature overlay +
+    projectile marker + legend).
+    """
+    ANG = 1.8897259886  # Bohr per Angstrom
+    GEOM = (
+        "/local/data/public/skcb2/tddft/ResearchProject/systems/graphene"
+        "/shared/geometry/graphene_3x2_bilayer.xyz"
+    )
+    VTI = (
+        "/local/data/public/skcb2/tddft/ResearchProject/systems/graphene/scripts"
+        "/lovelace_test/classical/results/bi_E025_sigma1_dx0p5_centered"
+        "/raw/vti/density_gs_system/density_gs_system.vti"
+    )
+    LX = 7.3800 * ANG   # 13.946 Bohr
+    LY = 8.5217 * ANG   # 16.104 Bohr
+    COL_BOT, COL_TOP = "#5B9BD5", "#ED7D31"
+    BOND_LO, BOND_HI = 2.4, 3.0    # C-C nn = 1.42 Ang = 2.68 Bohr
+
+    # real column density -----------------------------------------------------
+    v = load_vti(VTI)
+    dz = float(v.z[1] - v.z[0])
+    n_col = v.data.sum(axis=2) * dz          # (nx, ny), Bohr^-2
+
+    # carbon atoms (Ang -> Bohr), split by layer ------------------------------
+    rows = []
+    for ln in Path(GEOM).read_text().splitlines()[2:]:
+        p = ln.split()
+        if len(p) >= 4 and p[0] == "C":
+            rows.append([float(p[1]) * ANG, float(p[2]) * ANG, float(p[3]) * ANG])
+    R = np.array(rows)
+    bot = R[R[:, 2] < 0][:, :2]
+    top = R[R[:, 2] > 0][:, :2]
+
+    def bonds(P):
+        segs = []
+        for i in range(len(P)):
+            for j in range(i + 1, len(P)):
+                d = P[i] - P[j]
+                d[0] -= LX * round(d[0] / LX)   # minimum image
+                d[1] -= LY * round(d[1] / LY)
+                if BOND_LO < np.hypot(*d) < BOND_HI:
+                    segs.append((P[i], P[i] - d))  # draw to nearest image of j
+        return segs
+
+    fig, ax = plt.subplots(figsize=(3.071, 3.071))
+    fig.subplots_adjust(left=0.14, right=0.87, bottom=0.13, top=0.97)
+    ax.set_aspect("equal")
+
+    im = ax.pcolormesh(v.x, v.y, n_col.T, cmap=style.cmap_for("density"),
+                       shading="gouraud", rasterized=True)
+    _log_cbar(fig, ax, im, r"$n$")
+
+    for (a, b) in bonds(bot):
+        ax.plot([a[0], b[0]], [a[1], b[1]], color=COL_BOT, lw=0.6, alpha=0.45, zorder=2)
+    for (a, b) in bonds(top):
+        ax.plot([a[0], b[0]], [a[1], b[1]], color=COL_TOP, lw=0.6, alpha=0.45, zorder=2)
+    ax.scatter(bot[:, 0], bot[:, 1], s=16, c=COL_BOT, edgecolors="white",
+               linewidths=0.4, zorder=4, label="bottom\n$z=-3.17$")
+    ax.scatter(top[:, 0], top[:, 1], s=16, c=COL_TOP, edgecolors="white",
+               linewidths=0.4, zorder=4, label="top\n$z=+3.17$")
+
+    # periodic cell boundary
+    ax.add_patch(plt.Rectangle((-LX / 2, -LY / 2), LX, LY, fill=False,
+                               ec="white", lw=0.8, ls=":", alpha=0.6, zorder=3))
+
+    # perpendicular projectile impact at (0,0)
+    ax.scatter([0], [0], marker="x", s=90, c="white", linewidths=1.8,
+               zorder=6, label=r"projectile ($\perp$)")
+
+    ax.set_xlabel(r"$x$ (Bohr)", fontsize=9)
+    ax.set_ylabel(r"$y$ (Bohr)", fontsize=9)
+    ax.tick_params(labelsize=8)
+    ax.set_xlim(-LX / 2, LX / 2)
+    ax.set_ylim(-LY / 2, LY / 2)
+    leg = ax.legend(fontsize=5.5, loc="upper right", framealpha=0.7,
+                    title=r"48 C, AB bilayer", title_fontsize=5.5, markerscale=1.0)
+    # bump the layer-dot symbols with markerscale, but keep the projectile
+    # crosshair at its previous (markerscale 0.75) size so it does not grow.
+    _hs = getattr(leg, "legend_handles", None) or leg.legendHandles
+    _hs[-1].set_sizes([67.5])
+
+    out = HERE / "setup_graphene_bilayer.png"
+    fig.savefig(out, dpi=600, bbox_inches=None)
+    plt.close(fig)
+    print(f"written: {out}")
+
+
 if __name__ == "__main__":
     build_slab()
     build_cylindrical_sweep()
     build_cylindrical_xz()
+    build_graphene_bilayer()
     print("All setup panels written to", HERE)
