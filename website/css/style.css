@@ -1,0 +1,184 @@
+/* Quantum Description of Electronic Stopping Power — project site
+   Hand-built static styles. Palette: deep slate + a single quantum-violet accent.
+   Classical = blue, Wavepacket = red (matches the figure theme). */
+
+:root {
+  --bg: #0e1116;
+  --bg-soft: #151a22;
+  --panel: #1b222c;
+  --ink: #e8ecf1;
+  --ink-soft: #a7b0bd;
+  --accent: #8b6cff;      /* quantum violet */
+  --classical: #2b6cb0;   /* blue */
+  --wp: #c0392b;          /* red */
+  --rule: #2a323d;
+  --maxw: 980px;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Inter", "Helvetica Neue", Arial, system-ui, sans-serif;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 { font-weight: 650; line-height: 1.2; letter-spacing: -0.01em; }
+h2 { font-size: 1.9rem; margin: 0 0 0.4em; }
+h3 { font-size: 1.25rem; margin: 1.6em 0 0.4em; color: var(--ink); }
+p  { color: var(--ink-soft); }
+a  { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.eq {
+  font-family: "Latin Modern Math", "Cambria Math", Georgia, serif;
+  font-style: italic;
+  background: var(--bg-soft);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 0.9em 1.1em;
+  margin: 1.2em 0;
+  color: var(--ink);
+  overflow-x: auto;
+}
+
+/* ---- placeholder styling so the author sees exactly what to fill ---- */
+.ph {
+  border: 1.5px dashed var(--accent);
+  border-radius: 8px;
+  background: rgba(139, 108, 255, 0.06);
+  padding: 0.9em 1.1em;
+  margin: 1em 0;
+  color: var(--ink-soft);
+  font-style: italic;
+}
+.ph::before {
+  content: "✎ PLACEHOLDER — ";
+  font-style: normal;
+  font-weight: 650;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+.fig-missing {
+  border: 1.5px dashed #c9a227;
+  background: rgba(201, 162, 39, 0.08);
+  color: #e6cf7a;
+  text-align: center;
+  padding: 2.5em 1em;
+  border-radius: 10px;
+  font-style: italic;
+}
+
+/* ---- hero ---- */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 3rem 1.5rem;
+  background: radial-gradient(1200px 600px at 50% -10%, #1a2130 0%, var(--bg) 60%);
+  border-bottom: 1px solid var(--rule);
+}
+.hero .kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-size: 0.78rem;
+  color: var(--accent);
+  margin-bottom: 1rem;
+}
+.hero h1 {
+  font-size: clamp(2rem, 5vw, 3.3rem);
+  max-width: 16ch;
+  margin: 0 0 1rem;
+}
+.hero .sub { max-width: 60ch; font-size: 1.1rem; margin-bottom: 2rem; }
+.hero figure { margin: 0 0 1.4rem; width: min(760px, 100%); }
+.hero video, .hero img.herofig {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--rule);
+  background: #fff;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+}
+.hero figcaption { font-size: 0.85rem; color: var(--ink-soft); margin-top: 0.6rem; }
+
+.cta {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.75em 1.6em;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  color: var(--ink);
+  background: rgba(139,108,255,0.12);
+  font-weight: 600;
+  transition: background 0.2s, transform 0.2s;
+}
+.cta:hover { background: rgba(139,108,255,0.25); transform: translateY(-2px); text-decoration: none; }
+
+/* ---- sections ---- */
+section.block {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 4.5rem 1.5rem;
+  border-bottom: 1px solid var(--rule);
+}
+.block .num {
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.4rem;
+}
+figure.fig { margin: 1.8rem 0; }
+figure.fig img {
+  width: 100%;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid var(--rule);
+}
+figure.fig figcaption { font-size: 0.88rem; color: var(--ink-soft); margin-top: 0.6rem; }
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.4rem; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.1rem; }
+@media (max-width: 720px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+
+/* key-numbers table */
+table.kv { width: 100%; border-collapse: collapse; margin: 1.4rem 0; font-size: 0.95rem; }
+table.kv th, table.kv td { padding: 0.5em 0.8em; border-bottom: 1px solid var(--rule); text-align: right; }
+table.kv th:first-child, table.kv td:first-child { text-align: left; }
+table.kv thead th { color: var(--accent); }
+
+/* ---- appendix (collapsible) ---- */
+details.appendix {
+  max-width: var(--maxw);
+  margin: 0 auto 5rem;
+  padding: 0 1.5rem;
+}
+details.appendix > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 1.2rem 1.5rem;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-top: 2rem;
+}
+details.appendix > summary::after { content: "  ▾  expand"; color: var(--accent); font-weight: 500; }
+details.appendix[open] > summary::after { content: "  ▴  collapse"; }
+
+footer {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 3rem 1.5rem 5rem;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
