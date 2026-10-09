@@ -137,7 +137,8 @@ section.block {
   margin-bottom: 0.4rem;
 }
 figure.fig { margin: 1.8rem 0; }
-figure.fig img {
+figure.fig img,
+figure.fig video {
   width: 100%;
   border-radius: 10px;
   background: #fff;

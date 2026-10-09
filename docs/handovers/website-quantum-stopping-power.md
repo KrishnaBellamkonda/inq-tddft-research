@@ -43,7 +43,17 @@ Rolling file. Task: build a CV-linked single-page site showcasing the quantum
   reviewing the plots themselves. Hero headline sentence intentionally deferred.
 - **DNA-damage ~10 eV plot** (section 01): not in repo; gold placeholder. User has
   the file → drop into `website/assets/figures/motivation/`, then wire the `<img>`.
-- **Density split-screen animation** ("C" upgrade; hero + appendix): placeholder.
+- **§3 "The idea" density pair — DONE via option (b), 2026-10-09.** Side-by-side
+  web MP4s (`website/assets/idea/idea_{classical,wp}_sigma1_density.mp4`, 65–70 KB
+  each, re-encoded from 27 MB GIFs via ffmpeg). Source: matched
+  `muon_mass_fork/effmass_sigma1` classical+WP runs — VERIFIED matched (both
+  σ_WP=1, box 40×40×80, dx 0.333, v=2.711, E≈210 eV, same GS
+  `shared_gs/slab_n52_L40x40x80_dx0p333`). **CAVEAT to tell user:** projectile
+  effective mass is **2.1 m_e** (mass-fork study), not a bare electron, and
+  E≈210 eV ≠ hero's 100 eV. Labelled "illustrative" in the HTML caption note.
+  A heavier WP disperses *less*, so this UNDERSTATES the quantum visual, not
+  overstates it. Swap for a true-electron E=100 density pair if/when (a) is run.
+- **Density split-screen animation** ("C" hero upgrade; per-energy appendix): placeholder.
   Clean path = re-run ONE matched E=100/Lz45 classical+WP pair with frame saving
   (`LJ_SAVE_EVERY>0`), then composite. NOT launched — expensive GPU + disk-fill
   risk (density frames ~2.6 GB/run fill sda1; see memory
