@@ -1,0 +1,42 @@
+{
+  "updated": "2026-09-16 17:42:49",
+  "phase": "production",
+  "free_gb": 90.9,
+  "done": [
+    "E100_Lz15_classical",
+    "E100_Lz15_wp",
+    "E100_Lz30_classical",
+    "E100_Lz30_wp",
+    "E100_Lz45_classical",
+    "E100_Lz45_wp",
+    "E167_Lz15_classical",
+    "E167_Lz15_wp",
+    "E167_Lz30_classical",
+    "E167_Lz30_wp",
+    "E167_Lz45_classical",
+    "E167_Lz45_wp",
+    "E276_Lz15_classical",
+    "E276_Lz15_wp",
+    "E276_Lz30_classical",
+    "E276_Lz30_wp",
+    "E276_Lz45_classical",
+    "E276_Lz45_wp",
+    "E31_Lz15_classical",
+    "E31_Lz15_wp",
+    "E31_Lz30_classical",
+    "E31_Lz30_wp",
+    "E31_Lz45_classical",
+    "E31_Lz45_wp",
+    "E54_Lz15_classical",
+    "E54_Lz15_wp",
+    "E54_Lz30_classical",
+    "E54_Lz30_wp",
+    "E54_Lz45_classical",
+    "E54_Lz45_wp"
+  ],
+  "failed": [],
+  "running": {
+    "0": null,
+    "1": null
+  }
+}
