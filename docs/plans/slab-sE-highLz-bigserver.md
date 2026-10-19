@@ -11,6 +11,19 @@ is here. Origin machine = `lovelace` (this repo), origin repo root
 > constant is copied from `orchestrate_sE.py` / `launch_2gpu.sh` / the `run.cpp`
 > env contracts.
 
+### Resolved parameters (confirmed by the project owner, 2026-10-19)
+
+- **Server is a FULL working-tree copy** of the origin repo — `inq-study/`, the
+  pseudopotential share, `inqkit` headers, the venv, and the `shared_gs/slab_sE_sweep`
+  ground states are already present. `git pull origin quantum-stopping-power` only
+  refreshes the scripts/CSVs; no heavy rsync is needed. **Verify presence** (§4) and
+  rebuild the binaries for the server's GPU arch (§5) — then run.
+- **Scope: L_z = 60, 75, 90; CLASSICAL HALF FIRST** (all 3 thicknesses × 5 energies
+  = 15 classical runs), validate the classical S(L_z) line, THEN run the WP half
+  (another 15). Do **not** re-run L_z = 15/30/45.
+- **Scheduler: Slurm** — launch each run as an `sbatch` job (§6 Slurm path). The
+  setsid/plain-GPU recipe is retained only as a fallback.
+
 ---
 
 ## 1. TL;DR — what to do and why
@@ -28,10 +41,10 @@ UVM-thrashes (~100× slowdown) on those boxes, so they were dropped
 (`orchestrate_sE.py:53`). **This is a pure memory wall, not physics.** A
 bigger-memory GPU removes it.
 
-**Your job:** run the **high-L_z points** — recommended **L_z = 60 and 75** (add
-**90** if memory allows) — for **all 5 energies × {classical, WP}**, measure
-`S(L_z)` for each with the locked method, and report the new rows so they can be
-merged into `sweep_results.csv` and the `1/L_z` extrapolation re-fit on more points.
+**Your job:** run the **high-L_z points** — **L_z = 60, 75, 90** — for all 5
+energies, **classical half first (15 runs), then WP (15 runs)**, measure `S(L_z)`
+for each with the locked method, and report the new rows so they can be merged into
+`sweep_results.csv` and the `1/L_z` extrapolation re-fit on more points.
 
 Nothing about geometry, engine, projectile, CAP, or analysis changes — **only L_z
 grows**. Do **not** re-run L_z = 15/30/45 (that data already exists and is good).
@@ -116,26 +129,30 @@ The bulk limit is then `S_bulk = ` the `1/L_z = 0` intercept of a quadratic fit
 
 ---
 
-## 4. Prerequisites — files the target machine MUST have
+## 4. Prerequisites — verify the full working-tree copy
 
-**The scripts + CSVs below are now on GitHub** (repo
-`KrishnaBellamkonda/inq-tddft-research`, branch `quantum-stopping-power`) — a
-`git pull` of that branch brings every `run.cpp`, `orchestrate_sE.py`, the
-launchers, the `build_S_vs_*.py` fit scripts, `slab_stopping.py`, both CSVs, and
-this runbook. **But `git pull` does NOT bring the large/ignored artefacts** — the
-engine (`inq/`, `inq-study/`), `inqkit` headers, the venv, the GS checkpoints, or
-any run output. Those must be rsync'd from origin (or regenerated). The table marks
-which is which.
+The server **is a full working-tree copy** (owner-confirmed), so the heavy artefacts
+are already present. Refresh the scripts and verify, don't rsync:
+
+```bash
+cd $ROOT && git fetch origin && git checkout quantum-stopping-power \
+  && git pull origin quantum-stopping-power     # brings run.cpp, orchestrator, fit scripts, CSVs, this runbook
+
+# verify the heavy artefacts are present (all must exist):
+ls -d $ROOT/inq-study/ && ls $INQ_SHARE_PATH/pseudopod >/dev/null && echo "engine+share OK"
+ls -d $ROOT/inq-stack/include/inqkit/ && echo "inqkit headers OK"
+$PY -c "import inqview; print('inqview OK')"
+ls -d $LJ/shared_gs/slab_sE_sweep/Lz60/checkpoint $LJ/shared_gs/slab_sE_sweep/Lz75/checkpoint \
+  && echo "GS Lz60/Lz75 present (Lz90 to be generated)"
+```
 
 > **Path gotcha:** `orchestrate_sE.py` and `build_S_vs_invLz.py` import
 > `slab_stopping` from a **hardcoded** path
-> `/home/raid/skcb2/skcb2/tddft/.claude/skills/slab-stopping-power`. On the target,
-> either replicate that path, or edit those two `sys.path.insert(...)` / `SKILL =`
-> lines to point at the pulled `.claude/skills/slab-stopping-power/` under the
-> target's repo root.
+> `/home/raid/skcb2/skcb2/tddft/.claude/skills/slab-stopping-power`. If the server's
+> repo root differs, edit those two `sys.path.insert(...)` / `SKILL =` lines to point
+> at `$ROOT/.claude/skills/slab-stopping-power/`.
 
-rsync the following from the origin machine (paths are under `$ROOT`), or confirm
-the target is a full working-tree copy:
+Reference of what each piece is (should all already be on the full copy):
 
 | Path (under `$ROOT`) | Role | Must be present |
 |---|---|---|
@@ -191,84 +208,124 @@ are finite before committing GPU-hours — see §8 env block with `LJ_N_STEPS=5`
 
 ## 6. Run the high-L_z grid
 
-### Recommended path — SINGLE GPU per run (big-memory card)
+### Launch model — one Slurm job per run, single GPU
 
-If the target has **≥ ~40 GB GPU memory**, run each job on **one** GPU. This is the
-`orchestrate_sE.py` design and it sidesteps the 2-GPU GS-partition hazard (below).
+The server uses **Slurm**, and each run goes on **one GPU** (the single-GPU design
+sidesteps the 2-GPU GS-partition hazard in the fallback below). Order is
+**classical first (Phase 1, 15 jobs) → WP (Phase 2, 15 jobs)**.
 
-**Ground states first** (one per new L_z; reuse `shared_gs/slab_sE_sweep/Lz{60,75}`
-if transferred and valid — verify `r_s ≈ 4.18` and a `checkpoint/` dir exist; only
-generate what's missing, e.g. Lz90):
+**Ground states first.** Lz60/Lz75 single-partition GS are already on the copy —
+verify (`r_s ≈ 4.18`, a `checkpoint/` dir). Generate **only Lz90**, as a short GPU
+job (`srun` interactively, or an sbatch wrapper of this block):
 
 ```bash
-# GS for L_z — env contract from campaign_autorun/gs/run.cpp
 LZ=90; N=$($PY -c "print(round(0.001288*2500*$LZ))")
-OUT=$LJ/shared_gs/slab_sE_sweep/Lz$LZ
-mkdir -p $OUT && cd $OUT
-CUDA_VISIBLE_DEVICES=0 \
+OUT=$LJ/shared_gs/slab_sE_sweep/Lz$LZ; mkdir -p $OUT && cd $OUT
 LJ_LX=50 LJ_LY=50 LJ_LZ=$((LZ+60)) LJ_HALF=$($PY -c "print($LZ/2)") \
 LJ_N=$N LJ_EDGE_W=1 LJ_PERIODICITY=2 LJ_SPACING=0.5 \
 LJ_GS_DIR=$OUT/checkpoint LJ_TAG=Lz$LZ \
 INQ_SHARE_PATH=$INQ_SHARE_PATH PSEUDOPOD_SHARE_PATH=$PSEUDOPOD_SHARE_PATH \
-$LJ/scripts/campaign_autorun/gs/run 2>&1 | tee gs.log
-# PASS gate: "GS energy = …" printed, run_summary.txt has r_s ≈ 4.18 and a checkpoint/ dir.
+srun --gres=gpu:1 $LJ/scripts/campaign_autorun/gs/run 2>&1 | tee gs.log
+# PASS: "GS energy = …" printed; run_summary.txt has r_s ≈ 4.18 and a checkpoint/ dir.
 ```
 
-**Then each production run** (both halves, every energy, every new L_z). The env
-contract is identical for classical and WP except `LJ_MASS`/`LJ_DELTA` (classical
-only) and the step count. Example — E = 276 eV (v₀ = 4.5), L_z = 60, classical:
+**Reusable run script** — save as `$BASE/slurm_run.sh`. Fill the cluster-specific
+resource lines (partition/account/QoS/time) from the server's own conventions — I
+cannot know those; everything below the `set -euo pipefail` is verified:
 
 ```bash
-EV=276; V0=4.5; LZ=60; HALF=classical
+#!/usr/bin/env bash
+#SBATCH --job-name=sE_slab
+#SBATCH --gres=gpu:1
+#SBATCH --time=12:00:00
+### >>> FILL FOR THIS CLUSTER: --partition=... --account=... --qos=... <<<
+set -euo pipefail
+ROOT=/path/to/tddft                       # <-- server repo root
+LJ=$ROOT/ResearchProject/systems/localised_jellium
+BASE=$LJ/scripts/slab_sE_sweep
+PY=$ROOT/venv/bin/python3
+export INQ_SHARE_PATH=$ROOT/inq/install/share
+export PSEUDOPOD_SHARE_PATH=$ROOT/inq/install/share/pseudopod
+
+EV=$1; V0=$2; LZ=$3; HALF=$4              # e.g.  sbatch slurm_run.sh 276 4.5 60 classical
 N=$($PY -c "print(round(0.001288*2500*$LZ))")
-NSTEPS=$($PY -c "import math;print(math.ceil(1.6*($LZ+45)/$V0/0.04))")   # WP: add +60 a.u.: ceil((1.6*($LZ+45)/$V0+60)/0.04)
-RUNDIR=$BASE/runs/E${EV}_Lz${LZ}; mkdir -p $RUNDIR; cd $RUNDIR
-CUDA_VISIBLE_DEVICES=0 \
-LJ_LX=50 LJ_LY=50 LJ_LZ=$((LZ+60)) LJ_HALF=$($PY -c "print($LZ/2)") LJ_N=$N \
-LJ_EDGE_W=1 LJ_PERIODICITY=2 LJ_SPACING=0.5 LJ_SIGMA=2.0 \
-LJ_LAUNCH_Z=$($PY -c "print(-$LZ/2-10)") LJ_K0=$V0 \
-LJ_N_STEPS=$NSTEPS LJ_DT=0.04 LJ_CAP_ETA=-1.0 LJ_CAP_L=10.0 \
-LJ_SAVE_EVERY=0 LJ_CKPT_EVERY=200 \
-LJ_GS_DIR=$LJ/shared_gs/slab_sE_sweep/Lz${LZ}/checkpoint LJ_OUT=$HALF \
-LJ_MASS=1.0 LJ_DELTA=0.1 \
-INQ_SHARE_PATH=$INQ_SHARE_PATH PSEUDOPOD_SHARE_PATH=$PSEUDOPOD_SHARE_PATH \
-setsid $BASE/$HALF/run >> $RUNDIR/$HALF.log 2>&1 &
+if [ "$HALF" = classical ]; then
+  NS=$($PY -c "import math;print(math.ceil(1.6*($LZ+45)/$V0/0.04))")
+else                                      # WP: + 60 a.u. CAP-drain margin
+  NS=$($PY -c "import math;print(math.ceil((1.6*($LZ+45)/$V0+60)/0.04))")
+fi
+RUNDIR=$BASE/runs/E${EV}_Lz${LZ}; OUT=$RUNDIR/results/$HALF
+mkdir -p "$RUNDIR"; cd "$RUNDIR"
+RES=0                                      # resume if a checkpoint is short of target
+if [ -f "$OUT/rt_state.txt" ]; then
+  LAST=$(sed -n 's/^last_step=//p' "$OUT/rt_state.txt" | head -1)
+  if [ -n "$LAST" ] && [ "$LAST" -ge "$NS" ]; then echo "done ($LAST>=$NS)"; exit 0; fi
+  [ -n "$LAST" ] && RES=1
+fi
+export LJ_LX=50 LJ_LY=50 LJ_LZ=$((LZ+60)) LJ_HALF=$($PY -c "print($LZ/2)") LJ_N=$N \
+  LJ_EDGE_W=1 LJ_PERIODICITY=2 LJ_SPACING=0.5 LJ_SIGMA=2.0 \
+  LJ_LAUNCH_Z=$($PY -c "print(-$LZ/2-10)") LJ_K0=$V0 \
+  LJ_N_STEPS=$NS LJ_DT=0.04 LJ_CAP_ETA=-1.0 LJ_CAP_L=10.0 \
+  LJ_SAVE_EVERY=0 LJ_CKPT_EVERY=200 \
+  LJ_GS_DIR=$LJ/shared_gs/slab_sE_sweep/Lz${LZ}/checkpoint LJ_OUT=$HALF LJ_RESUME=$RES
+[ "$HALF" = classical ] && export LJ_MASS=1.0 LJ_DELTA=0.1
+srun $BASE/$HALF/run
 ```
 
-For the **WP half**: set `HALF=wp`, use the WP `n_steps` (with the +60 a.u. drain),
-**drop** `LJ_MASS`/`LJ_DELTA`. Use `$BASE/wp/run`.
+`srun` with `--gres=gpu:1` masks the allocation to one card, which INQ addresses as
+device 0 — no `CUDA_VISIBLE_DEVICES` juggling. `LJ_RESUME` auto-detects a short
+checkpoint, so re-submitting a killed/timed-out job just continues it.
+
+**Phase 1 — classical, all 15 jobs:**
+```bash
+for EV_V in "31 1.5" "54 2.0" "100 2.71" "167 3.5" "276 4.5"; do
+  set -- $EV_V
+  for LZ in 60 75 90; do sbatch $BASE/slurm_run.sh $1 $2 $LZ classical; done
+done
+```
+Then **measure (§7) and confirm the classical `S(L_z)` sits on a smooth, monotone
+`1/L_z` trend** (compare to the existing L_z=15/30/45 classical points in
+`sweep_results.csv`) before spending the WP budget.
+
+**Phase 2 — WP, all 15 jobs (only after classical validates):**
+```bash
+for EV_V in "31 1.5" "54 2.0" "100 2.71" "167 3.5" "276 4.5"; do
+  set -- $EV_V
+  for LZ in 60 75 90; do sbatch $BASE/slurm_run.sh $1 $2 $LZ wp; done
+done
+```
 
 - `LJ_SAVE_EVERY=0` → **no density VTIs** (they are ~GBs/run and fill the disk — see
-  the disk-crash caveat in §9). Keep it 0 unless you specifically need frames.
-- `LJ_CKPT_EVERY=200` → interior checkpoints; a killed run resumes (set
-  `LJ_RESUME=1` and the same or larger `LJ_N_STEPS`, re-run the same command — it
-  loads the checkpoint and continues). The binaries already implement this.
-- `setsid …&` detaches so the run survives your shell/session. Do **not** use the
-  harness background runner for anything that must outlive the conversation.
+  §9). Keep it 0 — we need only energies, not frames.
+- `LJ_CKPT_EVERY=200` → interior checkpoints; a killed/timed-out job resumes on
+  re-submit (the script sets `LJ_RESUME` automatically). The binaries implement this.
 
 ### WP absorption gate + auto-extend (mandatory for a valid WP S)
 
 After a WP run finishes, read the last `norm_wp` from
 `results/wp/raw/observables/interactions*.csv`. If **norm_wp_final > 1e-3**, the
-packet is not fully absorbed and the WP S is invalid — **extend**: re-run the same
-command with `LJ_RESUME=1` and `LJ_N_STEPS += 1250` (≈ 50 a.u.), up to ~4 rounds.
-(`orchestrate_sE.py` does this automatically; if you use it, this is handled.)
+packet is not fully absorbed and the WP S is invalid — **extend**: raise this run's
+step target by ~1250 steps (≈ 50 a.u.) and re-submit, up to ~4 rounds. With the
+`slurm_run.sh` template, bump `NS` by hand for that (E, L_z) — e.g. temporarily
+`NS=$((NS+1250))` — and re-`sbatch`; `LJ_RESUME` continues from the checkpoint.
+(`orchestrate_sE.py` automates this on an interactive node.)
 
-### Autonomous alternative — just run the orchestrator
+### Autonomous alternative — the orchestrator (NON-Slurm / interactive nodes only)
 
-If `orchestrate_sE.py` and its CSVs are present, the cleanest route is to **edit one
-line** and let it drive the whole pipeline (GS → runs → gate/extend → measure →
-re-fit), using its 2-GPU pool of single-GPU jobs:
+`orchestrate_sE.py` drives the whole pipeline (GS → runs → gate/extend → measure →
+re-fit) but it launches runs **directly on local GPUs** (`subprocess` +
+`CUDA_VISIBLE_DEVICES`, pool `GPUS=[0,1]`), **not** through Slurm. Use it only if you
+have an interactive GPU node you hold for the duration; on a batch-scheduled cluster
+prefer the `sbatch` path above. To point it at the high-L_z set:
 
 ```python
 # orchestrate_sE.py:53
-SWEEP = [60, 75]        # add 90 if memory allows; 15/30/45 already done, don't repeat
+SWEEP = [60, 75, 90]     # 15/30/45 already done — the orchestrator skips completed ones
 ```
-It skips any GS/run already `done` in `sweep_status.json`, so it only does the new
-L_z. Then `cd $BASE && $PY orchestrate_sE.py`. It appends new rows to
-`sweep_results.csv` and re-runs the extrapolation. Confirm its `GPUS=[0,1]` matches
-the target (widen if more GPUs). It writes per-phase logs; email creds may be absent
-(reports degrade to disk/log — fine).
+It skips any GS/run already `done` in `sweep_status.json`, appends new rows to
+`sweep_results.csv`, and re-runs the extrapolation. It does NOT do classical-first
+(it interleaves both halves); if you want strict classical-first, use the `sbatch`
+two-phase path. Email creds may be absent (reports degrade to disk/log — fine).
 
 ### Fallback — 2 GPUs per run (if each card is still only 24 GB)
 
@@ -330,17 +387,15 @@ downstream read `sE_results.csv`, so updating it propagates the improved extrapo
 Confirm the engine links and energies are sane on the target (cheap, ~minutes):
 
 ```bash
-# 5-step classical smoke at the smallest high-L_z box, on the Lz60 GS
-EV=276; V0=4.5; LZ=60; N=193
+# 5-step classical smoke at the smallest high-L_z box, on the Lz60 GS (one GPU)
 cd /tmp && mkdir -p smoke && cd smoke
-CUDA_VISIBLE_DEVICES=0 \
 LJ_LX=50 LJ_LY=50 LJ_LZ=120 LJ_HALF=30 LJ_N=193 LJ_EDGE_W=1 LJ_PERIODICITY=2 \
 LJ_SPACING=0.5 LJ_SIGMA=2.0 LJ_LAUNCH_Z=-40 LJ_K0=4.5 \
 LJ_N_STEPS=5 LJ_DT=0.04 LJ_CAP_ETA=-1.0 LJ_CAP_L=10.0 LJ_SAVE_EVERY=0 \
 LJ_GS_DIR=$LJ/shared_gs/slab_sE_sweep/Lz60/checkpoint LJ_OUT=classical \
 LJ_MASS=1.0 LJ_DELTA=0.1 \
 INQ_SHARE_PATH=$INQ_SHARE_PATH PSEUDOPOD_SHARE_PATH=$PSEUDOPOD_SHARE_PATH \
-$BASE/classical/run
+srun --gres=gpu:1 $BASE/classical/run
 # PASS: finite E_total ~ (same order as the GS energy, NOT thousands of Ha off),
 #       5 steps complete, no NaN/complex-energy. A garbage E_total ~2785 vs ~923
 #       means a corrupted GS load (wrong partition) — STOP and fix the GS.
