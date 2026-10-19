@@ -118,9 +118,24 @@ The bulk limit is then `S_bulk = ` the `1/L_z = 0` intercept of a quadratic fit
 
 ## 4. Prerequisites — files the target machine MUST have
 
-**These are gitignored / untracked on origin — a fresh `git clone` will NOT have
-them.** rsync the following from the origin machine (paths are under `$ROOT`), or
-confirm the target is a full working-tree copy:
+**The scripts + CSVs below are now on GitHub** (repo
+`KrishnaBellamkonda/inq-tddft-research`, branch `quantum-stopping-power`) — a
+`git pull` of that branch brings every `run.cpp`, `orchestrate_sE.py`, the
+launchers, the `build_S_vs_*.py` fit scripts, `slab_stopping.py`, both CSVs, and
+this runbook. **But `git pull` does NOT bring the large/ignored artefacts** — the
+engine (`inq/`, `inq-study/`), `inqkit` headers, the venv, the GS checkpoints, or
+any run output. Those must be rsync'd from origin (or regenerated). The table marks
+which is which.
+
+> **Path gotcha:** `orchestrate_sE.py` and `build_S_vs_invLz.py` import
+> `slab_stopping` from a **hardcoded** path
+> `/home/raid/skcb2/skcb2/tddft/.claude/skills/slab-stopping-power`. On the target,
+> either replicate that path, or edit those two `sys.path.insert(...)` / `SKILL =`
+> lines to point at the pulled `.claude/skills/slab-stopping-power/` under the
+> target's repo root.
+
+rsync the following from the origin machine (paths are under `$ROOT`), or confirm
+the target is a full working-tree copy:
 
 | Path (under `$ROOT`) | Role | Must be present |
 |---|---|---|
